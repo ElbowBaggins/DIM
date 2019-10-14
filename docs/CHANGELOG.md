@@ -12,12 +12,17 @@
 * Collections > Mods updated for year 3 style mods.
 * Check your Bright Dust levels from the Vault header.
 * Multi-interval triumphs now supported.
-* Stat displays tuned up. Totals included, stats rearranged, 
+* Stat displays tuned up. Total stat included, stats rearranged.
 * CSV exports include more stats.
 * Clarifications for API errors.
 * Item popup now features armor Energy capacity.
 * Reviews filtered better.
-* Improvements to items at vendors showning as Owned.
+* Emotes, Ghost Projections, Ornaments, and Mods that you own are badged in vendors.
+* Added Ghost Projections to Collections.
+* Hide objectives for secret triumphs.
+* Added a privacy policy (from About DIM).
+* Fixed engrams having a number under them.
+* Subclass path and super are highlighted on subclass icons.
 
 # 5.49.1 (2019-10-07)
 
