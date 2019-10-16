@@ -7,10 +7,6 @@ cache:
   yarn: true
   directories:
     $HOME/.cache/
-branches:
-  only:
-    - master
-    - /^greenkeeper/.*$/
 deploy:
   provider: releases
   api_key:
