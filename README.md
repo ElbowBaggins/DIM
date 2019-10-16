@@ -2,7 +2,7 @@
 [![Crowdin](http://d322cqt584bo4o.cloudfront.net/destiny-item-manager/localized.svg)](https://crowdin.com/project/destiny-item-manager)
 [![OpenCollective](https://opencollective.com/dim/backers/badge.svg)](#backers)
 [![OpenCollective](https://opencollective.com/dim/sponsors/badge.svg)](#sponsors) [![Greenkeeper badge](https://badges.greenkeeper.io/DestinyItemManager/DIM.svg)](https://greenkeeper.io/)
-
+ 
 ### [Launch DIM](https://app.destinyitemmanager.com)
 
 ## Scrap Destiny Item Manager
