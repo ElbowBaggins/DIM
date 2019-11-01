@@ -8,5 +8,5 @@ yarn run lint-check
 yarn run build-release
 
 shopt -s dotglob
-rm built.zip
+rm built.zip || true
 zip -r built.zip dist/*
