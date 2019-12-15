@@ -55,7 +55,6 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       3390164851, // Source: Found by turning in Black Armory bounties.
       3764925750, // Source: Complete an Izanami Forge ignition.
       4101102010, // Source: Found by completing Bergusia Forge ignitions.
-      4120473292, // Source: Found by completing Gofannon Forge ignitions.
       4247521481, // Source: Complete the "Beautiful but Deadly" Triumph.
       4290227252 // Source: Complete a Volundr Forge ignition.
     ]
@@ -106,14 +105,16 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       3928440585 // Crucible Redjack
     ],
     sourceHashes: [
+      454115234, // Source: Complete this weapon's associated Crucible quest.
       598662729, // Source: Reach Glory Rank "Legend" in the Crucible.
+      745186842, // Source: Complete this reward's associated Crucible quest.
       897576623, // Source: Complete Crucible matches and earn rank-up packages from Lord Shaxx.
       929025440, // Acquired by competing in the Crucible during the Prismatic Inferno.
-      1223492644, // Source: Complete the "Reconnaissance by Fire" pursuit.
+      1223492644, // Source: Complete the "Reconnaissance by Fire" quest.
       2055470113, // Source: Chance to acquire when completing Crucible Survival matches after reaching Glory rank "Mythic."
       2537301256, // Source: Reach a Glory rank of "Fabled" in the Crucible.
       2641169841, // Source: Purchased from Lord Shaxx.
-      2658055900, // Source: Complete the "Season 8: Battle Drills" pursuit.
+      2658055900, // Source: Complete the "Season 8: Battle Drills" quest.
       2821852478 // Source: Complete this weapon's associated Crucible quest.
     ]
   },
@@ -147,11 +148,13 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       3217477988 // Gambit Duds
     ],
     sourceHashes: [
+      571102497, // Source: Complete this weapon's associated Gambit quest.
       594786771, // Source: Complete this weapon's associated Gambit quest.
-      1162859311, // Source: Complete the "Clean Getaway" pursuit.
+      1162859311, // Source: Complete the "Clean Getaway" quest.
       2170269026, // Source: Complete Gambit matches and earn rank-up packages from the Drifter.
+      2601524261, // Source: Complete this reward's associated Gambit quest.
       2883838366, // Source: Complete the "Breakneck" quest from the Drifter.
-      3494247523 // Source: Complete the "Season 8: Keepin' On" pursuit.
+      3494247523 // Source: Complete the "Season 8: Keepin' On" quest.
     ]
   },
   edz: {
@@ -211,11 +214,13 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       3217477988 // Gambit Duds
     ],
     sourceHashes: [
+      571102497, // Source: Complete this weapon's associated Gambit quest.
       594786771, // Source: Complete this weapon's associated Gambit quest.
-      1162859311, // Source: Complete the "Clean Getaway" pursuit.
+      1162859311, // Source: Complete the "Clean Getaway" quest.
       2170269026, // Source: Complete Gambit matches and earn rank-up packages from the Drifter.
+      2601524261, // Source: Complete this reward's associated Gambit quest.
       2883838366, // Source: Complete the "Breakneck" quest from the Drifter.
-      3494247523 // Source: Complete the "Season 8: Keepin' On" pursuit.
+      3494247523 // Source: Complete the "Season 8: Keepin' On" quest.
     ]
   },
   gambitprime: {
@@ -275,7 +280,8 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
     sourceHashes: [
       1828622510, // Source: Chance to acquire when you win Iron Banner matches.
       2648408612, // Acquired by competing in the Iron Banner when the wolves were loud.
-      3072862693 // Source: Complete Iron Banner matches and earn rank-up packages from Lord Saladin.
+      3072862693, // Source: Complete Iron Banner matches and earn rank-up packages from Lord Saladin.
+      3966667255 // Source: Complete Iron Banner's Season 9 Seasonal Pursuit.
     ]
   },
   lastwish: {
@@ -284,6 +290,12 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
     ],
     sourceHashes: [
       2455011338 // Source: Last Wish raid.
+    ]
+  },
+  legendaryengram: {
+    itemHashes: [],
+    sourceHashes: [
+      3334812276 // Source: Open Legendary engrams and earn faction rank-up packages.
     ]
   },
   leviathan: {
@@ -304,7 +316,6 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       1924238751, // Source: Complete Nightfall strike "Will of the Thousands."
       2310754348, // Source: World Quest "Data Recovery" on Mars.
       2926805810, // Source: Complete Nightfall strike "Strange Terrain."
-      3034204074, // Source: Rare drop from high-scoring Nightfall strikes on Mars.
       4137108180 // Source: Escalation Protocol on Mars.
     ]
   },
@@ -334,6 +345,7 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       1400219831, // Source: Equip the full Mercury destination set on a Hunter.
       1411886787, // Source: Equip the full Mercury destination set on a Titan.
       1581680964, // Source: Complete Nightfall strike "Tree of Probabilities."
+      1618754228, // Source: Acquired from the Sundial activity on Mercury.
       1654120320, // Source: Complete activities and earn rank-up packages on Mercury.
       2487203690, // Source: Complete Nightfall strike "Tree of Probabilities."
       3079246067, // Source: Complete Osiris' Lost Prophecies for Brother Vance on Mercury.
@@ -380,7 +392,6 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       2851783112, // Source: Complete Nightfall strike "Lake of Shadows."
       2926805810, // Source: Complete Nightfall strike "Strange Terrain."
       3022766747, // Source: Complete Nightfall strike "The Insight Terminus."
-      3034204074, // Source: Rare drop from high-scoring Nightfall strikes on Mars.
       3067146211, // Source: Complete Nightfall strike "Exodus Crash."
       3874934421, // Source: Complete Nightfall strike "The Corrupted."
       3964663093, // Source: Rare drop from high-scoring Nightfall strikes on Mercury.
@@ -391,7 +402,8 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
   nightmare: {
     itemHashes: [],
     sourceHashes: [
-      550270332 // Source: Complete all Nightmare Hunt time trials on Master difficulty.
+      550270332, // Source: Complete all Nightmare Hunt time trials on Master difficulty.
+      2778435282 // Source: Nightmare Hunts
     ]
   },
   nm: {
@@ -455,7 +467,7 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
     itemHashes: [],
     sourceHashes: [
       594540014, // Source: Exotic quest "Make Bows, Not War." Available only to Season Pass owners.
-      1838401392 // Source: Earned as a Season Pass reward.
+      1593696611 // Source: Season Pass Reward
     ]
   },
   shaxx: {
@@ -472,14 +484,16 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       3928440585 // Crucible Redjack
     ],
     sourceHashes: [
+      454115234, // Source: Complete this weapon's associated Crucible quest.
       598662729, // Source: Reach Glory Rank "Legend" in the Crucible.
+      745186842, // Source: Complete this reward's associated Crucible quest.
       897576623, // Source: Complete Crucible matches and earn rank-up packages from Lord Shaxx.
       929025440, // Acquired by competing in the Crucible during the Prismatic Inferno.
-      1223492644, // Source: Complete the "Reconnaissance by Fire" pursuit.
+      1223492644, // Source: Complete the "Reconnaissance by Fire" quest.
       2055470113, // Source: Chance to acquire when completing Crucible Survival matches after reaching Glory rank "Mythic."
       2537301256, // Source: Reach a Glory rank of "Fabled" in the Crucible.
       2641169841, // Source: Purchased from Lord Shaxx.
-      2658055900, // Source: Complete the "Season 8: Battle Drills" pursuit.
+      2658055900, // Source: Complete the "Season 8: Battle Drills" quest.
       2821852478 // Source: Complete this weapon's associated Crucible quest.
     ]
   },
@@ -508,10 +522,12 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       3215252549 // Determination
     ],
     sourceHashes: [
+      288436121, // Source: Complete this weapon's associated Vanguard quest.
       1144274899, // Source: Complete this weapon's associated Vanguard quest.
-      1216155659, // Source: Complete the "Season 8: First Watch" pursuit.
+      1216155659, // Source: Complete the "Season 8: First Watch" quest.
       1244908294, // Source: Complete the "Loaded Question" quest from Zavala.
-      2317365255, // Source: Complete the "A Loud Racket" pursuit.
+      1564061133, // Source: Complete this reward's associated Vanguard quest.
+      2317365255, // Source: Complete the "A Loud Racket" quest.
       2527168932 // Source: Complete strikes and earn rank-up packages from Commander Zavala.
     ]
   },
@@ -611,10 +627,12 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       3215252549 // Determination
     ],
     sourceHashes: [
+      288436121, // Source: Complete this weapon's associated Vanguard quest.
       1144274899, // Source: Complete this weapon's associated Vanguard quest.
-      1216155659, // Source: Complete the "Season 8: First Watch" pursuit.
+      1216155659, // Source: Complete the "Season 8: First Watch" quest.
       1244908294, // Source: Complete the "Loaded Question" quest from Zavala.
-      2317365255, // Source: Complete the "A Loud Racket" pursuit.
+      1564061133, // Source: Complete this reward's associated Vanguard quest.
+      2317365255, // Source: Complete the "A Loud Racket" quest.
       2527168932 // Source: Complete strikes and earn rank-up packages from Commander Zavala.
     ]
   }

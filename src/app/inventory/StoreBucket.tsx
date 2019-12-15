@@ -92,7 +92,10 @@ class StoreBucket extends React.Component<Props> {
     }
 
     const equippedItem = items.find((i) => i.equipped);
-    const unequippedItems = sortItems(items.filter((i) => !i.equipped), itemSortOrder);
+    const unequippedItems = sortItems(
+      items.filter((i) => !i.equipped),
+      itemSortOrder
+    );
 
     return (
       <>
@@ -102,7 +105,14 @@ class StoreBucket extends React.Component<Props> {
               <StoreInventoryItem key={equippedItem.index} item={equippedItem} />
             </div>
             {bucket.hasTransferDestination && (
-              <a onClick={this.pickEquipItem} className="pull-item-button">
+              <a
+                onClick={this.pickEquipItem}
+                className="pull-item-button"
+                title={t('MovePopup.PullItem', {
+                  bucket: bucket.name,
+                  store: store.name
+                })}
+              >
                 <AppIcon icon={faPlusCircle} />
               </a>
             )}
@@ -119,7 +129,7 @@ class StoreBucket extends React.Component<Props> {
           ))}
           {bucket.id === '375726501' &&
             _.times(bucket.capacity - unequippedItems.length, (index) => (
-              <img src={emptyEngram} className="empty-engram" key={index} />
+              <img src={emptyEngram} className="empty-engram" aria-hidden="true" key={index} />
             ))}
         </StoreBucketDropTarget>
       </>

@@ -67,12 +67,10 @@ export function toVendorGroups(
                 vendorHash,
                 defs,
                 buckets,
-                vendorsResponse.vendors.data && vendorsResponse.vendors.data[vendorHash],
+                vendorsResponse.vendors.data?.[vendorHash],
                 account,
                 vendorsResponse.itemComponents[vendorHash],
-                vendorsResponse.sales.data &&
-                  vendorsResponse.sales.data[vendorHash] &&
-                  vendorsResponse.sales.data[vendorHash].saleItems,
+                vendorsResponse.sales.data?.[vendorHash]?.saleItems,
                 mergedCollectibles
               )
             )
@@ -189,26 +187,21 @@ export function getVendorItems(
 
 export function filterVendorGroupsToUnacquired(vendorGroups: readonly D2VendorGroup[]) {
   return vendorGroups
-    .map((group) => {
-      return {
-        ...group,
-        vendors: group.vendors
-          .map((vendor) => {
-            return {
-              ...vendor,
-              items: vendor.items.filter((item) => {
-                return (
-                  item.item &&
-                  item.item.isDestiny2() &&
-                  item.item.collectibleState !== null &&
-                  item.item.collectibleState & DestinyCollectibleState.NotAcquired
-                );
-              })
-            };
-          })
-          .filter((v) => v.items.length)
-      };
-    })
+    .map((group) => ({
+      ...group,
+      vendors: group.vendors
+        .map((vendor) => ({
+          ...vendor,
+          items: vendor.items.filter(
+            (item) =>
+              item.item &&
+              item.item.isDestiny2() &&
+              item.item.collectibleState !== null &&
+              item.item.collectibleState & DestinyCollectibleState.NotAcquired
+          )
+        }))
+        .filter((v) => v.items.length)
+    }))
     .filter((g) => g.vendors.length);
 }
 
@@ -218,22 +211,16 @@ export function filterVendorGroupsToSearch(
   filterItems: (item: DimItem) => boolean
 ) {
   return vendorGroups
-    .map((group) => {
-      return {
-        ...group,
-        vendors: group.vendors
-          .map((vendor) => {
-            return {
-              ...vendor,
-              items: vendor.def.displayProperties.name
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase())
-                ? vendor.items
-                : vendor.items.filter((i) => i.item && filterItems(i.item))
-            };
-          })
-          .filter((v) => v.items.length)
-      };
-    })
+    .map((group) => ({
+      ...group,
+      vendors: group.vendors
+        .map((vendor) => ({
+          ...vendor,
+          items: vendor.def.displayProperties.name.toLowerCase().includes(searchQuery.toLowerCase())
+            ? vendor.items
+            : vendor.items.filter((i) => i.item && filterItems(i.item))
+        }))
+        .filter((v) => v.items.length)
+    }))
     .filter((g) => g.vendors.length);
 }

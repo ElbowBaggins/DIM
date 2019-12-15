@@ -94,13 +94,12 @@ async function loadActivePlatform(): Promise<DestinyAccount | undefined> {
     return account;
   }
 
-  if (data && data.membershipId) {
-    const active = accounts.find((platform) => {
-      return (
+  if (data?.membershipId) {
+    const active = accounts.find(
+      (platform) =>
         platform.membershipId === data.membershipId &&
         platform.destinyVersion === data.destinyVersion
-      );
-    });
+    );
     if (active) {
       return active;
     }

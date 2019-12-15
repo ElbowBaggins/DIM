@@ -2,26 +2,25 @@ import copy from 'fast-copy';
 import { t } from 'app/i18next-t';
 import _ from 'lodash';
 import { optimalLoadout, newLoadout } from './loadout-utils';
-import { Loadout } from './loadout.service';
 import { StoreServiceType, DimStore } from '../inventory/store-types';
 import { DimItem } from '../inventory/item-types';
 import { DestinyClass } from 'bungie-api-ts/destiny2';
+import { Loadout } from './loadout-types';
 
 /**
  *  A dynamic loadout set up to level weapons and armor
  */
 export function itemLevelingLoadout(storeService: StoreServiceType, store: DimStore): Loadout {
-  const applicableItems = storeService.getAllItems().filter((i) => {
-    return (
+  const applicableItems = storeService.getAllItems().filter(
+    (i) =>
       i.canBeEquippedBy(store) &&
       i.talentGrid &&
       !(i.talentGrid as any).xpComplete && // Still need XP
-      (i.hash !== 2168530918 && // Husk of the pit has a weirdo one-off xp mechanic
-        i.hash !== 3783480580 &&
-        i.hash !== 2576945954 &&
-        i.hash !== 1425539750)
-    );
-  });
+      i.hash !== 2168530918 && // Husk of the pit has a weirdo one-off xp mechanic
+      i.hash !== 3783480580 &&
+      i.hash !== 2576945954 &&
+      i.hash !== 1425539750
+  );
 
   const bestItemFn = (item) => {
     let value = 0;
@@ -67,18 +66,16 @@ export function maxLightLoadout(storeService: StoreServiceType, store: DimStore)
     368428387 // D1 Attack
   ]);
 
-  const applicableItems = storeService.getAllItems().filter((i) => {
-    return (
+  const applicableItems = storeService.getAllItems().filter(
+    (i) =>
       (i.canBeEquippedBy(store) ||
         (i.location.inPostmaster &&
           (i.classType === DestinyClass.Unknown || i.classType === store.classType) &&
           // nothing we are too low-level to equip
           i.equipRequiredLevel <= store.level)) &&
-      i.primStat &&
-      i.primStat.value && // has a primary stat (sanity check)
-      statHashes.has(i.primStat.statHash)
-    ); // one of our selected stats
-  });
+      i.primStat?.value && // has a primary stat (sanity check)
+      statHashes.has(i.primStat.statHash) // one of our selected stats
+  );
 
   const bestItemFn = (item) => {
     let value = item.primStat.value;
@@ -119,8 +116,7 @@ export function maxStatLoadout(
           (i.classType === DestinyClass.Unknown || i.classType === store.classType) &&
           // nothing we are too low-level to equip
           i.equipRequiredLevel <= store.level)) &&
-      i.primStat &&
-      i.primStat.value && // has a primary stat (sanity check)
+      i.primStat?.value && // has a primary stat (sanity check)
       i.stats &&
       i.stats.some((stat) => stat.statHash === statHash) // contains our selected stat
   );
@@ -156,9 +152,11 @@ export function gatherEngramsLoadout(
   storeService: StoreServiceType,
   options: { exotics: boolean } = { exotics: false }
 ): Loadout {
-  const engrams = storeService.getAllItems().filter((i) => {
-    return i.isEngram && !i.location.inPostmaster && (options.exotics ? true : !i.isExotic);
-  });
+  const engrams = storeService
+    .getAllItems()
+    .filter(
+      (i) => i.isEngram && !i.location.inPostmaster && (options.exotics ? true : !i.isExotic)
+    );
 
   if (engrams.length === 0) {
     let engramWarning = t('Loadouts.NoEngrams');
@@ -168,22 +166,21 @@ export function gatherEngramsLoadout(
     throw new Error(engramWarning);
   }
 
-  const itemsByType = _.mapValues(_.groupBy(engrams, (e) => e.type), (items) => {
-    // Sort exotic engrams to the end so they don't crowd out other types
-    items = _.sortBy(items, (i) => {
-      return i.isExotic ? 1 : 0;
-    });
-    // No more than 9 engrams of a type
-    return _.take(items, 9);
-  });
+  const itemsByType = _.mapValues(
+    _.groupBy(engrams, (e) => e.type),
+    (items) => {
+      // Sort exotic engrams to the end so they don't crowd out other types
+      items = _.sortBy(items, (i) => (i.isExotic ? 1 : 0));
+      // No more than 9 engrams of a type
+      return _.take(items, 9);
+    }
+  );
 
   // Copy the items and mark them equipped and put them in arrays, so they look like a loadout
   const finalItems = {};
   _.forIn(itemsByType, (items, type) => {
     if (items) {
-      finalItems[type.toLowerCase()] = items.map((i) => {
-        return copy(i);
-      });
+      finalItems[type.toLowerCase()] = items.map((i, ..._args) => copy(i));
     }
   });
 
@@ -191,9 +188,9 @@ export function gatherEngramsLoadout(
 }
 
 export function gatherTokensLoadout(storeService: StoreServiceType): Loadout {
-  let tokens = storeService.getAllItems().filter((i) => {
-    return i.isDestiny2() && i.itemCategoryHashes.includes(2088636411) && !i.notransfer;
-  });
+  let tokens = storeService
+    .getAllItems()
+    .filter((i) => i.isDestiny2() && i.itemCategoryHashes.includes(2088636411) && !i.notransfer);
 
   if (tokens.length === 0) {
     throw new Error(t('Loadouts.NoTokens'));
@@ -222,14 +219,15 @@ export function searchLoadout(
   store: DimStore,
   searchFilter: (item: DimItem) => boolean
 ): Loadout {
-  let items = storeService.getAllItems().filter((i) => {
-    return !i.location.inPostmaster && !i.notransfer && searchFilter(i);
-  });
+  let items = storeService
+    .getAllItems()
+    .filter((i) => !i.location.inPostmaster && !i.notransfer && searchFilter(i));
 
   items = addUpStackables(items);
 
-  const itemsByType = _.mapValues(_.groupBy(items, (i) => i.type), (items) =>
-    limitToBucketSize(items, store.isVault)
+  const itemsByType = _.mapValues(
+    _.groupBy(items, (i) => i.type),
+    (items) => limitToBucketSize(items, store.isVault)
   );
 
   // Copy the items and mark them equipped and put them in arrays, so they look like a loadout

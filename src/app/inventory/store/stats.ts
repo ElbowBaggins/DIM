@@ -7,13 +7,16 @@ import {
   DestinyItemStatsComponent,
   DestinyDisplayPropertiesDefinition,
   DestinyStatAggregationType,
-  DestinyStatCategory
+  DestinyStatCategory,
+  DestinySocketCategoryStyle
 } from 'bungie-api-ts/destiny2';
-import { D2Item, DimSocket, DimPlug, DimStat } from '../item-types';
+import { D2Item, DimSocket, DimPlug, DimStat, DimSockets } from '../item-types';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
 import { compareBy } from 'app/utils/comparators';
 import _ from 'lodash';
 import { t } from 'app/i18next-t';
+import { getSocketsWithStyle, getSocketsWithPlugCategoryHash } from '../../utils/socket-utils';
+import { D2CategoryHashes } from 'app/search/search-filter-hashes';
 
 /**
  * These are the utilities that deal with Stats on items - specifically, how to calculate them.
@@ -115,7 +118,7 @@ export function buildStats(
   let investmentStats = buildInvestmentStats(itemDef, defs, statGroup, statDisplays) || [];
 
   // Include the contributions from perks and mods
-  if (createdItem.sockets && createdItem.sockets.sockets.length) {
+  if (createdItem.sockets?.sockets.length) {
     investmentStats = enhanceStatsWithPlugs(
       itemDef,
       investmentStats,
@@ -127,20 +130,75 @@ export function buildStats(
   }
 
   // For Armor, we always replace the previous stats with live stats, even if they were already created
-  if ((!investmentStats.length || createdItem.bucket.inArmor) && stats && stats[createdItem.id]) {
+  if ((!investmentStats.length || createdItem.bucket.inArmor) && stats?.[createdItem.id]) {
     // TODO: build a version of enhanceStatsWithPlugs that only calculates plug values
     investmentStats = buildLiveStats(stats[createdItem.id], itemDef, defs, statGroup, statDisplays);
     if (createdItem.bucket.inArmor) {
-      if (createdItem.sockets && createdItem.sockets.sockets.length) {
+      if (createdItem.sockets?.sockets.length) {
         investmentStats = buildBaseStats(investmentStats, createdItem.sockets.sockets);
       }
 
       // Add the "Total" stat for armor
       investmentStats.push(totalStat(investmentStats));
     }
+  } else if (
+    createdItem.isDestiny2() &&
+    createdItem.type === 'ClassItem' &&
+    createdItem.energy &&
+    createdItem.sockets
+  ) {
+    investmentStats = buildStatsFromMods(createdItem.sockets, defs, statGroup, statDisplays);
   }
 
   return investmentStats.length ? investmentStats.sort(compareBy((s) => s.sort)) : null;
+}
+
+function buildStatsFromMods(
+  itemSockets: DimSockets,
+  defs: D2ManifestDefinitions,
+  statGroup: DestinyStatGroupDefinition,
+  statDisplays: { [key: number]: DestinyStatDisplayDefinition }
+): DimStat[] {
+  const statTracker: { stat: number; value: number } | {} = {};
+  const investmentStats: DimStat[] = [];
+  const modSockets = getSocketsWithPlugCategoryHash(itemSockets, D2CategoryHashes.armormod);
+  const masterworkSockets = getSocketsWithStyle(
+    itemSockets,
+    DestinySocketCategoryStyle.EnergyMeter
+  );
+
+  for (const statHash of armorStats) {
+    statTracker[statHash] = 0;
+  }
+
+  // there should only be one masterwork socket
+  if (masterworkSockets.length) {
+    modSockets.push(masterworkSockets[0]);
+  }
+
+  for (const socket of modSockets) {
+    if (socket?.plug?.stats) {
+      for (const statHash of armorStats) {
+        if (socket.plug.stats[statHash]) {
+          statTracker[statHash] += socket.plug.stats[statHash];
+        }
+      }
+    }
+  }
+
+  for (const statHash of armorStats) {
+    const hashAndValue = {
+      statTypeHash: statHash,
+      value: statTracker[statHash]
+    };
+    const builtStat = buildStat(hashAndValue, statGroup, defs.Stat.get(statHash), statDisplays);
+    builtStat.maximumValue = 42;
+    investmentStats.push(builtStat);
+  }
+
+  investmentStats.push(totalStat(investmentStats));
+
+  return investmentStats;
 }
 
 function shouldShowStat(
@@ -149,18 +207,12 @@ function shouldShowStat(
   statDisplays: { [key: number]: DestinyStatDisplayDefinition }
 ) {
   // Bows have a charge time stat that nobody asked for
-  if (
-    statHash === 2961396640 &&
-    itemDef.itemCategoryHashes &&
-    itemDef.itemCategoryHashes.includes(3317538576)
-  ) {
+  if (statHash === 2961396640 && itemDef.itemCategoryHashes?.includes(3317538576)) {
     return false;
   }
 
   // Swords shouldn't show any hidden stats
-  const includeHiddenStats = !(
-    itemDef.itemCategoryHashes && itemDef.itemCategoryHashes.includes(54)
-  );
+  const includeHiddenStats = !itemDef.itemCategoryHashes?.includes(54);
 
   return (
     // Must be on the whitelist
@@ -202,7 +254,7 @@ function buildInvestmentStats(
 }
 
 function buildStat(
-  itemStat: DestinyItemInvestmentStatDefinition,
+  itemStat: DestinyItemInvestmentStatDefinition | { statTypeHash: number; value: number },
   statGroup: DestinyStatGroupDefinition,
   statDef: DestinyStatDefinition,
   statDisplays: { [key: number]: DestinyStatDisplayDefinition }
@@ -256,7 +308,7 @@ function enhanceStatsWithPlugs(
 
   // Add the chosen plugs' investment stats to the item's base investment stats
   for (const socket of sockets) {
-    if (socket.plug && socket.plug.plugItem.investmentStats) {
+    if (socket.plug?.plugItem.investmentStats) {
       for (const perkStat of socket.plug.plugItem.investmentStats) {
         const statHash = perkStat.statTypeHash;
         const itemStat = statsByHash[statHash];
@@ -269,7 +321,7 @@ function enhanceStatsWithPlugs(
             (s) => s.statTypeHash === statHash
           );
 
-          if (stat && stat.value) {
+          if (stat?.value) {
             const statDef = defs.Stat.get(statHash);
             const builtStat = buildStat(stat, statGroup, statDef, statDisplays);
             statsByHash[statHash] = builtStat;
@@ -297,7 +349,7 @@ function enhanceStatsWithPlugs(
   const sortedSockets = _.sortBy(sockets, (s) => s.plugOptions.length);
   for (const socket of sortedSockets) {
     for (const plug of socket.plugOptions) {
-      if (plug.plugItem && plug.plugItem.investmentStats && plug.plugItem.investmentStats.length) {
+      if (plug.plugItem?.investmentStats?.length) {
         plug.stats = buildPlugStats(plug, statsByHash, statDisplays);
       }
     }
@@ -401,7 +453,7 @@ function buildLiveStats(
  */
 function buildBaseStats(stats: DimStat[], sockets: DimSocket[]) {
   for (const socket of sockets) {
-    if (socket.plug && socket.plug.plugItem.investmentStats) {
+    if (socket.plug?.plugItem.investmentStats) {
       for (const perkStat of socket.plug.plugItem.investmentStats) {
         const statHash = perkStat.statTypeHash;
         const itemStat = stats.find((stat) => stat.statHash === statHash);
@@ -439,7 +491,7 @@ function totalStat(stats: DimStat[]): DimStat {
  * Some stats have an item-specific interpolation table, which is defined as
  * a piecewise linear function mapping input stat values to output stat values.
  */
-function interpolateStatValue(value: number, statDisplay: DestinyStatDisplayDefinition) {
+export function interpolateStatValue(value: number, statDisplay: DestinyStatDisplayDefinition) {
   const interp = statDisplay.displayInterpolation;
 
   // Clamp the value to prevent overfilling

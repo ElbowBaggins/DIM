@@ -21,15 +21,13 @@ const GlobalAlertLevelsToToastLevels = [
  */
 export async function getGlobalAlerts(): Promise<GlobalAlert[]> {
   const response = await httpAdapter(bungieApiQuery(`/Platform/GlobalAlerts/`));
-  if (response && response.Response) {
-    return response.Response.map((alert) => {
-      return {
-        key: alert.AlertKey,
-        type: GlobalAlertLevelsToToastLevels[alert.AlertLevel],
-        body: alert.AlertHtml,
-        timestamp: alert.AlertTimestamp
-      };
-    });
+  if (response?.Response) {
+    return response.Response.map((alert) => ({
+      key: alert.AlertKey,
+      type: GlobalAlertLevelsToToastLevels[alert.AlertLevel],
+      body: alert.AlertHtml,
+      timestamp: alert.AlertTimestamp
+    }));
   }
   return [];
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { t } from 'app/i18next-t';
 import clsx from 'clsx';
-import { DimItem, DimStat } from '../inventory/item-types';
+import { DimItem, DimStat, D2Item } from '../inventory/item-types';
 import { router } from '../router';
 import _ from 'lodash';
 import { CompareService } from './compare.service';
@@ -17,19 +17,23 @@ import Sheet from '../dim-ui/Sheet';
 import { showNotification } from '../notifications/notifications';
 import { scrollToPosition } from 'app/dim-ui/scroll';
 import { DestinyDisplayPropertiesDefinition } from 'bungie-api-ts/destiny2';
-import idx from 'idx';
-import { INTRINSIC_PLUG_CATEGORY } from 'app/inventory/store/sockets';
 import { makeDupeID } from 'app/search/search-filters';
-
+import { D2ManifestDefinitions } from '../destiny2/d2-definitions';
+import { getItemDamageType, getItemSpecialtyModSlotDisplayName } from 'app/utils/item-utils';
+import intrinsicLookupTable from 'data/d2/intrinsic-perk-lookup.json';
+import { INTRINSIC_PLUG_CATEGORY } from 'app/inventory/store/sockets';
+import BungieImage from 'app/dim-ui/BungieImage';
 interface StoreProps {
   ratings: ReviewsState['ratings'];
+  defs?: D2ManifestDefinitions;
 }
 
 type Props = StoreProps;
 
 function mapStateToProps(state: RootState): StoreProps {
   return {
-    ratings: ratingsSelector(state)
+    ratings: ratingsSelector(state),
+    defs: state.manifest.d2Manifest
   };
 }
 
@@ -37,12 +41,11 @@ function mapStateToProps(state: RootState): StoreProps {
 // TODO: maybe have a holder/state component and a connected display component
 interface State {
   show: boolean;
-  comparisons: DimItem[];
+  comparisonItems: DimItem[];
   highlight?: string | number;
   sortedHash?: string | number;
   sortBetterFirst: boolean;
-  similarTypes: DimItem[];
-  archetypes: DimItem[];
+  comparisonSets: { buttonLabel: React.ReactElement; items: DimItem[] }[];
 }
 
 export interface StatInfo {
@@ -57,9 +60,8 @@ export interface StatInfo {
 
 class Compare extends React.Component<Props, State> {
   state: State = {
-    comparisons: [],
-    similarTypes: [],
-    archetypes: [],
+    comparisonItems: [],
+    comparisonSets: [],
     show: false,
     sortBetterFirst: true
   };
@@ -69,7 +71,7 @@ class Compare extends React.Component<Props, State> {
 
   // Memoize computing the list of stats
   private getAllStatsSelector = createSelector(
-    (state: State) => state.comparisons,
+    (state: State) => state.comparisonItems,
     (_state: State, props: Props) => props.ratings,
     getAllStats
   );
@@ -99,19 +101,18 @@ class Compare extends React.Component<Props, State> {
     const { ratings } = this.props;
     const {
       show,
-      comparisons: unsortedComparisons,
+      comparisonItems: unsortedComparisonItems,
       sortedHash,
       highlight,
-      similarTypes,
-      archetypes
+      comparisonSets
     } = this.state;
 
-    if (!show || unsortedComparisons.length === 0) {
+    if (!show || unsortedComparisonItems.length === 0) {
       CompareService.dialogOpen = false;
       return null;
     }
 
-    const comparisons = Array.from(unsortedComparisons).sort(
+    const comparisonItems = Array.from(unsortedComparisonItems).sort(
       reverseComparator(
         chainComparator(
           compareBy((item: DimItem) => {
@@ -123,6 +124,10 @@ class Compare extends React.Component<Props, State> {
                 ? item.primStat
                 : sortedHash === 'Rating'
                 ? { value: showRating || 0 }
+                : sortedHash === 'EnergyCapacity'
+                ? {
+                    value: (item.isDestiny2() && item.energy?.energyCapacity) || 0
+                  }
                 : (item.stats || []).find((s) => s.statHash === sortedHash);
 
             if (!stat) {
@@ -141,7 +146,6 @@ class Compare extends React.Component<Props, State> {
       )
     );
 
-    const firstComparison = comparisons[0];
     const stats = this.getAllStatsSelector(this.state, this.props);
 
     return (
@@ -149,21 +153,15 @@ class Compare extends React.Component<Props, State> {
         onClose={this.cancel}
         header={
           <div className="compare-options">
-            {archetypes.length > 1 && (
-              <button className="dim-button" onClick={(e) => this.compareSimilar(e, 'archetype')}>
-                {firstComparison.bucket.inWeapons
-                  ? t('Compare.Archetype', { quantity: archetypes.length })
-                  : t('Compare.Splits', { quantity: archetypes.length })}
+            {comparisonSets.map(({ buttonLabel, items }, index) => (
+              <button
+                key={index}
+                className="dim-button"
+                onClick={(e) => this.compareSimilar(e, items)}
+              >
+                {buttonLabel} {`(${items.length})`}
               </button>
-            )}{' '}
-            {similarTypes.length > 1 && (
-              <button className="dim-button" onClick={this.compareSimilar}>
-                {t('Compare.All', {
-                  type: firstComparison.typeName,
-                  quantity: similarTypes.length
-                })}
-              </button>
-            )}
+            ))}
           </div>
         }
       >
@@ -186,7 +184,7 @@ class Compare extends React.Component<Props, State> {
               ))}
             </div>
             <div className="compare-items" onTouchStart={this.stopTouches}>
-              {comparisons.map((item) => (
+              {comparisonItems.map((item) => (
                 <CompareItem
                   item={item}
                   key={item.id}
@@ -218,18 +216,18 @@ class Compare extends React.Component<Props, State> {
   private cancel = () => {
     this.setState({
       show: false,
-      comparisons: [],
+      comparisonItems: [],
       highlight: undefined,
       sortedHash: undefined
     });
     CompareService.dialogOpen = false;
   };
 
-  private compareSimilar = (e, type?: string) => {
+  private compareSimilar = (e, comparisonSetItems: DimItem[]) => {
     e.preventDefault();
-    this.setState(({ archetypes, similarTypes }) => ({
-      comparisons: type === 'archetype' ? archetypes : similarTypes
-    }));
+    this.setState({
+      comparisonItems: comparisonSetItems
+    });
   };
 
   private sort = (sortedHash?: string | number) => {
@@ -238,65 +236,81 @@ class Compare extends React.Component<Props, State> {
       sortBetterFirst: prevState.sortedHash === sortedHash ? !prevState.sortBetterFirst : true
     }));
   };
-
-  private add = ({ items, dupes }: { items: DimItem[]; dupes: boolean }) => {
+  private add = ({
+    additionalItems,
+    showSomeDupes
+  }: {
+    additionalItems: DimItem[];
+    showSomeDupes: boolean;
+  }) => {
     // use the first item and assume all others are of the same 'type'
-    const item = items[0];
-
-    if (!item.comparable) {
+    const exampleItem = additionalItems[0];
+    if (!exampleItem.comparable) {
       return;
     }
 
-    const { comparisons } = this.state;
-
-    if (
-      comparisons.length &&
-      comparisons[0].typeName &&
-      item.typeName !== comparisons[0].typeName
-    ) {
+    const { comparisonItems } = this.state;
+    if (comparisonItems.length && exampleItem.typeName !== comparisonItems[0].typeName) {
       showNotification({
         type: 'warning',
-        title: item.name,
+        title: exampleItem.name,
         body:
-          comparisons[0].classType && item.classType !== comparisons[0].classType
-            ? t('Compare.Error.Class', { class: comparisons[0].classTypeNameLocalized })
-            : t('Compare.Error.Archetype', { type: comparisons[0].typeName })
+          comparisonItems[0].classType && exampleItem.classType !== comparisonItems[0].classType
+            ? t('Compare.Error.Class', { class: comparisonItems[0].classTypeNameLocalized })
+            : t('Compare.Error.Archetype', { type: comparisonItems[0].typeName })
       });
       return;
     }
 
-    const allItems = item.getStoresService().getAllItems();
-    const similarTypes = this.findSimilarTypes(allItems, item);
+    // if there are existing comparisonItems, we're adding this one in
+    if (comparisonItems.length) {
+      // but not if it's already being compared
+      if (comparisonItems.some((i) => i.id === exampleItem.id)) {
+        return;
+      }
 
-    if (items.length > 1) {
-      this.setState({ similarTypes, archetypes: [], comparisons: [...comparisons, ...items] });
-    } else if (dupes) {
-      const archetypes = this.findArchetypes(similarTypes, item);
-      const dupeID = makeDupeID(item);
-      this.setState({
-        comparisons: allItems.filter((i) => makeDupeID(i) === dupeID),
-        // TODO: I'd rather not store these on state - they should just be a memoized selector
-        similarTypes,
-        archetypes
-      });
-    } else if (comparisons.every((i) => i.id !== item.id)) {
-      this.setState({ comparisons: [...comparisons, item] });
+      this.setState({ comparisonItems: [...comparisonItems, ...additionalItems] });
+    }
+
+    // else,this is a fresh comparison sheet spawn, so let's generate comparisonSets
+    else {
+      const allItems = exampleItem.getStoresService().getAllItems();
+      // comparisonSets is an array so that it has order, filled with {label, setOfItems} objects
+      const comparisonSets = exampleItem.bucket.inArmor
+        ? this.findSimilarArmors(allItems, additionalItems)
+        : exampleItem.bucket.inWeapons
+        ? this.findSimilarWeapons(allItems, additionalItems)
+        : [];
+
+      // if this was spawned from an item, and not from a search,
+      // DIM tries to be helpful by including a starter comparison of dupes
+      if (additionalItems.length === 1 && showSomeDupes) {
+        const comparisonItems = comparisonSets[0]?.items ?? additionalItems;
+        this.setState({
+          comparisonSets,
+          comparisonItems
+        });
+      }
+      // otherwise, compare only the items we were asked to compare
+      else {
+        this.setState({ comparisonSets, comparisonItems: [...additionalItems] });
+      }
     }
   };
 
   private remove = (item: DimItem) => {
-    const { comparisons } = this.state;
+    const { comparisonItems } = this.state;
 
-    if (comparisons.length <= 1) {
+    if (comparisonItems.length <= 1) {
       this.cancel();
     } else {
-      this.setState({ comparisons: comparisons.filter((compare) => compare.id !== item.id) });
+      this.setState({ comparisonItems: comparisonItems.filter((c) => c.id !== item.id) });
     }
   };
 
   private itemClick = (item: DimItem) => {
     // TODO: this is tough to do with an ID since we'll have multiple
-    const element = idx(document.getElementById(item.index), (e) => e.parentNode) as HTMLElement;
+    const element = document.getElementById(item.index)?.parentNode as HTMLElement;
     if (!element) {
       throw new Error(`No element with id ${item.index}`);
     }
@@ -322,73 +336,244 @@ class Compare extends React.Component<Props, State> {
     }
   };
 
-  private findSimilarTypes = (allItems: DimItem[], compare = this.state.comparisons[0]) => {
-    return compare
-      ? allItems.filter(
-          (i) =>
-            i.typeName === compare.typeName &&
-            // If it's armor, make sure it's all for the same class
-            (!compare.bucket.inArmor || i.classType === compare.classType)
+  private findSimilarArmors = (
+    allArmors: DimItem[],
+    comparisonItems = this.state.comparisonItems
+  ) => {
+    const exampleItem = comparisonItems[0];
+    const exampleItemDamageType =
+      this.props.defs && getItemDamageType(exampleItem, this.props.defs);
+    const exampleItemElementIcon = exampleItemDamageType && (
+      <BungieImage src={exampleItemDamageType.displayProperties.icon} />
+    );
+    const exampleItemModSlot = getItemSpecialtyModSlotDisplayName(exampleItem);
+
+    // helper functions for filtering items
+    const matchesExample = (key: string) => (item: DimItem) => item[key] === exampleItem[key];
+    const matchingModSlot = (item: DimItem) =>
+      exampleItemModSlot === getItemSpecialtyModSlotDisplayName(item);
+    const hasEnergy = (item: DimItem) => Boolean(item.isDestiny2() && item.energy);
+
+    // minimum filter: make sure it's all armor, and can go in the same slot on the same class
+    allArmors = allArmors
+      .filter((i) => i.bucket.inArmor)
+      .filter(matchesExample('typeName'))
+      .filter(matchesExample('classType'));
+
+    let comparisonSets = [
+      // same slot on the same class
+      {
+        buttonLabel: <>{exampleItem.typeName}</>,
+        items: allArmors
+      },
+
+      // above but also has to be armor 2.0
+      {
+        buttonLabel: <>{[t('Compare.Armor2'), exampleItem.typeName].join(' + ')}</>,
+        items: hasEnergy(exampleItem) ? allArmors.filter(hasEnergy) : []
+      },
+
+      // above but also the same seasonal mod slot, if it has one
+      {
+        buttonLabel: <>{[exampleItemModSlot].join(' + ')}</>,
+        items:
+          hasEnergy(exampleItem) && exampleItemModSlot
+            ? allArmors.filter(hasEnergy).filter(matchingModSlot)
+            : []
+      },
+
+      // armor 2.0 and needs to match energy capacity element
+      {
+        buttonLabel: <>{[exampleItemElementIcon, exampleItem.typeName]}</>,
+        items: hasEnergy(exampleItem)
+          ? allArmors.filter(hasEnergy).filter(matchesExample('dmg'))
+          : []
+      },
+      // above but also the same seasonal mod slot, if it has one
+      {
+        buttonLabel: <>{[exampleItemElementIcon, exampleItemModSlot]}</>,
+        items:
+          hasEnergy(exampleItem) && exampleItemModSlot
+            ? allArmors
+                .filter(hasEnergy)
+                .filter(matchingModSlot)
+                .filter(matchesExample('dmg'))
+            : []
+      },
+
+      // basically stuff with the same name & categories
+      {
+        buttonLabel: <>{exampleItem.name}</>,
+        items: allArmors.filter((i) => makeDupeID(i) === makeDupeID(exampleItem))
+      },
+
+      // above, but also needs to match energy capacity element
+      {
+        buttonLabel: <>{[exampleItemElementIcon, exampleItem.name]}</>,
+        items: hasEnergy(exampleItem)
+          ? allArmors
+              .filter(hasEnergy)
+              .filter(matchesExample('dmg'))
+              .filter((i) => makeDupeID(i) === makeDupeID(exampleItem))
+          : []
+      }
+    ];
+
+    // here, we dump some buttons if they aren't worth displaying
+
+    comparisonSets = comparisonSets.reverse();
+    comparisonSets = comparisonSets.filter((comparisonSet, index) => {
+      const nextComparisonSet = comparisonSets[index + 1];
+      // always print the final button
+      if (!nextComparisonSet) {
+        return true;
+      }
+      // skip empty buttons
+      if (!comparisonSet.items.length) {
+        return false;
+      }
+      // skip if the next button has [all of, & only] the exact same items in it
+      if (
+        comparisonSet.items.length === nextComparisonSet.items.length &&
+        comparisonSet.items.every((setItem) =>
+          nextComparisonSet.items.some((nextSetItem) => nextSetItem === setItem)
         )
-      : [];
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    return comparisonSets;
   };
 
-  private findArchetypes = (similarTypes: DimItem[], compare = this.state.comparisons[0]) => {
-    if (!compare || !compare.stats) {
-      return [];
-    }
+  private findSimilarWeapons = (
+    allWeapons: DimItem[],
+    comparisonItems = this.state.comparisonItems
+  ) => {
+    const exampleItem = comparisonItems[0];
+    const exampleItemDamageType =
+      this.props.defs && getItemDamageType(exampleItem, this.props.defs);
+    const exampleItemElementIcon = exampleItemDamageType && (
+      <BungieImage src={exampleItemDamageType.displayProperties.icon} />
+    );
 
-    let armorSplit = 0;
-    if (compare.bucket.inArmor) {
-      armorSplit = _.sumBy(compare.stats, (stat) => (stat.value === 0 ? 0 : stat.statHash));
-    }
-
-    const isArchetypeStat = (s: DimStat) =>
-      // 4284893193 is RPM in D2
-      s.statHash === (compare.isDestiny1() ? compare.stats![0].statHash : 4284893193);
-
-    const archetypeStat = compare.stats.find(isArchetypeStat);
-
-    const byStat = (item: DimItem) => {
-      if (item.bucket.inWeapons) {
-        const archetypeMatch = item.stats && item.stats.find(isArchetypeStat);
-        if (!archetypeMatch) {
-          return false;
-        }
-        return archetypeStat && archetypeMatch.value === archetypeStat.value;
-      }
-      return _.sumBy(item.stats, (stat) => (stat.value === 0 ? 0 : stat.statHash)) === armorSplit;
+    const matchesExample = (key: string) => (item: DimItem) => item[key] === exampleItem[key];
+    // stuff for looking up weapon archetypes
+    const getRpm = (i: DimItem) => {
+      const itemRpmStat =
+        i.stats &&
+        i.stats.find(
+          (s) =>
+            s.statHash === (exampleItem.isDestiny1() ? exampleItem.stats![0].statHash : 4284893193)
+        );
+      return itemRpmStat?.value || -99999999;
     };
 
-    if (compare.isDestiny2() && !compare.isExotic && compare.sockets) {
-      const intrinsic = compare.sockets.sockets.find((s) =>
-        Boolean(s.plug && s.plug.plugItem.itemCategoryHashes.includes(INTRINSIC_PLUG_CATEGORY))
+    const weaponTypes = Object.keys(intrinsicLookupTable).map(Number);
+    const thisWeaponsType =
+      weaponTypes.find((h) => exampleItem.itemCategoryHashes.includes(h)) || -99999999;
+    const exampleItemRpm = getRpm(exampleItem);
+
+    /** d2ai-generated list of intrinsic hashes that count as matching our example item */
+    const matchingIntrisics = intrinsicLookupTable[thisWeaponsType]?.[exampleItemRpm];
+    const intrinsicPerk =
+      matchingIntrisics &&
+      this.props.defs &&
+      this.props.defs.InventoryItem.get(matchingIntrisics[0]);
+    const intrinsicName = intrinsicPerk?.displayProperties.name || t('Compare.Archetype');
+
+    const getIntrinsicPerk: (item: D2Item) => number = (item) => {
+      const intrinsic =
+        item.sockets &&
+        item.sockets.sockets.find((s) =>
+          s.plug?.plugItem.itemCategoryHashes?.includes(INTRINSIC_PLUG_CATEGORY)
+        );
+      return intrinsic?.plug?.plugItem.hash || -99999999;
+    };
+
+    // minimum filter: make sure it's all weapons and the same weapon type
+    allWeapons = allWeapons
+      .filter((i) => i.bucket.inWeapons)
+      .filter(matchesExample('typeName'))
+      .filter(
+        (i) =>
+          // specifically for destiny 2 grenade launchers, let's not compare special with heavy.
+          // all other weapon types with multiple ammos, are novelty exotic exceptions
+          !exampleItem.isDestiny2() ||
+          !i.isDestiny2() ||
+          !exampleItem.itemCategoryHashes.includes(153950757) ||
+          exampleItem.ammoType === i.ammoType
       );
 
-      if (intrinsic) {
-        return similarTypes.filter((item: DimItem) => {
-          return (
-            item.isDestiny2() &&
-            ((item.sockets &&
-              item.sockets.sockets.find((s) =>
-                Boolean(s.plug && s.plug.plugItem.hash === intrinsic.plug!.plugItem.hash)
-              )) ||
-              (item.isExotic && archetypeStat && byStat(item)))
-          );
-        });
-      }
-    }
+    let comparisonSets = [
+      // same weapon type
+      {
+        buttonLabel: <>{exampleItem.typeName}</>,
+        items: allWeapons
+      },
 
-    if (archetypeStat) {
-      return similarTypes.filter(byStat);
-    }
-    return [];
+      // above, but also same (kinetic/energy/heavy) slot
+      {
+        buttonLabel: <>{[exampleItem.bucket.name, exampleItem.typeName].join(' + ')}</>,
+        items: allWeapons.filter((i) => i.bucket.name === exampleItem.bucket.name)
+      },
+
+      // same weapon type plus matching intrinsic (rpm+impact..... ish)
+      {
+        buttonLabel: <>{[intrinsicName, exampleItem.typeName].join(' + ')}</>,
+        items: exampleItem.isDestiny2()
+          ? allWeapons.filter(
+              (i) =>
+                i.isDestiny2() &&
+                i.sockets &&
+                matchingIntrisics &&
+                matchingIntrisics.includes(getIntrinsicPerk(i))
+            )
+          : allWeapons.filter((i) => exampleItemRpm === getRpm(i))
+      },
+
+      // same weapon type and also matching element (& usually same-slot because same element)
+      {
+        buttonLabel: <>{[exampleItemElementIcon, exampleItem.typeName]}</>,
+        items: allWeapons.filter(matchesExample('dmg'))
+      },
+
+      // exact same weapon, judging by name. might span multiple expansions.
+      {
+        buttonLabel: <>{exampleItem.name}</>,
+        items: allWeapons.filter(matchesExample('name'))
+      }
+    ];
+    comparisonSets = comparisonSets.reverse();
+    comparisonSets = comparisonSets.filter((comparisonSet, index) => {
+      const nextComparisonSet = comparisonSets[index + 1];
+      // always print the final button
+      if (!nextComparisonSet) {
+        return true;
+      }
+      // skip empty buttons
+      if (!comparisonSet.items.length) {
+        return false;
+      }
+      // skip if the next button has [all of, & only] the exact same items in it
+      if (
+        comparisonSet.items.length === nextComparisonSet.items.length &&
+        comparisonSet.items.every((setItem) =>
+          nextComparisonSet.items.some((nextSetItem) => nextSetItem === setItem)
+        )
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    return comparisonSets;
   };
 }
 
-function getAllStats(comparisons: DimItem[], ratings: ReviewsState['ratings']) {
-  const firstComparison = comparisons[0];
-
+function getAllStats(comparisonItems: DimItem[], ratings: ReviewsState['ratings']) {
+  const firstComparison = comparisonItems[0];
   const stats: StatInfo[] = [];
   if ($featureFlags.reviewsEnabled) {
     stats.push({
@@ -420,11 +605,32 @@ function getAllStats(comparisons: DimItem[], ratings: ReviewsState['ratings']) {
       }
     });
   }
-
+  if (firstComparison.bucket.inArmor) {
+    stats.push({
+      id: 'EnergyCapacity',
+      displayProperties: {
+        name: t('EnergyMeter.Energy')
+      } as DestinyDisplayPropertiesDefinition,
+      min: Number.MAX_SAFE_INTEGER,
+      max: 0,
+      enabled: false,
+      lowerBetter: false,
+      getStat(item: DimItem) {
+        return (
+          (item.isDestiny2() &&
+            item.energy && {
+              statHash: item.energy.energyType,
+              value: item.energy.energyCapacity
+            }) ||
+          undefined
+        );
+      }
+    });
+  }
   // Todo: map of stat id => stat object
   // add 'em up
   const statsByHash: { [statHash: string]: StatInfo } = {};
-  for (const item of comparisons) {
+  for (const item of comparisonItems) {
     if (item.stats) {
       for (const stat of item.stats) {
         let statInfo = statsByHash[stat.statHash];
@@ -448,7 +654,7 @@ function getAllStats(comparisons: DimItem[], ratings: ReviewsState['ratings']) {
   }
 
   stats.forEach((stat) => {
-    for (const item of comparisons) {
+    for (const item of comparisonItems) {
       const itemStat = stat.getStat(item);
       if (itemStat) {
         stat.min = Math.min(stat.min, itemStat.value || 0);

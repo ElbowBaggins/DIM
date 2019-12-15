@@ -7,10 +7,7 @@ import { distinctUntilChanged, shareReplay } from 'rxjs/operators';
 class PromiseTracker {
   numTracked = 0;
   subject = new BehaviorSubject(false);
-  active$ = this.subject.pipe(
-    distinctUntilChanged(),
-    shareReplay(1)
-  );
+  active$ = this.subject.pipe(distinctUntilChanged(), shareReplay(1));
 
   addPromise<T>(promise: Promise<T>): Promise<T> {
     this.numTracked++;
@@ -26,12 +23,10 @@ class PromiseTracker {
   /** Convert a function that returns a promise into a function that tracks that promise then returns it. */
   trackPromise = <T extends any[], K>(
     promiseFn: (...args: T) => Promise<K>
-  ): ((...args: T) => Promise<K>) => {
-    return (...args: T) => {
-      const promise = promiseFn(...args);
-      this.addPromise(promise);
-      return promise;
-    };
+  ): ((...args: T) => Promise<K>) => (...args: T) => {
+    const promise = promiseFn(...args);
+    this.addPromise(promise);
+    return promise;
   };
 
   private countDown = () => {

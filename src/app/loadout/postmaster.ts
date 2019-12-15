@@ -25,20 +25,23 @@ export async function makeRoomForPostmaster(
       const numNeededToMove = Math.max(0, count + items.length - capacity);
       if (numNeededToMove > 0) {
         // We'll move the lowest-value item to the vault.
-        const candidates = _.sortBy(items.filter((i) => !i.equipped && !i.notransfer), (i) => {
-          let value: number = {
-            Common: 0,
-            Uncommon: 1,
-            Rare: 2,
-            Legendary: 3,
-            Exotic: 4
-          }[i.tier];
-          // And low-stat
-          if (i.primStat) {
-            value += i.primStat.value / 1000;
+        const candidates = _.sortBy(
+          items.filter((i) => !i.equipped && !i.notransfer),
+          (i) => {
+            let value: number = {
+              Common: 0,
+              Uncommon: 1,
+              Rare: 2,
+              Legendary: 3,
+              Exotic: 4
+            }[i.tier];
+            // And low-stat
+            if (i.primStat) {
+              value += i.primStat.value / 1000;
+            }
+            return value;
           }
-          return value;
-        });
+        );
         itemsToMove.push(..._.take(candidates, numNeededToMove));
       }
     }
@@ -57,7 +60,7 @@ export async function makeRoomForPostmaster(
         count: postmasterItems.length,
         movedNum: itemsToMove.length,
         store: store.name,
-        context: store.gender && store.gender.toLowerCase()
+        context: store.genderName
       })
     });
   } catch (e) {
@@ -72,14 +75,13 @@ export async function makeRoomForPostmaster(
 
 // D2 only
 export function pullablePostmasterItems(store: DimStore) {
-  return (store.buckets[215593132] || []).filter((i) => {
-    // Can be pulled
-    return (
+  return (store.buckets[215593132] || []).filter(
+    (i) =>
+      // Can be pulled
       i.canPullFromPostmaster &&
       // Either has space, or is going to a bucket we can make room in
       ((i.bucket.vaultBucket && !i.notransfer) || store.spaceLeftForItem(i) > 0)
-    );
-  });
+  );
 }
 
 // We should load this from the manifest but it's hard to get it in here
@@ -99,10 +101,11 @@ export function postmasterSpaceUsed(store: DimStore) {
   return POSTMASTER_SIZE - postmasterSpaceLeft(store);
 }
 
+// to-do: either typing is wrong and this can return undefined, or this doesn't need &&s and ?.s
 export function totalPostmasterItems(store: DimStore) {
   return (
     (store.buckets[215593132] && store.buckets[215593132].length) ||
-    (store.buckets.BUCKET_RECOVERY && store.buckets.BUCKET_RECOVERY.length)
+    store.buckets.BUCKET_RECOVERY?.length
   );
 }
 
@@ -180,7 +183,7 @@ export async function pullFromPostmaster(store: DimStore): Promise<void> {
           // t('Loadouts.PullFromPostmasterDone_female_plural')
           count: succeeded,
           store: store.name,
-          context: store.gender && store.gender.toLowerCase()
+          context: store.genderName
         })
       });
     }

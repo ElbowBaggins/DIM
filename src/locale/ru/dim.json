@@ -4,7 +4,12 @@
     "ConfirmTitle": "Подтверждение"
   },
   "Accounts": {
-    "NoCharacters": "На данном аккаунте Bungie.net ни одного персонажа Destiny. Попробуйте авторизовать другой аккаунт."
+    "Blizzard": "PC",
+    "NoCharacters": "На данном аккаунте Bungie.net ни одного персонажа Destiny. Попробуйте авторизовать другой аккаунт.",
+    "PlayStation": "PS4",
+    "Stadia": "Stadia",
+    "Steam": "Steam",
+    "Xbox": "XB1"
   },
   "Activities": {
     "Activities": "Активности",
@@ -50,15 +55,14 @@
     "VendorNotFound": "Данные торговцев недоступны."
   },
   "Compare": {
-    "All": "{{type}} ({{quantity}})",
-    "Archetype": "Архетип ({{quantity}})",
+    "Archetype": "Archetype",
+    "Armor2": "Armor 2.0",
     "ButtonHelp": "Сравнить предметы",
     "Error": {
       "Archetype": "Невозможно сравнить этот предмет из-за несовпадения его типа с {{type}}.",
       "Class": "Невозможно сравнить этот предмет, т.к. он не для {{class}}."
     },
-    "Rating": "Рейтинг",
-    "Splits": "Сравнить похожие пары атрибутов ({{quantity}})"
+    "Rating": "Рейтинг"
   },
   "Cooldown": {
     "Grenade": "Перезарядка гранаты: {{cooldown}}",
@@ -66,7 +70,7 @@
     "Super": "Перезарядка Супер-умения: {{cooldown}}"
   },
   "Countdown": {
-    "Days": "{{count}} дн.",
+    "Days": "1 Day",
     "Days_compact": "{{count}} дн",
     "Days_plural": "{{count}} дн."
   },
@@ -84,7 +88,7 @@
     "BestRatedKey": " = предлагаемый бонус",
     "BestRatedTip": "Этот модификатор позитивно оценен сообществом.",
     "Cancel": "Отмена",
-    "DaysAgo": "{{count}} дeнь назад на {{platform}}",
+    "DaysAgo": "1 day ago on {{platform}}",
     "DaysAgo_plural": "{{count}} дней/я назад на {{platform}} ",
     "ForGameMode": "Для {{mode}} режимов",
     "ForGameModeLabel": "Для игрового режима",
@@ -188,6 +192,7 @@
       "Glimmer": "Расходные материалы, и для получения блеска:",
       "Item": "За которые Мастер Рахул даст 200 Блеска."
     },
+    "HasNotes": "Show items that have notes applied.",
     "HasShader": "Покрашенные шейдерами.",
     "InLoadout": "В ваших Наборах.",
     "Infusable": "Доступные для Синтеза.",
@@ -204,7 +209,12 @@
     "LockAllFailed": "Ошибка выбора предметов",
     "LockAllSuccess": "Задано {{num}} предметов",
     "Locked": "По статусу блокировки.",
+    "MaxPower": "Shows the items which would maximize Power Level for each character class.",
     "ModSlot": "Shows armor compatible with a specific type of Seasonal Mod.",
+    "Mods": {
+      "Y2": "Shows items with a Year 2 mod attached.",
+      "Y3": "Shows items with any Armor 2.0 mods selected."
+    },
     "NamedStat": "Показывать броню, у которой есть очки в указной характеристике.",
     "Negate": "Минус перед фильтром применяет обратную логику поиска, пример: {{notexample}}.",
     "NewItems": "Новые предметы.",
@@ -273,6 +283,7 @@
     "StatsLoadout": "Подбирает набор предметов которые экипируются для достижения максимального значения определенной характеристики.",
     "StatsMax": "Finds armor with the highest number for a specific stat. Includes all items with the highest stat.",
     "Tags": {
+      "Archive": "Dims items you rarely need.",
       "Dismantle": "Отмеченные в DIM для уничтожения.",
       "Favorite": "Отмеченные в DIM как \"Избранные\".",
       "Infuse": "Отмеченные в DIM \"для Синтеза\".",
@@ -281,6 +292,7 @@
     },
     "Tracked": "Контракты/Преследования по статусу отслеживания.",
     "Transferable": "Доступные всем Персонажам.",
+    "Trashlist": "Shows items that match your wish list's trash list.",
     "Undo": "Отменить",
     "UnlockAllFailed": "Разблокирование не удалось",
     "UnlockAllSuccess": "Разблокировано {{num}} предметов",
@@ -377,7 +389,7 @@
   "ItemMove": {
     "Consolidate": "Собрали {{name}}",
     "Distributed": "Распределили {{name}}\nтеперь {{name}} поровну распределены между персонажами.",
-    "MovingItem": "Transfer to vault",
+    "MovingItem": "Передача в хранилище",
     "MovingItem_female": "Передать {{target}}",
     "MovingItem_male": "Передать {{target}}",
     "ToStore": "Все {{name}} собраны в {{store}}.",
@@ -402,6 +414,7 @@
     "OnlyEquippedClassLevel": "Это может быть надето только на персонаже класса {{class}} с уровнем {{level}} или выше.",
     "OnlyEquippedLevel": "Это может быть надето только на персонаже с уровнем {{level}} или выше.",
     "PostmasterAlmostFull": "У почтмейстера заканчивается место для вашего барахла! ({{number}}/{{postmasterSize}})",
+    "PostmasterFull": "Full! ({{number}}/{{postmasterSize}})",
     "PreviewVendor": "Предпросмотр {{type}}",
     "StackFull": "У вас уже есть полная пачка {{name}}",
     "StoreName": "{{genderRace}} {{className}}",
@@ -463,13 +476,15 @@
   },
   "LoadoutBuilder": {
     "AltPerkKey": "Влияет на Статы",
+    "AssumeMasterwork": "Assume Masterworked",
+    "AssumeMasterworkDetailed": "Generate sets assuming all items are masterworked.",
     "BadPerk": "Бонус \"Слегка\" улучшающий показаетель - не лучший выбор.",
     "BurnTypeArc": "Молния",
     "BurnTypeSolar": "Солнце",
     "BurnTypeVoid": "Пустота",
     "ChooseAlternate": "Выбрать другой предмет с аналогичными характеристиками: ",
     "ChooseAlternateTitle": "Выбор другого предмета",
-    "Combinations": "Доступные варианты: {{count}} ",
+    "Combinations": "1 combination",
     "Combinations_plural": "{{count, number}} вариантов",
     "CreateLoadout": "+ Набор",
     "DropToExclude": "Перетащите сюда предмет, и Генератор Наборов будет игнорировать его при подборе",
@@ -481,7 +496,7 @@
     "LimitedCombos": "You have {{combosWithoutCaps, number}} possible stat combinations, but we only looked at {{combos, number}} of them to keep DIM from crashing. As a result, some possibilities are not shown. Lock some items or perks or dismantle some old armor to get under the limit.",
     "LockEquipped": "Надетое",
     "LockItem": "Фильтр по Предметам",
-    "LockPerk": "Фильтр по Бонусам",
+    "LockPerk": "Select mod or perk",
     "NewEmptyLoadout": "Новый Набор",
     "NoBuildsFound": "Нет подходящих предметов. Попробуйте расширить критерии Подбора по Бонусам, Характеристикам.",
     "NumStatMixes": "{{count, number}} вариант характеристик",
@@ -489,7 +504,6 @@
     "OptimizerExplanation": "Выбирайте Бонусы, Задайте желаемые Характеристики и выберите Предметы чтобы сузить вариативность потенциальных вариантов Набора.",
     "OptimizerExplanationArmour2Mods": "Armor 2.0 Mods are not included in stat tier calculations.",
     "OptimizerExplanationDesktop": "Зажав клавишу Shift, кликните по перку, чтобы выбрать его. Shift-кликните по предмету, чтобы удалить его из сборки снаряжения. Перетащите предметы в боковую панель чтобы удалить их или заблокировать.",
-    "RequirePerks": "Попробовать вновь включая долегендарные и предметы без бонусов",
     "ResetLocked": "Очистить Фильтр предметов",
     "SearchPlaceholder": "Фильтр (например, \"всенощная героев\")",
     "SelectMax": "- Макс. -",
@@ -498,6 +512,8 @@
     "SelectPower": "Минимальная Сила",
     "SelectPowerDescription": "Sets a minimum power level for the entire loadout (not individual pieces)",
     "SelectedPerkKey": "Искомый Бонус",
+    "StatTierIgnoreOption": "Ignore",
+    "StatTierIncludeOption": "Include",
     "TierNumber": "Т{{tier}}",
     "Traction": "\"Тяга\" даёт +1 Мобильности.",
     "UnlockItem": "Убрать из Фильтра"
@@ -556,10 +572,10 @@
     "NoEngrams": "Нет доступных для передачи не экзотических энграмм.",
     "NoExotics": "Нет доступных для передачи энграмм.",
     "NoTokens": "Нет доступных для передачи предметов репутации.",
-    "NotificationMessage": "Sending loadout with {{count}} items to vault.",
-    "NotificationMessage_female": "Equipping loadout with {{count}} item to {{store}}.",
+    "NotificationMessage": "Sending loadout with 1 item to vault.",
+    "NotificationMessage_female": "Equipping loadout with 1 item to {{store}}",
     "NotificationMessage_female_plural": "Equipping loadout with {{count}} items to {{store}}",
-    "NotificationMessage_male": "Equipping loadout with {{count}} item to {{store}}",
+    "NotificationMessage_male": "Equipping loadout with 1 item to {{store}}",
     "NotificationMessage_male_plural": "Equipping loadout with {{count}} items to {{store}}",
     "NotificationMessage_plural": "Equipping loadout with {{count}} items to {{store}}",
     "NotificationTitle": "Loadout: {{name}}",
@@ -673,7 +689,7 @@
     "QuestExpires": "Устареет через:",
     "Quests": "Задания",
     "RecordValue": "{{value}}",
-    "Resets": "{{count}} обнуление ранга",
+    "Resets": "1 reset",
     "Resets_plural": "{{count}} обнулений ранга",
     "SecretTriumph": "Скрытый Триумф"
   },
@@ -707,7 +723,6 @@
     "Items": "Отображение предмета",
     "Language": "Язык",
     "LogOut": "Выйти",
-    "Ornaments": "Use ornament icons (D2)",
     "Ratings": "Рейтинги",
     "ReloadDIM": "Обновите [F5] приложения для смены языка",
     "ResetToDefault": "Сбросить",
@@ -723,7 +738,7 @@
     "SortByPrimary": "По Силе",
     "SortByRarity": "Редкость",
     "SortByRating": "Рейтинги Сообщества или Качество Брони",
-    "SortByTag": "Тег ({{taglist}})",
+    "SortByTag": "Tag ({{taglist}})",
     "SortByType": "Тип",
     "SortCustom": "Свой порядок",
     "SortName": "Имя"
@@ -803,6 +818,7 @@
     "GoogleDriveReAuth": "Чтобы повторно авторизоваться в Google Диске, вам необходимо перезапустить браузер."
   },
   "Tags": {
+    "Archive": "Archive",
     "ClearTag": "Очистить",
     "Favorite": "Избранное",
     "Infuse": "На синтез",

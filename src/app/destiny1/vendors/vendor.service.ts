@@ -354,10 +354,8 @@ function VendorService(): VendorServiceType {
   function factionLevel(store: D1Store, factionHash: number) {
     const rep =
       store.progression &&
-      store.progression.progressions.find((rep) => {
-        return rep.faction && rep.faction.hash === factionHash;
-      });
-    return (rep && rep.level) || 0;
+      store.progression.progressions.find((rep) => rep.faction?.hash === factionHash);
+    return rep?.level || 0;
   }
 
   /**
@@ -414,7 +412,7 @@ function VendorService(): VendorServiceType {
           }
           return vendor;
         } else {
-          // console.log("load remote", vendorDef.summary.vendorName, key, vendorHash, vendor, vendor && vendor.nextRefreshDate);
+          // console.log("load remote", vendorDef.summary.vendorName, key, vendorHash, vendor, vendor?.nextRefreshDate);
           return getVendorForCharacter(account, store, vendorHash)
             .then((vendor: Vendor) => {
               vendor.expires = calculateExpiration(vendor.nextRefreshDate, vendorHash);
@@ -447,7 +445,7 @@ function VendorService(): VendorServiceType {
         }
       })
       .then((vendor) => {
-        if (vendor && vendor.enabled) {
+        if (vendor?.enabled) {
           const processed = processVendor(vendor, vendorDef, defs, store);
           return processed;
         }
@@ -511,7 +509,10 @@ function VendorService(): VendorServiceType {
       saleItem.item.itemInstanceId = `vendor-${vendorDef.hash}-${saleItem.vendorItemIndex}`;
     });
 
-    return processItems({ id: null } as any, saleItems.map((i) => i.item)).then((items) => {
+    return processItems(
+      { id: null } as any,
+      saleItems.map((i) => i.item)
+    ).then((items) => {
       const itemsById = _.keyBy(items, (i) => i.id);
       const categories = _.compact(
         _.map(vendor.saleItemCategories, (category) => {
@@ -526,17 +527,15 @@ function VendorService(): VendorServiceType {
               return {
                 index: saleItem.vendorItemIndex,
                 costs: saleItem.costs
-                  .map((cost) => {
-                    return {
-                      value: cost.value,
-                      currency: _.pick(
-                        defs.InventoryItem.get(cost.itemHash),
-                        'itemName',
-                        'icon',
-                        'itemHash'
-                      )
-                    };
-                  })
+                  .map((cost) => ({
+                    value: cost.value,
+                    currency: _.pick(
+                      defs.InventoryItem.get(cost.itemHash),
+                      'itemName',
+                      'icon',
+                      'itemHash'
+                    )
+                  }))
                   .filter((c) => c.value > 0),
                 item: itemsById[`vendor-${vendorDef.hash}-${saleItem.vendorItemIndex}`],
                 // TODO: caveat, this won't update very often!
@@ -612,9 +611,9 @@ function VendorService(): VendorServiceType {
           )!.quantity;
           break;
         default:
-          totalCoins[currencyHash] = _.sumBy(stores, (store) => {
-            return store.amountOfItem({ hash: currencyHash } as any);
-          });
+          totalCoins[currencyHash] = _.sumBy(stores, (store) =>
+            store.amountOfItem({ hash: currencyHash } as any)
+          );
           break;
       }
     });

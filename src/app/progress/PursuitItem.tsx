@@ -14,7 +14,6 @@ function PursuitItem(
   { item, isNew }: { item: DimItem; isNew: boolean },
   ref: React.Ref<HTMLDivElement>
 ) {
-  const isCapped = item.amount === item.maxStackSize && item.uniqueStack;
   const expired = showPursuitAsExpired(item);
   const showProgressBar =
     item.objectives &&
@@ -28,20 +27,25 @@ function PursuitItem(
     [styles.tracked]: item.tracked
   };
   return (
-    <div id={item.index} className={clsx(styles.pursuit, itemImageStyles)} ref={ref}>
+    <div
+      id={item.index}
+      className={clsx(styles.pursuit, itemImageStyles)}
+      ref={ref}
+      title={item.name}
+    >
       {showProgressBar && (
         <div className={styles.progress}>
           <div className={styles.progressAmount} style={{ width: percent(item.percentComplete) }} />
         </div>
       )}
-      <BungieImage src={item.icon} className={styles.image} />
+      <BungieImage src={item.icon} className={styles.image} alt="" />
       {item.maxStackSize > 1 && item.amount > 1 && (
         <div
           className={clsx(styles.amount, {
             [styles.fullstack]: item.maxStackSize > 1 && item.amount === item.maxStackSize
           })}
         >
-          {isCapped && item.amount.toString()}
+          {item.amount.toString()}
         </div>
       )}
       {isNew && <div className={styles.newItem} />}

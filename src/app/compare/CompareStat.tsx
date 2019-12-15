@@ -1,11 +1,13 @@
 import React from 'react';
 import { StatInfo } from './Compare';
-import { DimItem, D1Stat, DimStat } from '../inventory/item-types';
+import { DimItem, D1Stat } from '../inventory/item-types';
 import { getColor } from '../shell/filters';
 import { AppIcon, starIcon } from '../shell/icons';
 import clsx from 'clsx';
 import { t } from 'app/i18next-t';
 import RecoilStat from 'app/item-popup/RecoilStat';
+import { energyCapacityTypeNames } from '../item-popup/EnergyMeter';
+import ElementIcon from 'app/inventory/ElementIcon';
 
 export default function CompareStat({
   stat,
@@ -28,11 +30,14 @@ export default function CompareStat({
     >
       <span>
         {stat.id === 'Rating' && <AppIcon icon={starIcon} />}
-        {itemStat && itemStat.value !== undefined ? (
+        {stat.id === 'EnergyCapacity' && itemStat && (
+          <ElementIcon element={energyCapacityTypeNames[itemStat.statHash]} />
+        )}
+        {itemStat?.value !== undefined ? (
           itemStat.statHash === 2715839340 ? (
             <span className="stat-recoil">
               <span>{itemStat.value}</span>
-              <RecoilStat stat={(itemStat as any) as DimStat} />
+              <RecoilStat value={itemStat.value} />
             </span>
           ) : (
             itemStat.value
@@ -40,7 +45,7 @@ export default function CompareStat({
         ) : (
           t('Stats.NotApplicable')
         )}
-        {Boolean(itemStat && itemStat.value) &&
+        {Boolean(itemStat?.value) &&
           (itemStat as D1Stat).qualityPercentage &&
           Boolean((itemStat as D1Stat).qualityPercentage!.range) && (
             <span className="range">({(itemStat as D1Stat).qualityPercentage!.range})</span>

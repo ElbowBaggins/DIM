@@ -34,14 +34,15 @@ interface StoreProps {
   profileResponse?: DestinyProfileResponse;
 }
 
-function mapStateToProps(state: RootState): StoreProps {
-  return {
+function mapStateToProps() {
+  const ownedItemSelectorInstance = ownedItemsSelector();
+  return (state: RootState): StoreProps => ({
     stores: storesSelector(state),
-    ownedItemHashes: ownedItemsSelector(state),
+    ownedItemHashes: ownedItemSelectorInstance(state),
     buckets: state.inventory.buckets,
     defs: state.manifest.d2Manifest,
     profileResponse: profileResponseSelector(state)
-  };
+  });
 }
 
 interface State {
@@ -105,18 +106,15 @@ class SingleVendor extends React.Component<Props, State> {
     // * featured item
     // * enabled
     // * filter by character class
-    const vendor = vendorResponse && vendorResponse.vendor.data;
+    const vendor = vendorResponse?.vendor.data;
 
     const destinationDef =
       vendor &&
       defs.Destination.get(vendorDef.locations[vendor.vendorLocationIndex].destinationHash);
     const placeDef = destinationDef && defs.Place.get(destinationDef.placeHash);
 
-    const placeString = [
-      destinationDef && destinationDef.displayProperties.name,
-      placeDef && placeDef.displayProperties.name
-    ]
-      .filter((n) => n && n.length)
+    const placeString = [destinationDef?.displayProperties.name, placeDef?.displayProperties.name]
+      .filter((n) => n?.length)
       .join(', ');
     // TODO: there's a cool background image but I'm not sure how to use it
 
@@ -133,8 +131,8 @@ class SingleVendor extends React.Component<Props, State> {
       buckets,
       vendor,
       account,
-      vendorResponse && vendorResponse.itemComponents,
-      vendorResponse && vendorResponse.sales.data,
+      vendorResponse?.itemComponents,
+      vendorResponse?.sales.data,
       mergedCollectibles
     );
 
@@ -162,11 +160,7 @@ class SingleVendor extends React.Component<Props, State> {
             defs={defs}
             vendor={d2Vendor}
             ownedItemHashes={ownedItemHashes}
-            currencyLookups={
-              vendorResponse && vendorResponse.currencyLookups.data
-                ? vendorResponse.currencyLookups.data.itemQuantities
-                : {}
-            }
+            currencyLookups={vendorResponse?.currencyLookups.data?.itemQuantities ?? {}}
           />
         </ErrorBoundary>
       </div>

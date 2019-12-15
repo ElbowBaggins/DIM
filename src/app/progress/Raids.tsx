@@ -4,7 +4,6 @@ import { DestinyMilestone, DestinyProfileResponse } from 'bungie-api-ts/destiny2
 import _ from 'lodash';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
 import { DimStore } from 'app/inventory/store-types';
-import idx from 'idx';
 
 // unfortunately the API's raid .order attribute is odd
 const raidOrder = [
@@ -29,10 +28,7 @@ export default function Raids({
   defs: D2ManifestDefinitions;
   profileInfo: DestinyProfileResponse;
 }) {
-  const profileMilestoneData = idx(
-    profileInfo,
-    (p) => p.characterProgressions.data[store.id].milestones
-  );
+  const profileMilestoneData = profileInfo?.characterProgressions?.data?.[store.id]?.milestones;
   const allMilestones: DestinyMilestone[] = profileMilestoneData
     ? Object.values(profileMilestoneData)
     : [];
@@ -42,9 +38,10 @@ export default function Raids({
     const milestoneActivities = (defs.Milestone.get(milestone.milestoneHash) || {}).activities;
     return (
       milestoneActivities &&
-      milestoneActivities.some((activity) => {
-        return (defs.Activity.get(activity.activityHash) || {}).activityTypeHash === 2043403989;
-      })
+      milestoneActivities.some(
+        (activity) =>
+          (defs.Activity.get(activity.activityHash) || {}).activityTypeHash === 2043403989
+      )
     );
   });
 

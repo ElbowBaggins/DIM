@@ -252,9 +252,7 @@ function StoreService(): D1StoreServiceType {
       store.items = items;
 
       // by type-bucket
-      store.buckets = _.groupBy(items, (i) => {
-        return i.location.id;
-      });
+      store.buckets = _.groupBy(items, (i) => i.location.id);
 
       // Fill in any missing buckets
       Object.values(buckets.byType).forEach((bucket) => {
@@ -272,8 +270,9 @@ function StoreService(): D1StoreServiceType {
           'BUCKET_VAULT_ITEMS'
         ];
 
-        _.sortBy(Object.values(buckets.byType).filter((b) => b.vaultBucket), (b) =>
-          vaultBucketOrder.indexOf(b.vaultBucket!.id)
+        _.sortBy(
+          Object.values(buckets.byType).filter((b) => b.vaultBucket),
+          (b) => vaultBucketOrder.indexOf(b.vaultBucket!.id)
         ).forEach((bucket) => {
           const vaultBucketId = bucket.vaultBucket!.id;
           vault.vaultCounts[vaultBucketId] = vault.vaultCounts[vaultBucketId] || {

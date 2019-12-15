@@ -158,7 +158,7 @@ const colorA11yOptions = $featureFlags.colorA11y
   : [];
 
 // Edge doesn't support these
-const supportsCssVar = window.CSS && window.CSS.supports && window.CSS.supports('(--foo: red)');
+const supportsCssVar = window?.CSS?.supports('(--foo: red)');
 
 class SettingsPage extends React.Component<Props> {
   private initialLanguage = settings.language;
@@ -193,13 +193,11 @@ class SettingsPage extends React.Component<Props> {
     const itemSortCustom = _.sortBy(
       _.map(
         itemSortProperties,
-        (displayName, id): SortProperty => {
-          return {
-            id,
-            displayName,
-            enabled: sortOrder.includes(id)
-          };
-        }
+        (displayName, id): SortProperty => ({
+          id,
+          displayName,
+          enabled: sortOrder.includes(id)
+        })
       ),
       (o) => {
         const index = sortOrder.indexOf(o.id);
@@ -289,13 +287,6 @@ class SettingsPage extends React.Component<Props> {
                   <div className="fineprint">{t('Settings.DefaultItemSizeNote')}</div>
                 </div>
               )}
-
-              <Checkbox
-                label={t('Settings.Ornaments')}
-                name="ornaments"
-                value={settings.ornaments !== 'none'}
-                onChange={this.ornamentsChanged}
-              />
 
               <Checkbox
                 label={t('Settings.ShowNewItems')}
@@ -513,11 +504,6 @@ class SettingsPage extends React.Component<Props> {
     }
   };
 
-  private ornamentsChanged: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    this.props.setSetting('ornaments', e.target.checked ? 'unique' : 'none');
-    D2StoresService.reloadStores();
-  };
-
   private changeLanguage = (e) => {
     const language = e.target.value;
     this.onChange(e);
@@ -605,10 +591,7 @@ class SettingsPage extends React.Component<Props> {
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(SettingsPage);
+export default connect(mapStateToProps, mapDispatchToProps)(SettingsPage);
 
 function isInputElement(element: HTMLElement): element is HTMLInputElement {
   return element.nodeName === 'INPUT';

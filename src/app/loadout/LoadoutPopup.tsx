@@ -2,7 +2,6 @@ import React from 'react';
 import { t } from 'app/i18next-t';
 import './loadout-popup.scss';
 import { DimStore } from '../inventory/store-types';
-import { Loadout, getLight, dimLoadoutService, LoadoutClass } from './loadout.service';
 import { RootState } from '../store/reducers';
 import { previousLoadoutSelector, loadoutsSelector } from './reducer';
 import { currentAccountSelector } from '../accounts/reducer';
@@ -19,7 +18,7 @@ import {
   randomLoadout
 } from './auto-loadouts';
 import { querySelector } from '../shell/reducer';
-import { newLoadout } from './loadout-utils';
+import { newLoadout, getLight } from './loadout-utils';
 import { D1FarmingService } from '../farming/farming.service';
 import { D2FarmingService } from '../farming/d2farming.service';
 import {
@@ -57,6 +56,10 @@ import { showNotification } from '../notifications/notifications';
 import { DestinyAccount } from 'app/accounts/destiny-account';
 import { createSelector } from 'reselect';
 import { getArtifactBonus, maxPowerString } from 'app/inventory/d2-stores';
+import { LoadoutClass, Loadout } from './loadout-types';
+import { editLoadout } from './LoadoutDrawer';
+import { getLoadouts, deleteLoadout } from './loadout-storage';
+import { applyLoadout } from './loadout-apply';
 
 const loadoutIcon = {
   [LoadoutClass.any]: globeIcon,
@@ -81,46 +84,48 @@ interface StoreProps {
 
 type Props = ProvidedProps & StoreProps;
 
-const loadoutsForPlatform = createSelector(
-  loadoutsSelector,
-  (_, { dimStore }: ProvidedProps) => dimStore,
-  (loadouts, dimStore) => {
+function mapStateToProps() {
+  const loadoutsForPlatform = createSelector(
+    loadoutsSelector,
+    (_, { dimStore }: ProvidedProps) => dimStore,
+    (loadouts, dimStore) => {
+      const classTypeId = LoadoutClass[dimStore.class === 'vault' ? 'any' : dimStore.class];
+
+      return _.sortBy(
+        loadouts.filter(
+          (loadout) =>
+            (dimStore.destinyVersion === 2
+              ? loadout.destinyVersion === 2
+              : loadout.destinyVersion !== 2) &&
+            (classTypeId === LoadoutClass.any ||
+              loadout.classType === LoadoutClass.any ||
+              loadout.classType === classTypeId)
+        ),
+        (l) => l.name
+      );
+    }
+  );
+
+  return (state: RootState, ownProps: ProvidedProps): StoreProps => {
+    const { dimStore } = ownProps;
+
     const classTypeId = LoadoutClass[dimStore.class === 'vault' ? 'any' : dimStore.class];
 
-    return _.sortBy(
-      loadouts.filter(
-        (loadout) =>
-          (dimStore.destinyVersion === 2
-            ? loadout.destinyVersion === 2
-            : loadout.destinyVersion !== 2) &&
-          (classTypeId === LoadoutClass.any ||
-            loadout.classType === LoadoutClass.any ||
-            loadout.classType === classTypeId)
-      ),
-      (l) => l.name
-    );
-  }
-);
-
-function mapStateToProps(state: RootState, ownProps: ProvidedProps): StoreProps {
-  const { dimStore } = ownProps;
-
-  const classTypeId = LoadoutClass[dimStore.class === 'vault' ? 'any' : dimStore.class];
-
-  return {
-    previousLoadout: previousLoadoutSelector(state, ownProps.dimStore.id),
-    loadouts: loadoutsForPlatform(state, ownProps),
-    query: querySelector(state),
-    searchFilter: searchFilterSelector(state),
-    classTypeId,
-    account: currentAccountSelector(state)!
+    return {
+      previousLoadout: previousLoadoutSelector(state, ownProps.dimStore.id),
+      loadouts: loadoutsForPlatform(state, ownProps),
+      query: querySelector(state),
+      searchFilter: searchFilterSelector(state),
+      classTypeId,
+      account: currentAccountSelector(state)!
+    };
   };
 }
 
 class LoadoutPopup extends React.Component<Props> {
   componentDidMount() {
     // Need this to poke the state
-    dimLoadoutService.getLoadouts();
+    getLoadouts();
   }
 
   render() {
@@ -131,12 +136,11 @@ class LoadoutPopup extends React.Component<Props> {
     const hasClassified = dimStore
       .getStoresService()
       .getAllItems()
-      .some((i) => {
-        return (
+      .some(
+        (i) =>
           i.classified &&
           (i.location.sort === 'Weapons' || i.location.sort === 'Armor' || i.type === 'Ghost')
-        );
-      });
+      );
 
     const maxLight = getLight(dimStore, maxLightLoadout(dimStore.getStoresService(), dimStore));
     const artifactLight = getArtifactBonus(dimStore);
@@ -339,7 +343,7 @@ class LoadoutPopup extends React.Component<Props> {
 
   private deleteLoadout = (loadout: Loadout) => {
     if (confirm(t('Loadouts.ConfirmDelete', { name: loadout.name }))) {
-      dimLoadoutService.deleteLoadout(loadout).catch((e) => {
+      deleteLoadout(loadout).catch((e) => {
         showNotification({
           type: 'error',
           title: t('Loadouts.DeleteErrorTitle'),
@@ -354,7 +358,7 @@ class LoadoutPopup extends React.Component<Props> {
   };
 
   private editLoadout = (loadout: Loadout, { isNew = true } = {}) => {
-    dimLoadoutService.editLoadout(loadout, { showClass: true, isNew });
+    editLoadout(loadout, { showClass: true, isNew });
   };
 
   // TODO: move all these fancy loadouts to a new service
@@ -368,15 +372,11 @@ class LoadoutPopup extends React.Component<Props> {
     }
 
     if (dimStore.destinyVersion === 1) {
-      return D1FarmingService.interrupt(() =>
-        dimLoadoutService.applyLoadout(dimStore, loadout, true)
-      );
+      return D1FarmingService.interrupt(() => applyLoadout(dimStore, loadout, true));
     }
 
     if (dimStore.destinyVersion === 2) {
-      return D2FarmingService.interrupt(() =>
-        dimLoadoutService.applyLoadout(dimStore, loadout, true)
-      );
+      return D2FarmingService.interrupt(() => applyLoadout(dimStore, loadout, true));
     }
   };
 

@@ -4,7 +4,12 @@
     "ConfirmTitle": "Confirmer l'action"
   },
   "Accounts": {
-    "NoCharacters": "Vous n'avez aucun personnage Destiny associé à ce compte Bungie.net. Essayez de vous connecter sur un compte différent."
+    "Blizzard": "PC",
+    "NoCharacters": "Vous n'avez aucun personnage Destiny associé à ce compte Bungie.net. Essayez de vous connecter sur un compte différent.",
+    "PlayStation": "PS4",
+    "Stadia": "Stadia",
+    "Steam": "Steam",
+    "Xbox": "XB1"
   },
   "Activities": {
     "Activities": "Activités",
@@ -50,15 +55,14 @@
     "VendorNotFound": "Les données du vendeur sont indisponible."
   },
   "Compare": {
-    "All": "{{type}} ({{quantity}})",
-    "Archetype": "Archetype ({{quantity}})",
+    "Archetype": "Archétype",
+    "Armor2": "Armure 2.0",
     "ButtonHelp": "Comparer des objets",
     "Error": {
       "Archetype": "Impossible de comparer cet objet parce qu'il n'est pas un {{type}}.",
       "Class": "Impossible de comparer cet objet parce qu'il n'est pas pour un {{class}}."
     },
-    "Rating": "Évaluation",
-    "Splits": "Comparer des paliers similaires ({{quantity}})"
+    "Rating": "Évaluation"
   },
   "Cooldown": {
     "Grenade": "Délai de la Grenade: {{cooldown}}",
@@ -66,7 +70,7 @@
     "Super": "Délai du Super: {{cooldown}}"
   },
   "Countdown": {
-    "Days": "{{count}} Jour",
+    "Days": "1 Jour",
     "Days_compact": "{{count}}j",
     "Days_plural": "{{count}} Jours"
   },
@@ -84,7 +88,7 @@
     "BestRatedKey": " = perk recommandé",
     "BestRatedTip": "Cette capacité est associés avec des bons votes de la communauté.",
     "Cancel": "Annuler",
-    "DaysAgo": "il y a {{count}} jour sur {{platform}}",
+    "DaysAgo": "Il y a 1 jour sur {{platform}}",
     "DaysAgo_plural": "il y a {{count}} jours sur {{platform}}",
     "ForGameMode": "Pour le mode de jeu {{mode}}",
     "ForGameModeLabel": "Pour le mode de jeu",
@@ -188,6 +192,7 @@
       "Glimmer": "Affiche les objets consommables qui font gagner des lumens:",
       "Item": "Objets échangeables avec Rahol contre 200 lumens."
     },
+    "HasNotes": "Afficher les objets ayant des notes.",
     "HasShader": "Montrer les objets qui ont un revêtement appliqué.",
     "InLoadout": "Affiche les objets qui sont dans un pré set.",
     "Infusable": "Affiche les objets qui peuvent être infusés.",
@@ -204,7 +209,12 @@
     "LockAllFailed": "Verouillage des objets échoué",
     "LockAllSuccess": "{{num}} objets verouillés",
     "Locked": "Affiche les objets selon leur verrouillage.",
+    "MaxPower": "Shows the items which would maximize Power Level for each character class.",
     "ModSlot": "Affiche les armures compatible avec un type spécifique de mod saisonnier.",
+    "Mods": {
+      "Y2": "Affiche les objets avec un mod de l'année 2 attaché.",
+      "Y3": "Affiche les objets avec n'importe quel mod d'armure 2.0 sélectionné."
+    },
     "NamedStat": "Affiche les armures qui ont des points dans la statistique sélectionnée.",
     "Negate": "Pour inverser une recherche, précédez cette recherche par un signe moins: {{notexample}} trouvera tout les objets n'étant pas des engrammes.",
     "NewItems": "Affiche les nouveaux objets.",
@@ -273,6 +283,7 @@
     "StatsLoadout": "Recherche un ensemble d'objets à équiper pour la valeur totale maximale d'une stat spécifique.",
     "StatsMax": "Recherche des armures avec le nombre le plus élevé pour une stat spécifique. Inclut tous les objets avec le nombre le plus élevé.",
     "Tags": {
+      "Archive": "Obscurci les objets dont vous avez rarement besoin.",
       "Dismantle": "Affiche les objets que vous voudriez éventuellement démanteler.",
       "Favorite": "Affiche vos objets favoris.",
       "Infuse": "Affiche les objets que vous voudriez éventuellement infuser.",
@@ -281,6 +292,7 @@
     },
     "Tracked": "Affiche les quêtes/contrats selon si elles sont suivis ou non.",
     "Transferable": "Objets qui peuvent êtres déplacés entre les personnages.",
+    "Trashlist": "Affiche les objets présents dans la liste de déchets de votre list de souhaits.",
     "Undo": "Annuler",
     "UnlockAllFailed": "Déverouillage des objets échoué",
     "UnlockAllSuccess": "{{num}} objets déverrouillés",
@@ -402,6 +414,7 @@
     "OnlyEquippedClassLevel": "Cela ne peut être équipé que par un {{class}} de niveau {{level}} ou plus.",
     "OnlyEquippedLevel": "Cela ne peut être équipé que par les personnages de niveau {{level}} ou plus.",
     "PostmasterAlmostFull": "Presque plein ! ({{number}}/{{postmasterSize}})",
+    "PostmasterFull": "Plein! ({{number}}/{{postmasterSize}})",
     "PreviewVendor": "Aperçu du contenu {{type}}",
     "StackFull": "Vous avez déjà une pile pleine de {{name}}",
     "StoreName": "{{className}} {{genderRace}}",
@@ -463,13 +476,15 @@
   },
   "LoadoutBuilder": {
     "AltPerkKey": "Choisissez cette compétence pour afficher les statistiques",
+    "AssumeMasterwork": "Considérer comme avec pièce maîtresse",
+    "AssumeMasterworkDetailed": "Générer des ensembles en supposant que tous les objets ont une pièce maîtresse.",
     "BadPerk": "Une compétence qui modifie \"légèrement\" n'est pas la meilleure option.",
     "BurnTypeArc": "Cryo-éléctrique",
     "BurnTypeSolar": "Solaire",
     "BurnTypeVoid": "Abyssal",
     "ChooseAlternate": "Choisissez un autre objet avec les mêmes statistiques:",
     "ChooseAlternateTitle": "Choisissez un autre objet",
-    "Combinations": "{{count}} combinaison",
+    "Combinations": "1 combinaison",
     "Combinations_plural": "{{count, number}} combinaisons",
     "CreateLoadout": "+ Présélection",
     "DropToExclude": "Glissez des objets ici pour les exclure",
@@ -481,7 +496,7 @@
     "LimitedCombos": "Vous avez {{combosWithoutCaps, number}} combinaisons de stat possibles, mais nous avons seulement regardé {{combos, number}} d'entre elles pour empêcher DIM de crasher. Par conséquent, certaines possibilités ne sont pas affichées. Verrouillez des objets ou des compétences ou démantelez des armures pour passer en dessous de la limite.",
     "LockEquipped": "Équipé",
     "LockItem": "Verrouiller l'objet",
-    "LockPerk": "Sélectionner la compétence",
+    "LockPerk": "Sélectionner mod ou compétence",
     "NewEmptyLoadout": "Créer une présélection vide",
     "NoBuildsFound": "Aucune présélection possible trouvé. Essayez d'augmenter vos critères de filtrage.",
     "NumStatMixes": "{{count, number}} mix de stat",
@@ -489,7 +504,6 @@
     "OptimizerExplanation": "Sélectionnez des compétences, filtrez et réorganisez les statistiques, et verrouillez des objets pour réduire votre nombre de présélections potentielles.",
     "OptimizerExplanationArmour2Mods": "Les mods d'armure 2.0 ne sont pas inclus dans le calcul des paliers de stat.",
     "OptimizerExplanationDesktop": "Maj+clique sur une compétence pour la sélectionner. Maj+clique sur un objet pour l'exclure. Glissez des objets sur la barre latérale pour les verrouiller ou les exclure.",
-    "RequirePerks": "Réessayez en ajoutant des objets sans compétences et des objets en dessous de légendaire",
     "ResetLocked": "Réinitialiser les objets verouillés",
     "SearchPlaceholder": "Filtre (ex: \"Veillée des héros\")",
     "SelectMax": "- Max -",
@@ -498,6 +512,8 @@
     "SelectPower": "Puissance minimum",
     "SelectPowerDescription": "Défini un niveau de puissance minimum pour tout l'équipement (pas les pièces individuelles)",
     "SelectedPerkKey": "Compétence sélectionnée",
+    "StatTierIgnoreOption": "Ignorer",
+    "StatTierIncludeOption": "Inclure",
     "TierNumber": "T{{tier}}",
     "Traction": "La compétence Traction apporte +1 mobilité.",
     "UnlockItem": "Déverrouiller l'objet"
@@ -544,9 +560,9 @@
     "MakeRoom": "Faire de la place pour le Commis des postes",
     "MakeRoomDone": "À Fini de faire de la place pour 1 objet du commis des postes en déplaçant 1 objet hors du {{store}}.",
     "MakeRoomDone_female": "À Fini de faire de la place pour 1 objet du commis des postes en déplaçant 1 objet hors du {{store}}.",
-    "MakeRoomDone_female_plural": "À Fini de faire de la place pour {{count}} objets du Commis des postes en déplaçant {{movedNum}} objets hors du {{store}}.",
+    "MakeRoomDone_female_plural": "A fini de faire de la place pour {{count}} objets du Commis des postes en déplaçant {{movedNum}} objets hors du {{store}}.",
     "MakeRoomDone_male": "À Fini de faire de la place pour 1 objet du commis des postes en déplaçant 1 objet hors du {{store}}.",
-    "MakeRoomDone_male_plural": "À Fini de faire de la place pour {{count}} objets du Commis des postes en déplaçant {{movedNum}} objets hors du {{store}}.",
+    "MakeRoomDone_male_plural": "A fini de faire de la place pour {{count}} objets du Commis des postes en déplaçant {{movedNum}} objets hors du {{store}}.",
     "MakeRoomDone_plural": "À Fini de faire de la place pour {{count}} objets du Commis des postes en déplaçant {{movedNum}} objets hors du {{store}}.",
     "MakeRoomError": "Impossible de faire de la place pour tous les objets du Commit Des Postes: {{error}}.",
     "MaxSlots": "Tu peux uniquement avoir {{slots}} de ce type d'objet dans un pré set.",
@@ -556,13 +572,13 @@
     "NoEngrams": "Aucun engrammes non-exotique n'est disponible pour le transfert.",
     "NoExotics": "Aucun engrammes n'est disponible pour le transfert.",
     "NoTokens": "Aucun objet de réputation disponible pour le transfert.",
-    "NotificationMessage": "Sending loadout with {{count}} items to vault.",
-    "NotificationMessage_female": "Equipping loadout with {{count}} item to {{store}}.",
-    "NotificationMessage_female_plural": "Equipping loadout with {{count}} items to {{store}}",
-    "NotificationMessage_male": "Equipping loadout with {{count}} item to {{store}}",
-    "NotificationMessage_male_plural": "Equipping loadout with {{count}} items to {{store}}",
-    "NotificationMessage_plural": "Equipping loadout with {{count}} items to {{store}}",
-    "NotificationTitle": "Loadout: {{name}}",
+    "NotificationMessage": "Envoie d'une présélection de 1 élément dans le coffre.",
+    "NotificationMessage_female": "Équipement d'une présélection de 1 élément sur {{store}}",
+    "NotificationMessage_female_plural": "Équipement d'une présélection de {{count}} éléments sur {{store}}",
+    "NotificationMessage_male": "Équipement d'une présélection de 1 élément sur {{store}}",
+    "NotificationMessage_male_plural": "Équipement d'une présélection de {{count}} éléments sur {{store}}",
+    "NotificationMessage_plural": "Équipement d'une présélection de {{count}} éléments sur {{store}}",
+    "NotificationTitle": "Présélection: {{name}}",
     "OnlyItems": "Seulement les objets équipables, matériaux et consommables peuvent être ajoutés à un pré set.",
     "PullFromPostmaster": "Collecter le commis des postes",
     "PullFromPostmasterDone": "Récupération de 1 objet du commis des postes vers {{store}} terminé.",
@@ -572,12 +588,12 @@
     "PullFromPostmasterDone_male_plural": "Récupération de {{count}} objets du commis des postes vers {{store}} terminé.",
     "PullFromPostmasterDone_plural": "Récupération de {{count}} objets du commis des postes vers {{store}} terminé.",
     "PullFromPostmasterError": "Impossible de récupérer du commis des postes: {{error}}.",
-    "PullFromPostmasterNotification": "Pulling 1 Postmaster item to {{store}}.",
-    "PullFromPostmasterNotification_female": "Pulling 1 Postmaster item to {{store}}.",
-    "PullFromPostmasterNotification_female_plural": "Pulling {{count}} Postmaster items to {{store}}.",
-    "PullFromPostmasterNotification_male": "Pulling 1 Postmaster item to {{store}}.",
-    "PullFromPostmasterNotification_male_plural": "Pulling {{count}} Postmaster items to {{store}}.",
-    "PullFromPostmasterNotification_plural": "Pulling {{count}} Postmaster items to {{store}}.",
+    "PullFromPostmasterNotification": "Récupération de 1 objet du commis des postes vers {{store}}.",
+    "PullFromPostmasterNotification_female": "Récupération de 1 objet du commis des postes vers {{store}}.",
+    "PullFromPostmasterNotification_female_plural": "Récupération de {{count}} objets du commis des postes vers {{store}}.",
+    "PullFromPostmasterNotification_male": "Récupération de 1 objet du commis des postes vers {{store}}.",
+    "PullFromPostmasterNotification_male_plural": "Récupération de {{count}} objets du commis des postes vers {{store}}.",
+    "PullFromPostmasterNotification_plural": "Récupération de {{count}} objets du commis des postes vers {{store}}.",
     "PullFromPostmasterPopupTitle": "Récupérer du commis des postes",
     "PullMakeSpace": "Espace",
     "Random": "Aléatoire",
@@ -673,7 +689,7 @@
     "QuestExpires": "Expire dans ",
     "Quests": "Quêtes",
     "RecordValue": "{{value}}pts",
-    "Resets": "{{count}} réinitialisation",
+    "Resets": "1 réinitialisation",
     "Resets_plural": "{{count}} réinitialisations",
     "SecretTriumph": "Triomphe Secret"
   },
@@ -707,7 +723,6 @@
     "Items": "Affichage des objets",
     "Language": "Langue",
     "LogOut": "Se déconnecter",
-    "Ornaments": "Utiliser les icônes d'ornement (D2)",
     "Ratings": "Notes",
     "ReloadDIM": "Recharger DIM pour finaliser le changement de langue",
     "ResetToDefault": "Réinitialiser",
@@ -803,6 +818,7 @@
     "GoogleDriveReAuth": "Pour réautoriser Google Drive, vous devez redémarrer votre navigateur."
   },
   "Tags": {
+    "Archive": "Archive",
     "ClearTag": "Vider",
     "Favorite": "Préféré",
     "Infuse": "Infuser",

@@ -68,13 +68,13 @@ function processInventoryResponse(character, response: ServerResponse<any>) {
 
 function getDestinyInventories(platform: DestinyAccount, characters: any[]) {
   // Guardians
-  const promises = characters.map((character) => {
-    return httpAdapter(
+  const promises = characters.map((character) =>
+    httpAdapter(
       bungieApiQuery(
         `/D1/Platform/Destiny/${platform.originalPlatformType}/Account/${platform.membershipId}/Character/${character.id}/Inventory/`
       )
-    ).then((response) => processInventoryResponse(character, response));
-  });
+    ).then((response) => processInventoryResponse(character, response))
+  );
 
   // Vault
   const vault = {
@@ -184,7 +184,7 @@ export async function equipItems(store: D1Store, items: D1Item[]) {
   store.updateCharacterInfoFromEquip(data.summary);
   return items.filter((i) => {
     const item = data.equipResults.find((r) => r.itemInstanceId === i.id);
-    return item && item.equipStatus === 1;
+    return item?.equipStatus === 1;
   });
 }
 

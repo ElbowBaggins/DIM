@@ -123,19 +123,22 @@ class SearchFilter extends React.Component<Props, State> {
       } else {
         // Bulk tagging
         const itemInfoService = await getItemInfoSource(this.props.account!);
-        const appliedTagInfo = bulkItemTags.find(
-          (tagInfo) => tagInfo.type && tagInfo.type === selectedTag
-        ) || { type: 'error', label: '[applied tag not found in tag list]' };
+        const appliedTagInfo = bulkItemTags.find((tagInfo) => tagInfo.type === selectedTag) || {
+          type: 'error',
+          label: '[applied tag not found in tag list]'
+        };
         const tagItems = this.getStoresService()
           .getAllItems()
           .filter((i) => i.taggable && this.props.searchFilter(i));
         // existing tags are later passed to buttonEffect so the notif button knows what to revert
-        const previousState = tagItems.map((item) => {
-          return { item, setTag: item.dimInfo.tag as TagValue | 'clear' | 'lock' | 'unlock' };
-        });
+        const previousState = tagItems.map((item) => ({
+          item,
+          setTag: item.dimInfo.tag as TagValue
+        }));
         await itemInfoService.bulkSaveByKeys(
           tagItems.map((item) => ({
             key: item.id,
+            notes: item.dimInfo.notes,
             tag: selectedTag === 'clear' ? undefined : (selectedTag as TagValue)
           }))
         );
@@ -153,6 +156,7 @@ class SearchFilter extends React.Component<Props, State> {
                   await itemInfoService.bulkSaveByKeys(
                     previousState.map(({ item, setTag }) => ({
                       key: item.id,
+                      notes: item.dimInfo.notes,
                       tag: selectedTag === 'clear' ? undefined : setTag
                     }))
                   );
@@ -233,18 +237,18 @@ class SearchFilter extends React.Component<Props, State> {
   }
 
   focusFilterInput = () => {
-    this.input.current && this.input.current.focusFilterInput();
+    this.input.current?.focusFilterInput();
   };
 
   clearFilter = () => {
-    this.input.current && this.input.current.clearFilter();
+    this.input.current?.clearFilter();
   };
 
   private compareMatching = () => {
     const comparableItems = this.getStoresService()
       .getAllItems()
       .filter(this.props.searchFilter);
-    CompareService.addItemsToCompare(comparableItems);
+    CompareService.addItemsToCompare(comparableItems, false);
   };
 
   private onTagClicked = () => {
@@ -253,17 +257,13 @@ class SearchFilter extends React.Component<Props, State> {
 
   private onClearFilter = () => {
     this.setState({ showSelect: false });
-    this.props.onClear && this.props.onClear();
+    this.props.onClear?.();
   };
 
-  private getStoresService = (): StoreServiceType => {
-    return this.props.destinyVersion === 2 ? D2StoresService : D1StoresService;
-  };
+  private getStoresService = (): StoreServiceType =>
+    this.props.destinyVersion === 2 ? D2StoresService : D1StoresService;
 }
 
-export default connect<StoreProps, DispatchProps>(
-  mapStateToProps,
-  mapDispatchToProps,
-  null,
-  { forwardRef: true }
-)(SearchFilter);
+export default connect<StoreProps, DispatchProps>(mapStateToProps, mapDispatchToProps, null, {
+  forwardRef: true
+})(SearchFilter);

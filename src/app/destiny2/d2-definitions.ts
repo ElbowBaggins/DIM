@@ -18,6 +18,7 @@ import {
   DestinySocketTypeDefinition,
   DestinyStatDefinition,
   DestinyEnergyTypeDefinition,
+  DestinyDamageTypeDefinition,
   DestinyTalentGridDefinition,
   DestinyVendorDefinition,
   DestinyDestinationDefinition,
@@ -29,8 +30,11 @@ import {
   DestinyPresentationNodeDefinition,
   DestinyRecordDefinition,
   DestinyStatGroupDefinition,
-  DestinySeasonDefinition
+  DestinySeasonDefinition,
+  DestinySeasonPassDefinition,
+  DestinyMaterialRequirementSetDefinition
 } from 'bungie-api-ts/destiny2';
+import { ManifestDefinitions } from './definitions';
 import _ from 'lodash';
 import { D2ManifestService } from '../manifest/manifest-service-json';
 import store from '../store/store';
@@ -43,6 +47,7 @@ const lazyTables = [
   'Stat', // DestinyStatDefinition
   'StatGroup',
   'EnergyType',
+  'DamageType',
   'TalentGrid', // DestinyTalentGridDefinition
   'Progression', // DestinyProgressionDefinition
   'ItemCategory', // DestinyItemCategoryDefinition
@@ -52,7 +57,9 @@ const lazyTables = [
   'Vendor',
   'SocketCategory',
   'SocketType',
+  'MaterialRequirementSet',
   'Season',
+  'SeasonPass',
   'Milestone',
   'Destination',
   'Place',
@@ -78,13 +85,14 @@ export interface LazyDefinition<T> {
   getAll(): { [hash: number]: T };
 }
 
-export interface D2ManifestDefinitions {
+export interface D2ManifestDefinitions extends ManifestDefinitions {
   InventoryItem: LazyDefinition<DestinyInventoryItemDefinition>;
   Objective: LazyDefinition<DestinyObjectiveDefinition>;
   SandboxPerk: LazyDefinition<DestinySandboxPerkDefinition>;
   Stat: LazyDefinition<DestinyStatDefinition>;
   StatGroup: LazyDefinition<DestinyStatGroupDefinition>;
   EnergyType: LazyDefinition<DestinyEnergyTypeDefinition>;
+  DamageType: LazyDefinition<DestinyDamageTypeDefinition>;
   TalentGrid: LazyDefinition<DestinyTalentGridDefinition>;
   Progression: LazyDefinition<DestinyProgressionDefinition>;
   ItemCategory: LazyDefinition<DestinyItemCategoryDefinition>;
@@ -94,7 +102,9 @@ export interface D2ManifestDefinitions {
   Vendor: LazyDefinition<DestinyVendorDefinition>;
   SocketCategory: LazyDefinition<DestinySocketCategoryDefinition>;
   SocketType: LazyDefinition<DestinySocketTypeDefinition>;
+  MaterialRequirementSet: LazyDefinition<DestinyMaterialRequirementSetDefinition>;
   Season: LazyDefinition<DestinySeasonDefinition>;
+  SeasonPass: LazyDefinition<DestinySeasonPassDefinition>;
   Milestone: LazyDefinition<DestinyMilestoneDefinition>;
   Destination: LazyDefinition<DestinyDestinationDefinition>;
   Place: LazyDefinition<DestinyPlaceDefinition>;
@@ -127,7 +137,10 @@ export const getDefinitions = _.once(getDefinitionsUncached);
  */
 async function getDefinitionsUncached() {
   const db = await D2ManifestService.getManifest([...eagerTables, ...lazyTables]);
-  const defs = {};
+  const defs = {
+    isDestiny1: () => false,
+    isDestiny2: () => true
+  };
   lazyTables.forEach((tableShort) => {
     const table = `Destiny${tableShort}Definition`;
     defs[tableShort] = {

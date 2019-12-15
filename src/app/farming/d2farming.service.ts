@@ -14,11 +14,9 @@ import { moveItemsToVault } from './farming.service';
 import { filter, map, tap, exhaustMap } from 'rxjs/operators';
 
 function getMakeRoomBuckets() {
-  return getBuckets().then((buckets) => {
-    return Object.values(buckets.byHash).filter(
-      (b) => b.category === BucketCategory.Equippable && b.type
-    );
-  });
+  return getBuckets().then((buckets) =>
+    Object.values(buckets.byHash).filter((b) => b.category === BucketCategory.Equippable && b.type)
+  );
 }
 
 /**
@@ -106,20 +104,23 @@ async function makeRoomForItems(store: D2Store, moveTokens: boolean) {
     const items = store.buckets[makeRoomBucket.id];
     if (items.length > 0 && items.length >= makeRoomBucket.capacity) {
       // We'll move the lowest-value item to the vault.
-      const itemToMove = _.minBy(items.filter((i) => !i.equipped && !i.notransfer), (i) => {
-        let value = {
-          Common: 0,
-          Uncommon: 1,
-          Rare: 2,
-          Legendary: 3,
-          Exotic: 4
-        }[i.tier];
-        // And low-stat
-        if (i.primStat) {
-          value += i.primStat.value / 1000;
+      const itemToMove = _.minBy(
+        items.filter((i) => !i.equipped && !i.notransfer),
+        (i) => {
+          let value = {
+            Common: 0,
+            Uncommon: 1,
+            Rare: 2,
+            Legendary: 3,
+            Exotic: 4
+          }[i.tier];
+          // And low-stat
+          if (i.primStat) {
+            value += i.primStat.value / 1000;
+          }
+          return value;
         }
-        return value;
-      });
+      );
       if (itemToMove) {
         itemsToMove.push(itemToMove);
       }

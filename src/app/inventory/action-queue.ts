@@ -8,12 +8,8 @@ export function queueAction(fn: () => Promise<any>) {
   // don't use finally here because finally can't modify the return value.
   promise = promise
     .then(
-      () => {
-        return fn();
-      },
-      () => {
-        return fn();
-      }
+      (..._args) => fn(),
+      (..._args) => fn()
     )
     .then(
       (value) => {
@@ -35,9 +31,5 @@ export function queuedAction<T extends any[], K>(
   fn: (...args: T) => Promise<K>,
   context?
 ): (...args: T) => Promise<any> {
-  return (...args: T) => {
-    return queueAction(() => {
-      return fn.apply(context, args);
-    });
-  };
+  return (...args: T) => queueAction(() => fn.apply(context, args));
 }

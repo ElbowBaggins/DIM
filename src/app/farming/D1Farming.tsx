@@ -1,11 +1,10 @@
 import React from 'react';
-import { D2Store } from '../inventory/store-types';
+import { DimStore } from '../inventory/store-types';
 import { t } from 'app/i18next-t';
 import { RootState } from '../store/reducers';
 import { connect } from 'react-redux';
 import { setFarmingSetting } from '../settings/actions';
 import _ from 'lodash';
-import { destinyVersionSelector } from '../accounts/reducer';
 import { farmingStoreSelector } from './reducer';
 import './farming.scss';
 import { D1FarmingService } from './farming.service';
@@ -13,15 +12,15 @@ import { TransitionGroup, CSSTransition } from 'react-transition-group';
 
 interface StoreProps {
   makeRoomForItems: boolean;
-  store?: D2Store;
+  store?: DimStore;
 }
 
-function mapStateToProps(state: RootState): StoreProps {
-  return {
+function mapStateToProps() {
+  const storeSelector = farmingStoreSelector();
+  return (state: RootState): StoreProps => ({
     makeRoomForItems: state.settings.farming.makeRoomForItems,
-    store:
-      destinyVersionSelector(state) === 1 ? (farmingStoreSelector(state) as D2Store) : undefined
-  };
+    store: storeSelector(state)
+  });
 }
 
 const mapDispatchToProps = {
@@ -34,6 +33,10 @@ type Props = StoreProps & DispatchProps;
 class D1Farming extends React.Component<Props> {
   render() {
     const { store, makeRoomForItems } = this.props;
+    const i18nData = {
+      store: store?.name,
+      context: store?.genderName
+    };
 
     return (
       <TransitionGroup component={null}>
@@ -42,15 +45,12 @@ class D1Farming extends React.Component<Props> {
             <div id="item-farming">
               <div>
                 <p>
-                  {t(makeRoomForItems ? 'FarmingMode.Desc' : 'FarmingMode.MakeRoom.Desc', {
-                    store: store.name,
-                    context: store.gender && store.gender.toLowerCase()
-                  })}
+                  {makeRoomForItems
+                    ? t('FarmingMode.Desc', i18nData)
+                    : t('FarmingMode.MakeRoom.Desc', i18nData)}
                   {/*
-                    t('FarmingMode.Desc')
                     t('FarmingMode.Desc_male')
                     t('FarmingMode.Desc_female')
-                    t('FarmingMode.MakeRoom.Desc')
                     t('FarmingMode.MakeRoom.Desc_male')
                     t('FarmingMode.MakeRoom.Desc_female')
                   */}
@@ -84,7 +84,4 @@ class D1Farming extends React.Component<Props> {
   };
 }
 
-export default connect<StoreProps, DispatchProps>(
-  mapStateToProps,
-  mapDispatchToProps
-)(D1Farming);
+export default connect<StoreProps, DispatchProps>(mapStateToProps, mapDispatchToProps)(D1Farming);

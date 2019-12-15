@@ -1,11 +1,10 @@
 import React from 'react';
-import { D2Store } from '../inventory/store-types';
+import { DimStore } from '../inventory/store-types';
 import { t } from 'app/i18next-t';
 import { RootState } from '../store/reducers';
 import { connect } from 'react-redux';
 import { setFarmingSetting } from '../settings/actions';
 import _ from 'lodash';
-import { destinyVersionSelector } from '../accounts/reducer';
 import { farmingStoreSelector } from './reducer';
 import { D2FarmingService } from './d2farming.service';
 import './farming.scss';
@@ -13,15 +12,15 @@ import { TransitionGroup, CSSTransition } from 'react-transition-group';
 
 interface StoreProps {
   moveTokens: boolean;
-  store?: D2Store;
+  store?: DimStore;
 }
 
-function mapStateToProps(state: RootState): StoreProps {
-  return {
+function mapStateToProps() {
+  const storeSelector = farmingStoreSelector();
+  return (state: RootState): StoreProps => ({
     moveTokens: state.settings.farming.moveTokens,
-    store:
-      destinyVersionSelector(state) === 2 ? (farmingStoreSelector(state) as D2Store) : undefined
-  };
+    store: storeSelector(state)
+  });
 }
 
 const mapDispatchToProps = {
@@ -44,7 +43,7 @@ class D2Farming extends React.Component<Props> {
                 <p>
                   {t('FarmingMode.D2Desc', {
                     store: store.name,
-                    context: store.gender && store.gender.toLowerCase()
+                    context: store.genderName
                   })}
                   {/*
                     t('FarmingMode.D2Desc_male')
@@ -78,7 +77,4 @@ class D2Farming extends React.Component<Props> {
   };
 }
 
-export default connect<StoreProps, DispatchProps>(
-  mapStateToProps,
-  mapDispatchToProps
-)(D2Farming);
+export default connect<StoreProps, DispatchProps>(mapStateToProps, mapDispatchToProps)(D2Farming);
