@@ -260,7 +260,7 @@ function equippable(item: DimItem) {
   return item.classType === DestinyClass.Unknown ? 'Any' : item.classTypeNameLocalized;
 }
 
-function source(item: DimItem) {
+export function source(item: DimItem) {
   if (item.isDestiny2()) {
     return (
       Object.keys(D2Sources).find(
@@ -426,7 +426,11 @@ function downloadWeapons(
       Type: item.typeName,
       Source: source(item),
       [item.isDestiny1() ? 'Light' : 'Power']: item.primStat?.value,
-      Dmg: item.dmg ? `${capitalizeFirstLetter(item.dmg)}` : 'Kinetic'
+      Category: item.bucket.type,
+      Element:
+        (item.isDestiny1() && item.element?.damageTypeName) ||
+        (item.isDestiny2() && item.element?.displayProperties.name) ||
+        undefined
     };
     if (item.isDestiny2()) {
       row['Masterwork Type'] = item.masterworkInfo?.statName;

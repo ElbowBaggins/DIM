@@ -6,7 +6,6 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import Link from './Link';
 import { router } from '../router';
 import './header.scss';
-
 import logo from 'images/logo-type-right-light.svg';
 import ClickOutside from '../dim-ui/ClickOutside';
 import Refresh from './refresh';
@@ -19,7 +18,7 @@ import { Subscriptions } from '../utils/rx-utils';
 import { installPrompt$ } from './app-install';
 import ExternalLink from '../dim-ui/ExternalLink';
 import SearchFilterInput from '../search/SearchFilterInput';
-import { connect } from 'react-redux';
+import { connect, DispatchProp } from 'react-redux';
 import { RootState } from 'app/store/reducers';
 import { currentAccountSelector } from 'app/accounts/reducer';
 import GlobalHotkeys from '../hotkeys/GlobalHotkeys';
@@ -27,6 +26,7 @@ import MenuAccounts from 'app/accounts/MenuAccounts';
 import ReactDOM from 'react-dom';
 import Sheet from 'app/dim-ui/Sheet';
 import _ from 'lodash';
+import { isDroppingHigh, getAllVendorDrops } from 'app/vendorEngramsXyzApi/vendorEngramsXyzService';
 
 const destiny1Links = [
   {
@@ -78,21 +78,31 @@ const destiny2Links = [
   {
     state: 'destiny2.loadoutbuilder',
     text: 'LB.LB', // t('LB.LB')
-    hotkey: 'o'
+    hotkey: 'b'
   }
 ];
+
+if ($featureFlags.organizer) {
+  destiny2Links.push({
+    state: 'destiny2.organizer',
+    text: 'Organizer.Organizer', // t('Organizer.Organizer')
+    hotkey: 'o'
+  });
+}
 
 const bugReport = 'https://github.com/DestinyItemManager/DIM/issues';
 
 interface StoreProps {
   account?: DestinyAccount;
+  vendorEngramDropActive: boolean;
 }
 
-type Props = StoreProps;
+type Props = StoreProps & DispatchProp;
 
 function mapStateToProps(state: RootState): StoreProps {
   return {
-    account: currentAccountSelector(state)
+    account: currentAccountSelector(state),
+    vendorEngramDropActive: state.vendorDrops.vendorDrops.some(isDroppingHigh)
   };
 }
 
@@ -109,6 +119,7 @@ class Header extends React.PureComponent<Props, State> {
   private unregisterTransitionHooks: Function[] = [];
   private dropdownToggler = React.createRef<HTMLAnchorElement>();
   private searchFilter = React.createRef<SearchFilterInput>();
+  private engramRefreshTimer: number;
 
   constructor(props) {
     super(props);
@@ -133,15 +144,18 @@ class Header extends React.PureComponent<Props, State> {
         }
       })
     ];
+
+    this.updateVendorEngrams(this.props.account || undefined);
   }
 
   componentWillUnmount() {
     this.unregisterTransitionHooks.forEach((f) => f());
     this.subscriptions.unsubscribe();
+    this.stopPollingVendorEngrams();
   }
 
   render() {
-    const { account } = this.props;
+    const { account, vendorEngramDropActive } = this.props;
     const { showSearch, dropdownOpen, installPromptEvent, promptIosPwa } = this.state;
 
     // TODO: new fontawesome
@@ -186,7 +200,13 @@ class Header extends React.PureComponent<Props, State> {
           .slice()
           .reverse()
           .map((link) => (
-            <Link key={link.state} account={account} state={link.state} text={t(link.text)} />
+            <Link
+              key={link.state}
+              account={account}
+              state={link.state}
+              text={t(link.text)}
+              showWhatsNew={link.state === 'destiny2.vendors' && vendorEngramDropActive}
+            />
           ))}
       </>
     );
@@ -302,11 +322,33 @@ class Header extends React.PureComponent<Props, State> {
     );
   }
 
-  componentDidUpdate(_prevProps, prevState: State) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     if (!prevState.showSearch && this.state.showSearch && this.searchFilter.current) {
       this.searchFilter.current.focusFilterInput();
     }
+
+    if (prevProps.account?.destinyVersion !== this.props.account?.destinyVersion) {
+      this.updateVendorEngrams(this.props.account || undefined);
+    }
   }
+
+  private updateVendorEngrams = (account = this.props.account) => {
+    if ($featureFlags.vendorEngrams) {
+      if (!account || account.destinyVersion !== 2) {
+        this.stopPollingVendorEngrams();
+        return;
+      }
+
+      this.props.dispatch(getAllVendorDrops() as any);
+    }
+  };
+
+  private stopPollingVendorEngrams = () => {
+    if (this.engramRefreshTimer) {
+      clearInterval(this.engramRefreshTimer);
+      this.engramRefreshTimer = 0;
+    }
+  };
 
   private toggleDropdown = (e) => {
     e.preventDefault();

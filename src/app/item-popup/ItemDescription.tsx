@@ -5,8 +5,7 @@ import ExternalLink from 'app/dim-ui/ExternalLink';
 import { t } from 'app/i18next-t';
 import ishtarLogo from '../../images/ishtar-collective.svg';
 import styles from './ItemDescription.m.scss';
-import { AppIcon } from 'app/shell/icons';
-import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { AppIcon, editIcon } from 'app/shell/icons';
 import { connect } from 'react-redux';
 import { getNotes } from 'app/inventory/dim-item-info';
 import { RootState } from 'app/store/reducers';
@@ -19,19 +18,19 @@ interface ProvidedProps {
 
 interface StoreProps {
   notes?: string;
-  inventoryCuratedRoll?: InventoryWishListRoll;
+  inventoryWishListRoll?: InventoryWishListRoll;
 }
 
 function mapStateToProps(state: RootState, props: ProvidedProps): StoreProps {
   return {
     notes: getNotes(props.item, state.inventory.itemInfos),
-    inventoryCuratedRoll: inventoryWishListsSelector(state)[props.item.id]
+    inventoryWishListRoll: inventoryWishListsSelector(state)[props.item.id]
   };
 }
 
 type Props = ProvidedProps & StoreProps;
 
-function ItemDescription({ item, notes, inventoryCuratedRoll }: Props) {
+function ItemDescription({ item, notes, inventoryWishListRoll }: Props) {
   const showDescription = Boolean(item.description?.length);
 
   const loreLink = item.loreHash
@@ -48,11 +47,11 @@ function ItemDescription({ item, notes, inventoryCuratedRoll }: Props) {
       {item.isDestiny2() && Boolean(item.displaySource?.length) && (
         <div className={styles.officialDescription}>{item.displaySource}</div>
       )}
-      {inventoryCuratedRoll &&
-        inventoryCuratedRoll.notes &&
-        inventoryCuratedRoll.notes.length > 0 && (
+      {inventoryWishListRoll &&
+        inventoryWishListRoll.notes &&
+        inventoryWishListRoll.notes.length > 0 && (
           <div className={styles.wishListNotes}>
-            {t('WishListRoll.WishListNotes', { notes: inventoryCuratedRoll.notes })}
+            {t('WishListRoll.WishListNotes', { notes: inventoryWishListRoll.notes })}
           </div>
         )}
       {notesOpen ? (
@@ -68,7 +67,7 @@ function ItemDescription({ item, notes, inventoryCuratedRoll }: Props) {
             }}
             tabIndex={0}
           >
-            <AppIcon icon={faPencilAlt} />{' '}
+            <AppIcon icon={editIcon} />{' '}
             <span className={styles.addNoteTag}>{t('MovePopup.Notes')}</span> {notes}
           </div>
         )
@@ -83,7 +82,7 @@ function ItemDescription({ item, notes, inventoryCuratedRoll }: Props) {
               onClick={() => setNotesOpen(true)}
               tabIndex={0}
             >
-              <AppIcon icon={faPencilAlt} />{' '}
+              <AppIcon icon={editIcon} />{' '}
               <span className={styles.addNoteTag}>{t('MovePopup.AddNote')}</span>
             </div>
           )}

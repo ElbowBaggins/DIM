@@ -1,5 +1,5 @@
 import { DimWorkingUserReview, DimUserReview } from './dtr-api-types';
-import { DestinyActivityModeType } from 'bungie-api-ts/destiny2';
+import { DtrD2ActivityModes } from '@destinyitemmanager/dim-api-types';
 
 /**
  * A "basic" item.
@@ -17,6 +17,8 @@ export interface DtrD2BasicItem {
   selectedPerks?: number[];
   /** If it's a random roll, what's the complete list of (random) perks on it? */
   availablePerks?: number[];
+  /** What plugs does the user have selected? Includes masterwork and ornaments. */
+  selectedPlugs?: number[];
 }
 
 /** The form that votes come back to us in for items in D2. */
@@ -118,14 +120,4 @@ export interface D2ItemReviewResponse {
   reviews: D2ItemUserReview[];
 
   lastUpdated: Date;
-}
-
-/** The subset of DestinyActivityModeType that we use for game modes. */
-export const enum DtrD2ActivityModes {
-  notSpecified = DestinyActivityModeType.None,
-  playerVersusEnemy = DestinyActivityModeType.AllPvE,
-  playerVersusPlayer = DestinyActivityModeType.AllPvP,
-  raid = DestinyActivityModeType.Raid,
-  // trials = DestinyActivityModeType.TrialsOfTheNine
-  gambit = DestinyActivityModeType.Gambit
 }

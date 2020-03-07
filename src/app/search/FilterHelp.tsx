@@ -6,7 +6,7 @@ import { RootState } from '../store/reducers';
 import { connect } from 'react-redux';
 
 const youTubeLink =
-  "<a href='https://youtu.be/T0tjH95AG_I' target='_blank' rel='noopener noreferrer'>YouTube</a>";
+  "<a href='https://www.youtube.com/watch?v=TDMiysNXoOo&list=PLwhQ0xgGDsPuKwoA8nBxeb9Gin-UcUf6d' target='_blank' rel='noopener noreferrer'>YouTube</a>";
 
 function mapStateToProps(state: RootState) {
   return {
@@ -828,6 +828,14 @@ function FilterHelp({ destinyVersion }: { destinyVersion: 1 | 2 }) {
                   <span>is:shaded</span> <span>is:hasshader</span>
                 </td>
                 <td>{t('Filter.HasShader')}</td>
+              </tr>
+            )}
+            {destinyVersion === 2 && (
+              <tr>
+                <td>
+                  <span>is:ornamented</span> <span>is:hasornament</span>
+                </td>
+                <td>{t('Filter.HasOrnament')}</td>
               </tr>
             )}
           </tbody>

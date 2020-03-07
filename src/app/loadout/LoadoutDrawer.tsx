@@ -194,7 +194,7 @@ class LoadoutDrawer extends React.Component<Props, State> {
 
     const header = (
       <div className="loadout-drawer-header">
-        <h1>{isNew ? 'Create Loadout' : 'Edit Loadout'}</h1>
+        <h1>{isNew ? t('Loadouts.Create') : t('Loadouts.Edit')}</h1>
         {clashingLoadout && (
           <LoadoutEditPopup
             changeNameHandler={() => this.changeNameHandler()}
@@ -351,7 +351,7 @@ class LoadoutDrawer extends React.Component<Props, State> {
           // Only allow one subclass per burn
           if (clone.type === 'Class') {
             const other = loadout.items.class;
-            if (other?.length && other[0].dmg !== clone.dmg) {
+            if (other?.length && other[0].element?.hash !== clone.element?.hash) {
               loadout.items.class.splice(0, loadout.items.class.length);
             }
             clone.equipped = true;
@@ -410,16 +410,25 @@ class LoadoutDrawer extends React.Component<Props, State> {
       return;
     }
 
+    this.close();
     saveLoadout(loadout)
       .then(this.handleLoadOutSaveResult)
       .catch((e) => this.handleLoadoutError(e, loadout.name));
   };
 
-  private handleLoadOutSaveResult = (clashingLoadout: Loadout | undefined) => {
+  private handleLoadOutSaveResult = (clashingLoadout?: Loadout) => {
     if (clashingLoadout) {
-      this.setState({ clashingLoadout: copy(clashingLoadout) });
-    } else {
-      this.close();
+      showNotification({
+        type: 'error',
+        title: t('Loadouts.ClashingTitle'),
+        body: t('Loadouts.ClashingDescription', {
+          loadoutName: clashingLoadout.name
+        }),
+        onClick: () => {
+          this.setState({ show: true, clashingLoadout: copy(clashingLoadout) });
+          loadoutDialogOpen = true;
+        }
+      });
     }
   };
 

@@ -193,6 +193,7 @@
       "Item": "Items that are exchangeable with Rahool for 200 glimmer."
     },
     "HasNotes": "Show items that have notes applied.",
+    "HasOrnament": "Shows items that have an ornament applied.",
     "HasShader": "Shows items that have a shader applied.",
     "InLoadout": "Shows items that are included in any loadout.",
     "Infusable": "Shows items that can be infused.",
@@ -337,7 +338,7 @@
     "BungieNetAlert": "Bungie Alert",
     "Clear": "Clear search filter",
     "CompareMatching": "Compare filtered items",
-    "FilterHelp": "Search item/perk or {{example}}",
+    "FilterHelp": "Search item/perk, {{example}}, and more",
     "FilterHelpBrief": "Search items",
     "FilterMatchCount": "1 item",
     "FilterMatchCount_plural": "{{count}} items",
@@ -516,7 +517,8 @@
     "StatTierIncludeOption": "Include",
     "TierNumber": "T{{tier}}",
     "Traction": "The Traction perk provides +1 Mobility.",
-    "UnlockItem": "Unlock Item"
+    "UnlockItem": "Unlock Item",
+    "YouTubeLink": "Watch a tutorial about Loadout Optimizer on YouTube."
   },
   "Loadouts": {
     "Abandon": "Are you sure you want to abandon this loadout?",
@@ -537,6 +539,8 @@
     "Before": "Before '{{name}}'",
     "ChangeName": "Change name",
     "ChooseItem": "Add {{name}}",
+    "ClashingDescription": "The loadout {{loadoutName}} clashes with a previous one and could not be saved. Click this to open the loadout drawer.",
+    "ClashingTitle": "Clashing loadout",
     "Classified": "Some of your items are classified, and cannot be included in the max power calculation.",
     "ClearSpace": "Move other items away",
     "ConfirmDelete": "Are you sure you want to delete '{{name}}'?",
@@ -552,7 +556,6 @@
     "FromEquipped": "Equipped",
     "GatherEngrams": "Gather Engrams",
     "GatherEngramsExceptExotics": "Exotics",
-    "GatherTokens": "Gather Reputation Items",
     "Generated": "T{{tier}} {{Mobility}}/{{Resilience}}/{{Recovery}}",
     "ItemLeveling": "Item Leveling",
     "LoadoutName": "Loadout name",
@@ -571,7 +574,6 @@
     "MaximizeStat": "Maximize Stat",
     "NoEngrams": "No non-exotic engrams are available to transfer.",
     "NoExotics": "No engrams are available to transfer.",
-    "NoTokens": "No reputation items are available to transfer.",
     "NotificationMessage": "Sending loadout with 1 item to vault.",
     "NotificationMessage_female": "Equipping loadout with 1 item to {{store}}",
     "NotificationMessage_female_plural": "Equipping loadout with {{count}} items to {{store}}",
@@ -677,6 +679,13 @@
     "Complete": "Complete",
     "Incomplete": "Incomplete"
   },
+  "Organizer": {
+    "BulkMove": "Move To",
+    "BulkMoveLoadoutName": "Selected in Organizer",
+    "BulkTag": "Tag",
+    "EnabledColumns": "Enabled Columns",
+    "Organizer": "Organizer"
+  },
   "Progress": {
     "Bounties": "Bounties",
     "CrucibleRank": "Ranks",
@@ -710,7 +719,7 @@
     "CsvImport": "Import tags/notes from CSV",
     "Data": "Spreadsheets",
     "DefaultItemSizeNote": "An item size of 50px will look the sharpest, without blurring the item picture or text.",
-    "DontForgetDupes": "Don't forget you can search is:dupe or is:dupelower to quickly find duplicate items, and you can use the comparison tool to evaluate related items.",
+    "DontForgetDupes": "Don't forget you can search is:dupe to quickly find duplicate items, and you can use the comparison tool to evaluate related items.",
     "EnableAdvancedStats": "Show stat quality rating on armor (D1)",
     "ExportSS": "Inventory spreadsheets",
     "ExportSSHelp": "Download a CSV list of your items that can be easily viewed in the spreadsheet app of your choice.",
@@ -838,6 +847,11 @@
     "HideCompleted": "Hide Completed",
     "RevealRedacted": "Reveal Redacted"
   },
+  "VendorEngramsXyz": {
+    "DroppingHigh": "VendorEngrams.xyz reports that this vendor is dropping high-level items.",
+    "ServiceCallFailed": "VendorEngrams.xyz service call failed.",
+    "Vote": "Seeing a vendor selling items near your light level? Go to VendorEngrams.xyz to vote and let the community know!"
+  },
   "Vendors": {
     "Catalysts": "Catalysts",
     "Collections": "Collections",
@@ -904,13 +918,16 @@
     "BestRatedKey": " = curator-suggested perk",
     "BestRatedTip": "This perk was selected by the curator.",
     "Clear": "Clear Wish List",
+    "ExternalSource": "Optionally, supply the URL for a wish list",
     "Header": "Wish List",
     "Import": "Load Wish List Rolls",
     "ImportFailed": "No wish list information found.",
     "ImportNoFile": "No file selected.",
     "ImportSuccess": "Wish list loaded with information about one roll.{{titleAndDescription}}",
-    "ImportSuccess_plural": "Wish list loaded with information about {{count}} rolls.{{titleAndDescription}}",
+    "ImportSuccess_plural": "Wish list loaded with information about {{count, number}} rolls.{{titleAndDescription}}",
+    "InvalidExternalSource": "Please enter a valid URL for your external wish list source. The URL must start with https://raw.githubusercontent.com",
     "Num": "{{num, number}} rolls in your wish list",
+    "UpdateExternalSource": "Update Wish List Source",
     "WishListNotes": "Wish List Notes: {{notes}}"
   }
 }

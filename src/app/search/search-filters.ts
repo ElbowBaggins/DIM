@@ -10,7 +10,8 @@ import { Loadout } from '../loadout/loadout-types';
 import {
   DestinyAmmunitionType,
   DestinyCollectibleState,
-  DestinyClass
+  DestinyClass,
+  DestinyItemSubType
 } from 'bungie-api-ts/destiny2';
 import { destinyVersionSelector } from '../accounts/reducer';
 import { D1Categories } from '../destiny1/d1-buckets';
@@ -35,9 +36,15 @@ import S8Sources from 'data/d2/s8-source-info';
 import seasonTags from 'data/d2/season-tags.json';
 import {
   getItemSpecialtyModSlotFilterName,
-  specialtyModSlotFilterNames
+  specialtyModSlotFilterNames,
+  getItemDamageShortName
 } from 'app/utils/item-utils';
-import { DEFAULT_SHADER } from 'app/inventory/store/sockets';
+import {
+  DEFAULT_SHADER,
+  DEFAULT_ORNAMENTS,
+  DEFAULT_GLOW,
+  DEFAULT_GLOW_CATEGORY
+} from 'app/inventory/store/sockets';
 
 /**
  * (to the tune of TMNT) ♪ string processing helper functions ♫
@@ -161,7 +168,7 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
   const filterTrans: {
     [key: string]: string[];
   } = {
-    dmg: ['arc', 'solar', 'void', 'kinetic', 'heroic'],
+    dmg: hashes.damageTypeNames,
     type: itemTypes,
     tier: [
       'common',
@@ -265,6 +272,7 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
           hasMod: ['hasmod'],
           modded: ['modded'],
           hasShader: ['shaded', 'hasshader'],
+          hasOrnament: ['ornamented', 'hasornament'],
           ikelos: ['ikelos'],
           masterwork: ['masterwork', 'masterworks'],
           powerfulreward: ['powerfulreward'],
@@ -309,19 +317,20 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
     ...Object.keys(seasonTags)
       .reverse()
       .map((tag) => `season:${tag}`),
-    // keywords for seaqsonal mod slots
+    // keywords for seasonal mod slots
     ...specialtyModSlotFilterNames
       .concat(['any', 'none'])
       .map((modSlotName) => `modslot:${modSlotName}`),
     // a keyword for every combination of a DIM-processed stat and mathmatical operator
     ...ranges.flatMap((range) => operators.map((comparison) => `${range}:${comparison}`)),
     // energy capacity elements and ranges
-    ...hashes.energyCapacityTypes.filter(Boolean).map((element) => `energycapacity:${element}`),
+    ...hashes.energyCapacityTypes.map((element) => `energycapacity:${element}`),
     ...operators.map((comparison) => `energycapacity:${comparison}`),
     // "source:" keyword plus one for each source
     ...(isD2
       ? [
           'source:',
+          'wishlistnotes:',
           ...Object.keys(D2Sources).map((word) => `source:${word}`),
           // maximum stat finders
           ...hashes.armorStatNames.map((armorStat) => `maxbasestatvalue:${armorStat}`),
@@ -332,6 +341,19 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
     // all the free text searches that support quotes
     ...['notes:', 'perk:', 'perkname:', 'name:', 'description:']
   ];
+
+  // create suggestion stubs for filter names
+  const keywordStubs = keywords.flatMap((keyword) => {
+    const keywordSegments = keyword //   'basestat:mobility:<='
+      .split(':') //                   [ 'basestat' , 'mobility' , '<=']
+      .slice(0, -1); //                [ 'basestat' , 'mobility' ]
+    const stubs: string[] = [];
+    for (let i = 1; i <= keywordSegments.length; i++) {
+      stubs.push(keywordSegments.slice(0, i).join(':') + ':');
+    }
+    return stubs; //                   [ 'basestat:' , 'basestat:mobility:' ]
+  });
+  keywords.push(...new Set(keywordStubs));
 
   // Build an inverse mapping of keyword to function name
   const keywordToFilter: { [key: string]: string } = {};
@@ -681,7 +703,7 @@ function searchFilters(
         return item.hash.toString() === predicate;
       },
       dmg(item: DimItem, predicate: string) {
-        return item.dmg === predicate;
+        return getItemDamageShortName(item) === predicate;
       },
       type(item: DimItem, predicate: string) {
         return item.type?.toLowerCase() === predicate;
@@ -1256,6 +1278,20 @@ function searchFilters(
                 socket.plug.plugItem.plug &&
                 socket.plug.plugItem.plug.plugCategoryHash === hashes.shaderBucket &&
                 socket.plug.plugItem.hash !== DEFAULT_SHADER
+            )
+          )
+        );
+      },
+      hasOrnament(item: D2Item) {
+        return (
+          item.sockets &&
+          item.sockets.sockets.some((socket) =>
+            Boolean(
+              socket.plug &&
+                socket.plug.plugItem.itemSubType === DestinyItemSubType.Ornament &&
+                socket.plug.plugItem.hash !== DEFAULT_GLOW &&
+                !DEFAULT_ORNAMENTS.includes(socket.plug.plugItem.hash) &&
+                !socket.plug.plugItem.itemCategoryHashes.includes(DEFAULT_GLOW_CATEGORY)
             )
           )
         );

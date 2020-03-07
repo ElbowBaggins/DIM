@@ -5,7 +5,7 @@ import { showInfuse$ } from './infuse';
 import { Subscriptions } from '../utils/rx-utils';
 import { router } from '../router';
 import Sheet from '../dim-ui/Sheet';
-import { AppIcon, plusIcon, helpIcon } from '../shell/icons';
+import { AppIcon, plusIcon, helpIcon, faRandom, faEquals, faArrowCircleDown } from '../shell/icons';
 import ConnectedInventoryItem from '../inventory/ConnectedInventoryItem';
 import copy from 'fast-copy';
 import { storesSelector } from '../inventory/reducer';
@@ -17,7 +17,6 @@ import { newLoadout } from '../loadout/loadout-utils';
 import { connect } from 'react-redux';
 import { t } from 'app/i18next-t';
 import clsx from 'clsx';
-import { faRandom, faEquals, faArrowCircleDown } from '@fortawesome/free-solid-svg-icons';
 import SearchFilterInput from '../search/SearchFilterInput';
 import {
   SearchConfig,
@@ -27,8 +26,9 @@ import {
 } from '../search/search-filters';
 import { setSetting } from '../settings/actions';
 import { showNotification } from '../notifications/notifications';
-import { InfuseDirection } from './infuse-direction';
 import { applyLoadout } from 'app/loadout/loadout-apply';
+import { settingsSelector } from 'app/settings/reducer';
+import { InfuseDirection } from '@destinyitemmanager/dim-api-types';
 
 const itemComparator = chainComparator(
   reverseComparator(compareBy((item: DimItem) => item.primStat!.value)),
@@ -56,7 +56,7 @@ function mapStateToProps(state: RootState): StoreProps {
     stores: storesSelector(state),
     searchConfig: searchConfigSelector(state),
     filters: searchFiltersConfigSelector(state),
-    lastInfusionDirection: state.settings.infusionDirection,
+    lastInfusionDirection: settingsSelector(state).infusionDirection,
     isPhonePortrait: state.shell.isPhonePortrait
   };
 }
@@ -168,8 +168,8 @@ class InfusionFinder extends React.Component<Props, State> {
     items = items.filter((item) => item.hash !== query.hash);
     items.sort(itemComparator);
 
-    target = target || items[0];
-    source = source || items[0];
+    target = target || dupes[0] || items[0];
+    source = source || dupes[0] || items[0];
 
     let result: DimItem | undefined;
     if (source && target && source.primStat && target.primStat) {
@@ -244,7 +244,7 @@ class InfusionFinder extends React.Component<Props, State> {
     return (
       <Sheet onClose={this.onClose} header={header} sheetClassName="infuseDialog">
         <div className="infuseSources" ref={this.itemContainer} style={{ height }}>
-          {items.length > 0 ? (
+          {items.length > 0 || dupes.length > 0 ? (
             <>
               <div className="sub-bucket">
                 {dupes.map((item) => (

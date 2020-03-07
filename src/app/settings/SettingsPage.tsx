@@ -14,28 +14,25 @@ import { DimItem } from '../inventory/item-types';
 import _ from 'lodash';
 import { reviewPlatformOptions } from '../destinyTrackerApi/platformOptionsFetcher';
 import { D2ReviewMode } from '../destinyTrackerApi/reviewModesFetcher';
-import { downloadCsvFiles, importTagsNotesFromCsv } from '../inventory/spreadsheets';
 import { D2StoresService } from '../inventory/d2-stores';
 import { D1StoresService } from '../inventory/d1-stores';
-import { settings } from './settings';
 import { storesLoadedSelector, storesSelector } from '../inventory/reducer';
 import Checkbox from './Checkbox';
 import Select, { mapToOptions, listToOptions } from './Select';
 import StorageSettings from '../storage/StorageSettings';
 import { getPlatforms, getActivePlatform } from '../accounts/platforms';
 import { itemSortOrder } from './item-sort';
-import { Settings, defaultItemSize } from './reducer';
-import { AppIcon, refreshIcon, spreadsheetIcon } from '../shell/icons';
+import { Settings, defaultItemSize, settingsSelector } from './reducer';
+import { AppIcon, refreshIcon } from '../shell/icons';
 import ErrorBoundary from '../dim-ui/ErrorBoundary';
 import RatingsKey from '../item-review/RatingsKey';
-import FileUpload from '../dim-ui/FileUpload';
-import { DropzoneOptions } from 'react-dropzone';
 import { getDefinitions } from '../destiny2/d2-definitions';
 import { reviewModesSelector } from '../item-review/reducer';
 import WishListSettings from 'app/settings/WishListSettings';
 import PageWithMenu from 'app/dim-ui/PageWithMenu';
 import { DimStore } from 'app/inventory/store-types';
 import { DimItemInfo, itemTagList } from 'app/inventory/dim-item-info';
+import Spreadsheets from './Spreadsheets';
 
 interface StoreProps {
   settings: Settings;
@@ -48,7 +45,7 @@ interface StoreProps {
 
 function mapStateToProps(state: RootState) {
   return {
-    settings: state.settings,
+    settings: settingsSelector(state),
     isPhonePortrait: state.shell.isPhonePortrait,
     storesLoaded: storesLoadedSelector(state),
     reviewModeOptions: reviewModesSelector(state),
@@ -69,7 +66,11 @@ const fakeWeapon = {
   icon: `~${exampleWeaponImage}`,
   dtrRating: 4.9,
   dtrRatingCount: 100,
-  dmg: 'void',
+  element: {
+    displayProperties: {
+      icon: '/img/destiny_content/damage_types/destiny2/thermal.png'
+    }
+  },
   isNew: true,
   location: {
     type: 'energy'
@@ -129,20 +130,6 @@ const languageOptions = mapToOptions({
   'zh-chs': '简体中文' // Chinese (Simplified)
 });
 
-const tagLabelList = itemTagList.map((tagLabel) => t(tagLabel.label));
-const listSeparator = ['ja', 'zh-cht', 'zh-chs'].includes(settings.language) ? '、' : ', ';
-const tagListString = tagLabelList.join(listSeparator);
-const itemSortProperties = {
-  typeName: t('Settings.SortByType'),
-  rarity: t('Settings.SortByRarity'),
-  primStat: t('Settings.SortByPrimary'),
-  amount: t('Settings.SortByAmount'),
-  rating: t('Settings.SortByRating'),
-  classType: t('Settings.SortByClassType'),
-  name: t('Settings.SortName'),
-  tag: t('Settings.SortByTag', { taglist: tagListString })
-  // archetype: 'Archetype'
-};
 const colorA11yOptions = $featureFlags.colorA11y
   ? listToOptions([
       '-',
@@ -160,10 +147,13 @@ const colorA11yOptions = $featureFlags.colorA11y
 // Edge doesn't support these
 const supportsCssVar = window?.CSS?.supports('(--foo: red)');
 
-class SettingsPage extends React.Component<Props> {
-  private initialLanguage = settings.language;
+let initialLanguage: string;
 
+class SettingsPage extends React.Component<Props> {
   componentDidMount() {
+    if (!initialLanguage) {
+      initialLanguage = this.props.settings.language;
+    }
     getDefinitions();
     getPlatforms().then(() => {
       const account = getActivePlatform();
@@ -176,7 +166,29 @@ class SettingsPage extends React.Component<Props> {
   }
 
   render() {
-    const { settings, isPhonePortrait, storesLoaded, reviewModeOptions } = this.props;
+    const {
+      settings,
+      isPhonePortrait,
+      storesLoaded,
+      reviewModeOptions,
+      stores,
+      itemInfos
+    } = this.props;
+
+    const tagLabelList = itemTagList.map((tagLabel) => t(tagLabel.label));
+    const listSeparator = ['ja', 'zh-cht', 'zh-chs'].includes(settings.language) ? '、' : ', ';
+    const tagListString = tagLabelList.join(listSeparator);
+    const itemSortProperties = {
+      typeName: t('Settings.SortByType'),
+      rarity: t('Settings.SortByRarity'),
+      primStat: t('Settings.SortByPrimary'),
+      amount: t('Settings.SortByAmount'),
+      rating: t('Settings.SortByRating'),
+      classType: t('Settings.SortByClassType'),
+      name: t('Settings.SortName'),
+      tag: t('Settings.SortByTag', { taglist: tagListString })
+      // archetype: 'Archetype'
+    };
 
     const charColOptions = _.range(3, 6).map((num) => ({
       value: num,
@@ -205,15 +217,15 @@ class SettingsPage extends React.Component<Props> {
       }
     );
 
-    const menuItems = [
+    const menuItems = _.compact([
       { id: 'general', title: t('Settings.General') },
       { id: 'items', title: t('Settings.Items') },
       { id: 'inventory', title: t('Settings.Inventory') },
-      { id: 'wishlist', title: t('WishListRoll.Header') },
+      $featureFlags.wishLists ? { id: 'wishlist', title: t('WishListRoll.Header') } : undefined,
       { id: 'ratings', title: t('Settings.Ratings') },
       { id: 'storage', title: t('Storage.MenuTitle') },
       { id: 'spreadsheets', title: t('Settings.Data') }
-    ];
+    ]);
 
     return (
       <PageWithMenu>
@@ -238,7 +250,7 @@ class SettingsPage extends React.Component<Props> {
                   options={languageOptions}
                   onChange={this.changeLanguage}
                 />
-                {this.initialLanguage !== settings.language && (
+                {initialLanguage !== settings.language && (
                   <div>
                     <button className="dim-button" onClick={this.reloadDim}>
                       <AppIcon icon={refreshIcon} /> <span>{t('Settings.ReloadDIM')}</span>
@@ -452,40 +464,7 @@ class SettingsPage extends React.Component<Props> {
               <StorageSettings />
             </ErrorBoundary>
 
-            <section id="spreadsheets">
-              <h2>{t('Settings.Data')}</h2>
-              <div className="setting horizontal">
-                <label htmlFor="spreadsheetLinks" title={t('Settings.ExportSSHelp')}>
-                  {t('Settings.ExportSS')}
-                </label>
-                <div>
-                  <button
-                    className="dim-button"
-                    onClick={this.downloadWeaponCsv}
-                    disabled={!storesLoaded}
-                  >
-                    <AppIcon icon={spreadsheetIcon} /> <span>{t('Bucket.Weapons')}</span>
-                  </button>{' '}
-                  <button
-                    className="dim-button"
-                    onClick={this.downloadArmorCsv}
-                    disabled={!storesLoaded}
-                  >
-                    <AppIcon icon={spreadsheetIcon} /> <span>{t('Bucket.Armor')}</span>
-                  </button>{' '}
-                  <button
-                    className="dim-button"
-                    onClick={this.downloadGhostCsv}
-                    disabled={!storesLoaded}
-                  >
-                    <AppIcon icon={spreadsheetIcon} /> <span>{t('Bucket.Ghost')}</span>
-                  </button>
-                </div>
-              </div>
-              <div className="setting">
-                <FileUpload title={t('Settings.CsvImport')} accept=".csv" onDrop={this.importCsv} />
-              </div>
-            </section>
+            <Spreadsheets disabled={!storesLoaded} stores={stores} itemInfos={itemInfos} />
           </form>
         </PageWithMenu.Contents>
       </PageWithMenu>
@@ -506,57 +485,10 @@ class SettingsPage extends React.Component<Props> {
 
   private changeLanguage = (e) => {
     const language = e.target.value;
-    this.onChange(e);
-
     localStorage.setItem('dimLanguage', language);
     i18next.changeLanguage(language, () => {
-      this.setState({});
+      this.props.setSetting('language', language);
     });
-  };
-
-  private importCsv: DropzoneOptions['onDrop'] = async (acceptedFiles) => {
-    if (acceptedFiles.length < 1) {
-      alert(t('Csv.ImportWrongFileType'));
-      return;
-    }
-
-    if (!confirm(t('Csv.ImportConfirm'))) {
-      return;
-    }
-    try {
-      const result = await importTagsNotesFromCsv(acceptedFiles);
-      alert(t('Csv.ImportSuccess', { count: result }));
-    } catch (e) {
-      alert(t('Csv.ImportFailed', { error: e.message }));
-    }
-  };
-
-  private downloadWeaponCsv = (e) => {
-    e.preventDefault();
-    this.downloadCsv('Weapons');
-    return false;
-  };
-
-  private downloadArmorCsv = (e) => {
-    e.preventDefault();
-    this.downloadCsv('Armor');
-    return false;
-  };
-
-  private downloadGhostCsv = (e) => {
-    e.preventDefault();
-    this.downloadCsv('Ghost');
-    return false;
-  };
-
-  private downloadCsv = (type: 'Armor' | 'Weapons' | 'Ghost') => {
-    const { stores, itemInfos } = this.props;
-    const activePlatform = getActivePlatform();
-    if (!activePlatform) {
-      return;
-    }
-    downloadCsvFiles(stores, itemInfos, type);
-    ga('send', 'event', 'Download CSV', type);
   };
 
   private resetItemSize = (e) => {

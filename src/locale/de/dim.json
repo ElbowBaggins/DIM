@@ -193,6 +193,7 @@
       "Item": "Items die bei Rahool für 200 Glimmer umgetauscht werden können."
     },
     "HasNotes": "Zeige Items mit Notizen an.",
+    "HasOrnament": "Zeigt Items an, die ein Ornament haben.",
     "HasShader": "Zeigt Items die einen Shader angewendet haben.",
     "InLoadout": "Zeigt Items die in einem Loadout verwendet werden.",
     "Infusable": "Zeigt Items die infundiert werden können.",
@@ -337,7 +338,7 @@
     "BungieNetAlert": "Bungie-Warnung",
     "Clear": "Suchfilter löschen",
     "CompareMatching": "Gefilterte Items vergleichen",
-    "FilterHelp": "Suche nach Item/Perk oder {{example}}",
+    "FilterHelp": "Suche Item/Perk, {{example}} und mehr",
     "FilterHelpBrief": "Suche Items",
     "FilterMatchCount": "1 Item",
     "FilterMatchCount_plural": "{{count}} Items",
@@ -516,7 +517,8 @@
     "StatTierIncludeOption": "Einschließen",
     "TierNumber": "T{{tier}}",
     "Traction": "Der Traktion-Perk bietet + 1 Mobilität.",
-    "UnlockItem": "Entsperre Item"
+    "UnlockItem": "Entsperre Item",
+    "YouTubeLink": "Sieh dir ein Tutorial über den Loadout Optimierer auf YouTube an."
   },
   "Loadouts": {
     "Abandon": "Möchtest du dieses Loadout wirklich verlassen?",
@@ -537,6 +539,8 @@
     "Before": "Bevor '{{name}}'",
     "ChangeName": "Namen ändern",
     "ChooseItem": "{{name}} hinzufügen",
+    "ClashingDescription": "Das Loadout {{loadoutName}} überschneidet sich mit einem vorherigen und konnte nicht gespeichert werden. Klicke hier, um die Loadout-Leiste zu öffnen.",
+    "ClashingTitle": "Überschneidendes Loadout",
     "Classified": "Einige deiner Items sind klassifiziert und können nicht in die Max-Power-Berechnung einbezogen werden.",
     "ClearSpace": "Andere Gegenstände wegräumen",
     "ConfirmDelete": "'{{name}}' wirklich löschen?",
@@ -552,7 +556,6 @@
     "FromEquipped": "Ausgerüstet",
     "GatherEngrams": "Engramme sammeln",
     "GatherEngramsExceptExotics": "Exos",
-    "GatherTokens": "Sammle Reputations-Items",
     "Generated": "T{{tier}} {{Mobility}}/{{Resilience}}/{{Recovery}}",
     "ItemLeveling": "Item Leveln",
     "LoadoutName": "Loadout-Name",
@@ -571,7 +574,6 @@
     "MaximizeStat": "Maximiere Stats",
     "NoEngrams": "Es sind keine nicht-exotischen Engramme zum Transfer verfügbar.",
     "NoExotics": "Es sind keine Engramme zum Transfer verfügbar.",
-    "NoTokens": "Es sind keine Reputations-Items zum Transfer verfügbar.",
     "NotificationMessage": "Sende Loadout mit 1 Item zum Tresor.",
     "NotificationMessage_female": "Übertrage Loadout mit 1 Item auf {{store}}",
     "NotificationMessage_female_plural": "Übertrage Loadout mit {{count}} Items auf {{store}}",
@@ -677,6 +679,13 @@
     "Complete": "Vollständig",
     "Incomplete": "Unvollständig"
   },
+  "Organizer": {
+    "BulkMove": "Verschieben zu",
+    "BulkMoveLoadoutName": "Im Planer ausgewählt",
+    "BulkTag": "Markierung",
+    "EnabledColumns": "Aktivierte Spalten",
+    "Organizer": "Planer"
+  },
   "Progress": {
     "Bounties": "Beutezüge",
     "CrucibleRank": "Ränge",
@@ -710,7 +719,7 @@
     "CsvImport": "Tags/Notizen von CSV importieren",
     "Data": "Excel Tabelle",
     "DefaultItemSizeNote": "Eine Itemgröße von 50px wird am schärfsten aussehen, ohne das Itembild oder den Text zu verwischen.",
-    "DontForgetDupes": "Vergiss nicht dass du nach is:dupe oder is:dupelower suchen kannst um schnell doppelte Items zu finden und dass du das Vergleichstool nutzen kannst um verwandte Items zu evaluieren.",
+    "DontForgetDupes": "Vergiss nicht, dass du nach is:dupe suchen kannst, um schnell doppelte Items zu finden und du kannst das Vergleichstool nutzen um verwandte Items zu evaluieren.",
     "EnableAdvancedStats": "Qualitätsbewertung auf Rüstung anzeigen (D1)",
     "ExportSS": "Inventar Tabellen",
     "ExportSSHelp": "Lade eine CSV-Tabelle von deinen Items herunter, die leicht mit jedem Tabellenprogramm angezeigt werden kann.",
@@ -819,7 +828,7 @@
   },
   "Tags": {
     "Archive": "Archiv",
-    "ClearTag": "Löschen",
+    "ClearTag": "Tag Löschen",
     "Favorite": "Favorisieren",
     "Infuse": "Infundieren",
     "Junk": "Müll",
@@ -837,6 +846,11 @@
   "Triumphs": {
     "HideCompleted": "Abgeschlossene verbergen",
     "RevealRedacted": "Zeige verborgene"
+  },
+  "VendorEngramsXyz": {
+    "DroppingHigh": "VendorEngrams.xyz meldet, dass dieser Anbieter hochstufige Items anbietet.",
+    "ServiceCallFailed": "VendorEngrams.xyz Service Zugriff fehlgeschlagen.",
+    "Vote": "Siehst du einen Verkäufer, der Gegenstände in der Nähe deines Lichtlevels verkauft? Gehe zu VendorEngrams.xyz, um abzustimmen und die Community darüber zu informieren!"
   },
   "Vendors": {
     "Catalysts": "Katalysatoren",
@@ -904,13 +918,16 @@
     "BestRatedKey": " = Kurator-vorgeschlagener Perk",
     "BestRatedTip": "Dieser Perk wurde vom Kurator ausgewählt.",
     "Clear": "Wunschliste löschen",
+    "ExternalSource": "Optional die URL für eine Wunschliste angeben",
     "Header": "Wunschliste",
     "Import": "Wunschlisten Rolls laden",
     "ImportFailed": "Keine Wunschlist-Informationen gefunden.",
     "ImportNoFile": "Keine Datei ausgewählt.",
     "ImportSuccess": "Wunschliste geladen mit Informationen über einen Roll.{{titleAndDescription}}",
-    "ImportSuccess_plural": "Wunschliste mit Informationen über {{count}} Rolls geladen.{{titleAndDescription}}",
+    "ImportSuccess_plural": "Wunschliste mit Informationen über {{count, number}} Rolls geladen. {{titleAndDescription}}",
+    "InvalidExternalSource": "Bitte gib eine gültige URL für die externe Wunschlistenquelle ein. Die URL muss mit https://raw.githubusercontent.com beginnen",
     "Num": "{{num, number}} Rolls in deiner Wunschliste",
+    "UpdateExternalSource": "Quelle der Wunschliste aktualisieren",
     "WishListNotes": "Wunschlisten-Notizen: {{notes}}"
   }
 }

@@ -17,11 +17,14 @@ import { safariTouchFix } from './app/safari-touch-fix';
 import Root from './app/Root';
 import setupRateLimiter from './app/bungie-api/rate-limit-config';
 import { SyncService } from './app/storage/sync.service';
-import { initSettings } from './app/settings/settings';
+import { initSettings, watchLanguageChanges } from './app/settings/settings';
 import { saveReviewsToIndexedDB } from './app/item-review/reducer';
 import { saveWishListToIndexedDB } from './app/wishlists/reducer';
 import { saveAccountsToIndexedDB } from 'app/accounts/reducer';
 import updateCSSVariables from 'app/css-variables';
+import { saveVendorDropsToIndexedDB } from 'app/vendorEngramsXyzApi/reducer';
+import store from 'app/store/store';
+import { loadGlobalSettings } from 'app/dim-api/actions';
 
 polyfill({
   holdToDrag: 300,
@@ -35,16 +38,25 @@ if ($DIM_FLAVOR !== 'dev') {
 }
 
 setupRateLimiter();
-saveReviewsToIndexedDB();
-saveWishListToIndexedDB();
+if ($featureFlags.reviewsEnabled) {
+  saveReviewsToIndexedDB();
+}
+if ($featureFlags.wishLists) {
+  saveWishListToIndexedDB();
+}
 saveAccountsToIndexedDB();
+if ($featureFlags.vendorEngrams) {
+  saveVendorDropsToIndexedDB();
+}
 updateCSSVariables();
+store.dispatch(loadGlobalSettings());
 
 // Load some stuff at startup
 SyncService.init();
 
 initi18n().then(() => {
   // Settings depends on i18n
+  watchLanguageChanges();
   initSettings();
 
   console.log(

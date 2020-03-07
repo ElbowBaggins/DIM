@@ -92,7 +92,7 @@
     "DaysAgo_plural": "{{count}} giorni fa su {{platform}}",
     "ForGameMode": "Per modalità di gioco {{mode}}",
     "ForGameModeLabel": "Per modalità",
-    "Help": "Scrivi una recensione specifica per questo roll (opzionale). Nota: i perk disponibili e selezionati saranno inviati automaticamente.",
+    "Help": "Scrivi una recensione specifica per questo roll (facoltativo). Nota: i perk disponibili e selezionati saranno inviati automaticamente.",
     "ModeNotSpecified": "Non Specificato",
     "NoReviews": "Non ci sono ancora recensioni per questo oggetto, scrivi tu la prima!",
     "Platforms": {
@@ -193,6 +193,7 @@
       "Item": "Oggetti che sono scambiabili con Rahool per 200 Lumen."
     },
     "HasNotes": "Mostra gli oggetti che hanno delle note.",
+    "HasOrnament": "Mostra gli oggetti sui quali è applicato un decoro.",
     "HasShader": "Mostra oggetti che hanno uno shader applicato.",
     "InLoadout": "Mostra gli oggetti che sono inclusi in qualsiasi loadout.",
     "Infusable": "Mostra gli oggetti che possono essere infusi.",
@@ -337,7 +338,7 @@
     "BungieNetAlert": "Avviso da Bungie",
     "Clear": "Cancella filtro di ricerca",
     "CompareMatching": "Confronta oggetti filtrati",
-    "FilterHelp": "Cerca oggetti/potenziamenti o {{example}}",
+    "FilterHelp": "Cerca oggetto/perk, {{example}}, e altro",
     "FilterHelpBrief": "Cerca oggetti",
     "FilterMatchCount": "1 oggetto",
     "FilterMatchCount_plural": "{{count}} oggetti",
@@ -516,7 +517,8 @@
     "StatTierIncludeOption": "Includi",
     "TierNumber": "T{{tier}}",
     "Traction": "Il perk Trazione fornisce +1 Mobilità.",
-    "UnlockItem": "Sblocca oggetto"
+    "UnlockItem": "Sblocca oggetto",
+    "YouTubeLink": "Guada un tutorial sull'Ottimizzatore di loadout su YouTube."
   },
   "Loadouts": {
     "Abandon": "Vuoi davvero abbandonare questo loadout?",
@@ -537,6 +539,8 @@
     "Before": "Prima '{{name}}'",
     "ChangeName": "Cambia nome",
     "ChooseItem": "Aggiungi {{name}}",
+    "ClashingDescription": "Il loadout {{loadoutName}} è in conflitto con un precedente e non può essere salvato. Clicca qui per aprire il cassetto loadout.",
+    "ClashingTitle": "Conflitto loadout",
     "Classified": "Alcuni dei tuoi oggetti sono nascosti, e non possono essere usati nel calcolo per il massimo Potere.",
     "ClearSpace": "Sposta via altri oggetti",
     "ConfirmDelete": "Sei sicuro di voler eliminare '{{name}}'?",
@@ -552,7 +556,6 @@
     "FromEquipped": "Da equipaggiato",
     "GatherEngrams": "Raccogliere Engrammi",
     "GatherEngramsExceptExotics": "Esotici",
-    "GatherTokens": "Raccogli i pegni di reputazione",
     "Generated": "T{{tier}} {{Mobility}}/{{Resilience}}/{{Recovery}}",
     "ItemLeveling": "Elementi da Livellare",
     "LoadoutName": "Nome loadout",
@@ -571,7 +574,6 @@
     "MaximizeStat": "Massimizza Statistica",
     "NoEngrams": "Non ci sono engrammi non-esotici da trasferire.",
     "NoExotics": "Non ci sono engrammi da trasferire.",
-    "NoTokens": "Non ci sono pegni di reputazione disponibili al trasferimento.",
     "NotificationMessage": "Invio loadout di 1 oggetto al deposito.",
     "NotificationMessage_female": "Equipaggiamento loadout di 1 oggetto su {{store}}",
     "NotificationMessage_female_plural": "Equipaggiamento di {{count}} oggetti su {{store}}",
@@ -677,6 +679,13 @@
     "Complete": "Completo",
     "Incomplete": "Incompleto"
   },
+  "Organizer": {
+    "BulkMove": "Sposta a",
+    "BulkMoveLoadoutName": "Seleziona in Gestore Deposito",
+    "BulkTag": "Etichetta",
+    "EnabledColumns": "Colonne Abilitate",
+    "Organizer": "Gestione Deposito"
+  },
   "Progress": {
     "Bounties": "Taglie",
     "CrucibleRank": "Gradi",
@@ -710,7 +719,7 @@
     "CsvImport": "Importa etichette/note da CSV",
     "Data": "Fogli di calcolo",
     "DefaultItemSizeNote": "Una dimensione di 50px sarà la più nitida, senza sfocare l'immagine dell'oggetto o il testo.",
-    "DontForgetDupes": "Non dimenticare che puoi cercare is:dupe o is:dupelower per trovare velocemente oggetti duplicati, e puoi usare lo strumento di confronto per valutarli.",
+    "DontForgetDupes": "Non dimenticare che puoi cercare is:dupe per trovare velocemente oggetti duplicati, e che puoi usare lo strumento di confronto per valutarli.",
     "EnableAdvancedStats": "Mostra i giudizi sulle statistiche delle armature (D1)",
     "ExportSS": "Scarica inventario in formato foglio elettronico",
     "ExportSSHelp": "Scarica una lista CSV dei tuoi oggetti, che può essere facilmente visualizzata in un'applicazione di fogli elettronici di tua scelta.",
@@ -838,6 +847,11 @@
     "HideCompleted": "Nascondi Completati",
     "RevealRedacted": "Rivela Segreti"
   },
+  "VendorEngramsXyz": {
+    "DroppingHigh": "VendorEngrams.xyz segnala che questo mercante sta vendendo oggetti di livello alto.",
+    "ServiceCallFailed": "Richiesta al servizio di VendorEngrams.xyz fallita.",
+    "Vote": "Vedi un mercante che sta vendendo oggetti vicino al tuo Livello Potere? Vai su VendorEngrams.xyz per votare e farlo sapere alla comunità!"
+  },
   "Vendors": {
     "Catalysts": "Catalizzatori",
     "Collections": "Collezioni",
@@ -904,13 +918,16 @@
     "BestRatedKey": " = perk suggerito dal curatore",
     "BestRatedTip": "Questo perk è stato selezionato dal curatore.",
     "Clear": "Cancella Lista Desideri",
+    "ExternalSource": "Oppure, inserisci un URL di una Lista Desideri",
     "Header": "Lista Desideri",
     "Import": "Carica i roll della Lista Desideri",
     "ImportFailed": "Nessuna informazione trovata nella Lista Desideri.",
     "ImportNoFile": "Nessun file selezionato.",
     "ImportSuccess": "Lista desideri caricata con informazioni su un roll.{{titleAndDescription}}",
-    "ImportSuccess_plural": "Lista desideri caricata con informazioni su {{count}} rolls.{{titleAndDescription}}",
+    "ImportSuccess_plural": "Lista Desideri caricata con informazioni su {{count, number}} rolls. {{titleAndDescription}}",
+    "InvalidExternalSource": "Inserisci un URL valido come origine della Lista Desideri esterna. L'URL deve iniziare con https://raw.githubusercontent.com",
     "Num": "{{num, number}} roll nella tua lista desideri",
+    "UpdateExternalSource": "Aggiorna la fonte della Lista Desideri",
     "WishListNotes": "Note della Lista Desideri: {{notes}}"
   }
 }

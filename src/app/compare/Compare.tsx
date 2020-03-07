@@ -16,13 +16,18 @@ import { RootState } from '../store/reducers';
 import Sheet from '../dim-ui/Sheet';
 import { showNotification } from '../notifications/notifications';
 import { scrollToPosition } from 'app/dim-ui/scroll';
-import { DestinyDisplayPropertiesDefinition } from 'bungie-api-ts/destiny2';
+import {
+  DestinyDisplayPropertiesDefinition,
+  DestinyInventoryItemDefinition
+} from 'bungie-api-ts/destiny2';
 import { makeDupeID } from 'app/search/search-filters';
 import { D2ManifestDefinitions } from '../destiny2/d2-definitions';
-import { getItemDamageType, getItemSpecialtyModSlotDisplayName } from 'app/utils/item-utils';
-import intrinsicLookupTable from 'data/d2/intrinsic-perk-lookup.json';
+import { getItemSpecialtyModSlotDisplayName } from 'app/utils/item-utils';
+// import intrinsicLookupTable from 'data/d2/intrinsic-perk-lookup.json';
+// we are falling back to using just an exactly matching intrinsic perk for now
+// archetypes are difficult.
 import { INTRINSIC_PLUG_CATEGORY } from 'app/inventory/store/sockets';
-import BungieImage from 'app/dim-ui/BungieImage';
+import ElementIcon from 'app/inventory/ElementIcon';
 interface StoreProps {
   ratings: ReviewsState['ratings'];
   defs?: D2ManifestDefinitions;
@@ -341,11 +346,7 @@ class Compare extends React.Component<Props, State> {
     comparisonItems = this.state.comparisonItems
   ) => {
     const exampleItem = comparisonItems[0];
-    const exampleItemDamageType =
-      this.props.defs && getItemDamageType(exampleItem, this.props.defs);
-    const exampleItemElementIcon = exampleItemDamageType && (
-      <BungieImage src={exampleItemDamageType.displayProperties.icon} />
-    );
+    const exampleItemElementIcon = <ElementIcon element={exampleItem.element} />;
     const exampleItemModSlot = getItemSpecialtyModSlotDisplayName(exampleItem);
 
     // helper functions for filtering items
@@ -386,7 +387,7 @@ class Compare extends React.Component<Props, State> {
       {
         buttonLabel: <>{[exampleItemElementIcon, exampleItem.typeName]}</>,
         items: hasEnergy(exampleItem)
-          ? allArmors.filter(hasEnergy).filter(matchesExample('dmg'))
+          ? allArmors.filter(hasEnergy).filter(matchesExample('element'))
           : []
       },
       // above but also the same seasonal mod slot, if it has one
@@ -397,7 +398,7 @@ class Compare extends React.Component<Props, State> {
             ? allArmors
                 .filter(hasEnergy)
                 .filter(matchingModSlot)
-                .filter(matchesExample('dmg'))
+                .filter(matchesExample('element'))
             : []
       },
 
@@ -413,7 +414,7 @@ class Compare extends React.Component<Props, State> {
         items: hasEnergy(exampleItem)
           ? allArmors
               .filter(hasEnergy)
-              .filter(matchesExample('dmg'))
+              .filter(matchesExample('element'))
               .filter((i) => makeDupeID(i) === makeDupeID(exampleItem))
           : []
       }
@@ -452,11 +453,7 @@ class Compare extends React.Component<Props, State> {
     comparisonItems = this.state.comparisonItems
   ) => {
     const exampleItem = comparisonItems[0];
-    const exampleItemDamageType =
-      this.props.defs && getItemDamageType(exampleItem, this.props.defs);
-    const exampleItemElementIcon = exampleItemDamageType && (
-      <BungieImage src={exampleItemDamageType.displayProperties.icon} />
-    );
+    const exampleItemElementIcon = <ElementIcon element={exampleItem.element} />;
 
     const matchesExample = (key: string) => (item: DimItem) => item[key] === exampleItem[key];
     // stuff for looking up weapon archetypes
@@ -470,20 +467,17 @@ class Compare extends React.Component<Props, State> {
       return itemRpmStat?.value || -99999999;
     };
 
+    /* disabled for now
     const weaponTypes = Object.keys(intrinsicLookupTable).map(Number);
     const thisWeaponsType =
       weaponTypes.find((h) => exampleItem.itemCategoryHashes.includes(h)) || -99999999;
-    const exampleItemRpm = getRpm(exampleItem);
-
-    /** d2ai-generated list of intrinsic hashes that count as matching our example item */
-    const matchingIntrisics = intrinsicLookupTable[thisWeaponsType]?.[exampleItemRpm];
-    const intrinsicPerk =
-      matchingIntrisics &&
-      this.props.defs &&
-      this.props.defs.InventoryItem.get(matchingIntrisics[0]);
-    const intrinsicName = intrinsicPerk?.displayProperties.name || t('Compare.Archetype');
-
-    const getIntrinsicPerk: (item: D2Item) => number = (item) => {
+      const matchingIntrisics = intrinsicLookupTable[thisWeaponsType]?.[exampleItemRpm];
+      const intrinsicPerk =
+        matchingIntrisics &&
+        this.props.defs &&
+        this.props.defs.InventoryItem.get(matchingIntrisics[0]);
+      const intrinsicName = intrinsicPerk?.displayProperties.name || t('Compare.Archetype');
+      const getIntrinsicPerk: (item: D2Item) => number = (item) => {
       const intrinsic =
         item.sockets &&
         item.sockets.sockets.find((s) =>
@@ -491,6 +485,21 @@ class Compare extends React.Component<Props, State> {
         );
       return intrinsic?.plug?.plugItem.hash || -99999999;
     };
+      */
+    const getIntrinsicPerk: (item: D2Item) => DestinyInventoryItemDefinition | undefined = (
+      item
+    ) => {
+      const intrinsic =
+        item.sockets &&
+        item.sockets.sockets.find((s) =>
+          s.plug?.plugItem.itemCategoryHashes?.includes(INTRINSIC_PLUG_CATEGORY)
+        );
+      return intrinsic?.plug?.plugItem;
+    };
+    const exampleItemRpm = getRpm(exampleItem);
+    const intrinsic = exampleItem.isDestiny2() && getIntrinsicPerk(exampleItem);
+    const intrinsicName = (intrinsic && intrinsic.displayProperties.name) || t('Compare.Archetype');
+    const intrinsicHash = intrinsic && intrinsic.hash;
 
     // minimum filter: make sure it's all weapons and the same weapon type
     allWeapons = allWeapons
@@ -524,11 +533,7 @@ class Compare extends React.Component<Props, State> {
         buttonLabel: <>{[intrinsicName, exampleItem.typeName].join(' + ')}</>,
         items: exampleItem.isDestiny2()
           ? allWeapons.filter(
-              (i) =>
-                i.isDestiny2() &&
-                i.sockets &&
-                matchingIntrisics &&
-                matchingIntrisics.includes(getIntrinsicPerk(i))
+              (i) => i.isDestiny2() && i.sockets && getIntrinsicPerk(i)?.hash === intrinsicHash
             )
           : allWeapons.filter((i) => exampleItemRpm === getRpm(i))
       },
@@ -536,7 +541,7 @@ class Compare extends React.Component<Props, State> {
       // same weapon type and also matching element (& usually same-slot because same element)
       {
         buttonLabel: <>{[exampleItemElementIcon, exampleItem.typeName]}</>,
-        items: allWeapons.filter(matchesExample('dmg'))
+        items: allWeapons.filter(matchesExample('element'))
       },
 
       // exact same weapon, judging by name. might span multiple expansions.

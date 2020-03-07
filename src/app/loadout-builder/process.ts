@@ -14,6 +14,7 @@ import { compareBy } from 'app/utils/comparators';
 import { DimStat } from 'app/inventory/item-types';
 import { getMasterworkSocketHashes } from '../utils/socket-utils';
 import { DestinySocketCategoryStyle } from 'bungie-api-ts/destiny2';
+import { getItemDamageShortName } from 'app/utils/item-utils';
 
 export const statHashes: { [type in StatTypes]: number } = {
   Mobility: 2996146975,
@@ -77,7 +78,7 @@ function matchLockedItem(item: DimItem, lockedItem: LockedItemType) {
     case 'exclude':
       return item.id !== lockedItem.item.id;
     case 'burn':
-      return item.dmg === lockedItem.burn.dmg;
+      return getItemDamageShortName(item) === lockedItem.burn.dmg;
     case 'mod':
       return canSlotMod(item, lockedItem);
     case 'perk':
@@ -263,7 +264,7 @@ export function process(
                 for (const stat of statChoices) {
                   let index = 0;
                   for (const key of statKeys) {
-                    stats[key] = (stats[key] || 0) + stat[index];
+                    stats[key] = Math.min((stats[key] || 0) + stat[index], 100);
                     index++;
                   }
                 }
@@ -509,8 +510,8 @@ function getBaseStatValues(
       baseStats[statHash] += value;
     });
   }
-  // mapping out from stat values to ensure ordering
-  return statValues.map((statHash) => baseStats[statHash]);
+  // mapping out from stat values to ensure ordering and that values don't fall below 0 from locked mods
+  return statValues.map((statHash) => Math.max(baseStats[statHash], 0));
 }
 
 /**

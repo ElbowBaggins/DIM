@@ -98,6 +98,10 @@ h5 {
   font-weight: normal;
 }
 
+label {
+  cursor: inherit;
+}
+
 div:focus,
 span:focus {
   outline-width: 0;
@@ -360,8 +364,17 @@ select {
   input {
     display: none;
   }
+
+  &[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    &:hover {
+      background-color: #555;
+    }
+  }
   img {
     height: 1.3em;
+    width: auto;
     vertical-align: bottom;
     margin: 0 0.3em;
     filter: drop-shadow(0 0 1px black);
@@ -387,5 +400,36 @@ a.dim-button {
       border-bottom-right-radius: 2px;
       border-right: 0;
     }
+  }
+}
+
+.check-button {
+  background-color: #555;
+  border-radius: 2px;
+  border: none;
+  box-sizing: border-box;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 12px;
+  margin-bottom: 4px;
+  margin-right: 4px;
+  padding: 4px 6px 4px 10px;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.25);
+
+  &:hover {
+    background-color: $orange;
+  }
+
+  &:active {
+    box-shadow: none;
+    background-color: $orange;
+  }
+
+  .app-icon {
+    margin: auto 0 auto 4px;
   }
 }

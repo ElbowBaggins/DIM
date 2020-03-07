@@ -16,6 +16,7 @@ const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const csp = require('./content-security-policy');
 const PacktrackerPlugin = require('@packtracker/webpack-plugin');
+const browserslist = require('browserslist');
 
 const Visualizer = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
@@ -31,8 +32,8 @@ module.exports = (env) => {
   if (process.env.WEBPACK_DEV_SERVER) {
     if (!fs.existsSync('key.pem') || !fs.existsSync('cert.pem')) {
       console.log('Generating certificate');
-      execSync('mkcert create-ca --validity 3650');
-      execSync('mkcert create-cert --validity 3650 --key key.pem --cert cert.pem');
+      execSync('mkcert create-ca --validity 825');
+      execSync('mkcert create-cert --validity 825 --key key.pem --cert cert.pem');
     }
   }
 
@@ -99,7 +100,9 @@ module.exports = (env) => {
       // Extract the runtime into a separate chunk
       runtimeChunk: 'single',
       splitChunks: {
-        chunks: 'all',
+        chunks(chunk) {
+          return chunk !== 'browsercheck';
+        },
         automaticNameDelimiter: '-'
       },
       minimizer: [
@@ -124,7 +127,7 @@ module.exports = (env) => {
       rules: [
         {
           test: /\.js$/,
-          exclude: [/node_modules/],
+          exclude: [/node_modules/, /browsercheck\.js$/],
           loader: 'babel-loader',
           options: {
             cacheDirectory: true
@@ -326,18 +329,19 @@ module.exports = (env) => {
         $DIM_WEB_API_KEY: JSON.stringify(process.env.WEB_API_KEY),
         $DIM_WEB_CLIENT_ID: JSON.stringify(process.env.WEB_OAUTH_CLIENT_ID),
         $DIM_WEB_CLIENT_SECRET: JSON.stringify(process.env.WEB_OAUTH_CLIENT_SECRET),
+        $DIM_API_KEY: JSON.stringify(process.env.DIM_API_KEY),
 
         $GOOGLE_DRIVE_CLIENT_ID: JSON.stringify(
           '22022180893-raop2mu1d7gih97t5da9vj26quqva9dc.apps.googleusercontent.com'
         ),
 
-        $BROWSERS: JSON.stringify(packageJson.browserslist),
+        $BROWSERS: JSON.stringify(browserslist(packageJson.browserslist)),
 
         // Feature flags!
 
         // Print debug info to console about item moves
         '$featureFlags.debugMoves': JSON.stringify(!env.release),
-        '$featureFlags.reviewsEnabled': JSON.stringify(true),
+        '$featureFlags.reviewsEnabled': JSON.stringify(false),
         // Sync data over gdrive
         '$featureFlags.gdrive': JSON.stringify(true),
         '$featureFlags.debugSync': JSON.stringify(!env.release),
@@ -358,7 +362,11 @@ module.exports = (env) => {
         // Community-curated wish lists
         '$featureFlags.wishLists': JSON.stringify(true),
         // Notifications for item moves
-        '$featureFlags.moveNotifications': JSON.stringify(!env.release)
+        '$featureFlags.moveNotifications': JSON.stringify(true),
+        // Item organizer
+        '$featureFlags.organizer': JSON.stringify(env.dev),
+        // Enable vendorengrams.xyz integration
+        '$featureFlags.vendorEngrams': JSON.stringify(true)
       }),
 
       new LodashModuleReplacementPlugin({
@@ -427,7 +435,9 @@ module.exports = (env) => {
           /\.map$/,
           // Ignore both the webapp manifest and the d1-manifest files
           /data\/d1\/manifests/,
-          /manifest-webapp/
+          /manifest-webapp/,
+          // Android manifest
+          /\.well-known/
         ],
         swSrc: './src/service-worker.js',
         swDest: 'service-worker.js',

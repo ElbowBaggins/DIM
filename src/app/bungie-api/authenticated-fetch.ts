@@ -75,6 +75,12 @@ export async function fetchWithBungieOAuth(
 }
 
 async function responseIndicatesBadToken(response: Response) {
+  // https://github.com/Bungie-net/api/issues/1151: D1 endpoints have a bug where they can return 401 if you've logged in via Stadia.
+  // This hack prevents a login loop
+  if (/\/D1\/Platform\/Destiny\/\d+\/Account\/\d+\/$/.test(response.url)) {
+    return false;
+  }
+
   if (response.status === 401) {
     return true;
   }
@@ -98,7 +104,7 @@ class FatalTokenError extends Error {
   }
 }
 
-async function getActiveToken(): Promise<Tokens> {
+export async function getActiveToken(): Promise<Tokens> {
   let token = getToken();
   if (!token) {
     removeToken();

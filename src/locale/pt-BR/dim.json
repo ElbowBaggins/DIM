@@ -193,6 +193,7 @@
       "Item": "Itens que podem ser trocados no Rahool por 200 lúmen."
     },
     "HasNotes": "Exibe itens que possuem anotações.",
+    "HasOrnament": "Mostra itens que tem um ornamento aplicado.",
     "HasShader": "Mostra itens que tem um tonalizador aplicado.",
     "InLoadout": "Mostra itens que estão incluídos em qualquer tipo de set pré-configurado.",
     "Infusable": "Mostra itens que podem ser infundidos.",
@@ -337,7 +338,7 @@
     "BungieNetAlert": "Alerta da Bungie",
     "Clear": "Limpar filtro de busca",
     "CompareMatching": "Comparar itens filtrados",
-    "FilterHelp": "Buscar por item/perk ou {{example}}",
+    "FilterHelp": "Pesquisar item/perk, {{example}}, e mais",
     "FilterHelpBrief": "Procurar itens",
     "FilterMatchCount": "1 item",
     "FilterMatchCount_plural": "{{count}} itens",
@@ -516,7 +517,8 @@
     "StatTierIncludeOption": "Incluir",
     "TierNumber": "T{{tier}}",
     "Traction": "O perk Tração fornece +1 em Mobilidade.",
-    "UnlockItem": "Destravar item"
+    "UnlockItem": "Destravar item",
+    "YouTubeLink": "Assista a um tutorial sobre o Otimizador de Set no Youtube."
   },
   "Loadouts": {
     "Abandon": "Você tem certeza que gostaria de descartar esse set?",
@@ -537,6 +539,8 @@
     "Before": "Antes de '{{name}}'",
     "ChangeName": "Renomear",
     "ChooseItem": "Adicionar {{name}}",
+    "ClashingDescription": "O set {{loadoutName}} conflita com outro já existente e não pôde ser salvo. Clique aqui para abrir o painel de Criação de Set.",
+    "ClashingTitle": "Set conflitante",
     "Classified": "Alguns de seus itens são secretos e não podem ser incluídos no cálculo do Poder máximo.",
     "ClearSpace": "Mover outros itens para fora",
     "ConfirmDelete": "Tem certeza que deseja excluir '{{name}}'?",
@@ -552,7 +556,6 @@
     "FromEquipped": "Equipado",
     "GatherEngrams": "Obter engramas",
     "GatherEngramsExceptExotics": "Exóticos",
-    "GatherTokens": "Obter itens de reputação",
     "Generated": "T{{tier}} {{Mobility}}/{{Resilience}}/{{Recovery}}",
     "ItemLeveling": "Nivelamento de itens",
     "LoadoutName": "Nome do set",
@@ -571,7 +574,6 @@
     "MaximizeStat": "Maximizar atributos",
     "NoEngrams": "Nenhum engrama não-exótico disponível para transferir.",
     "NoExotics": "Nenhum engrama disponível para transferir.",
-    "NoTokens": "Não há itens de reputação disponíveis para transferência.",
     "NotificationMessage": "Enviando set com um item para o cofre.",
     "NotificationMessage_female": "Equipando set com um item em sua {{store}}",
     "NotificationMessage_female_plural": "Equipando set com {{count}} itens em sua {{store}}",
@@ -677,6 +679,13 @@
     "Complete": "Completo",
     "Incomplete": "Incompleto"
   },
+  "Organizer": {
+    "BulkMove": "Mover Para",
+    "BulkMoveLoadoutName": "Selecionado no Organizador",
+    "BulkTag": "Tag",
+    "EnabledColumns": "Colunas Habilitadas",
+    "Organizer": "Organizador"
+  },
   "Progress": {
     "Bounties": "Contratos",
     "CrucibleRank": "Ranque",
@@ -710,7 +719,7 @@
     "CsvImport": "Importar marcas/anotações do CSV",
     "Data": "Planilhas",
     "DefaultItemSizeNote": "Um item de tamanho 50px vai parecer mais nítido, sem borrar a imagem ou o texto do item.",
-    "DontForgetDupes": "Não se esqueça que você pode buscar por is:dupe ou is:dupelower para localizar rapidamente itens duplicados, e você pode usar a ferramenta de comparação para avaliar itens relacionados.",
+    "DontForgetDupes": "Não esqueça que você pode pesquisar is:dupe para encontrar facilmente itens duplicados, e então usar a ferramenta de comparação para avaliar itens relacionados.",
     "EnableAdvancedStats": "Mostrar a avaliação de estatísticas de qualidade em armaduras (D1)",
     "ExportSS": "Planilhas do inventário",
     "ExportSSHelp": "Baixe a planilha CSV de todos os seus itens para que você possa visualizar no software de sua preferência.",
@@ -838,6 +847,11 @@
     "HideCompleted": "Ocultar Concluído",
     "RevealRedacted": "Revelar Confidencial"
   },
+  "VendorEngramsXyz": {
+    "DroppingHigh": "VendorEngrams.xyz relata que este vendedor está retornando items de poder alto.",
+    "ServiceCallFailed": "Chamada ao serviço do VendorEngrams.xyz falhou.",
+    "Vote": "Achou um vendedor com itens de poder alto? Acesse VendorEngrams.xyz para votar e avise a comunidade!"
+  },
   "Vendors": {
     "Catalysts": "Catalisadores",
     "Collections": "Coleções",
@@ -904,13 +918,16 @@
     "BestRatedKey": " = perk sugerido pelo curador",
     "BestRatedTip": "Este perk foi selecionado pelo curador.",
     "Clear": "Limpar Lista de Desejos",
+    "ExternalSource": "Opcionalmente, forneça a URL para uma lista de desejos",
     "Header": "Lista de Desejos",
     "Import": "Carregar valores da Lista de Desejos",
     "ImportFailed": "Nenhuma informação de lista de desejos encontrada.",
     "ImportNoFile": "Nenhum arquivo selecionado.",
     "ImportSuccess": "Lista de desejos carregada com informações sobre um valor.{{titleAndDescription}}",
-    "ImportSuccess_plural": "Lista de desejos carregada com informações sobre {{count}} valores.{{titleAndDescription}}",
+    "ImportSuccess_plural": "Lista de desejos carregada com informações sobre {{count, number}} valores.{{titleAndDescription}}",
+    "InvalidExternalSource": "Por favor, insira uma URL válida para a fonte da sua lista de desejos externa. A URL deve começar com https://raw.githubusercontent.com",
     "Num": "{{num, number}} valores em sua lista de desejos",
+    "UpdateExternalSource": "Atualizar fonte da Lista de Desejos",
     "WishListNotes": "Anotações da Lista de Desejos: {{notes}}"
   }
 }

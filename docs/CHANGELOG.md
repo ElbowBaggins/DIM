@@ -1,5 +1,58 @@
 ## Next
 
+## 5.72.0 <span className="changelog-date">(2020-03-01)</span>
+
+* Worked around a long-standing Bungie.net bug where items would change lock state when moved. One caveat is that DIM will always preserve the lock state as it sees it, so if you've locked/unlocked in game and haven't refreshed DIM, it may revert your lock.
+
+## 5.71.0 <span className="changelog-date">(2020-02-23)</span>
+
+* Removed "Gather Reputation Tokens" feature. You can do the same thing with an "is:reptoken" search.
+* Changing language now properly updates the UI language and prompts to reload.
+* Update search filters to include 'is:hasornament' and 'is:ornamented'
+* Filter autocomplete should now work in increments, and suggest a wider variety of filters.
+* Filter autocomplete should now work in increments, and suggest a wider variety of filters
+* Farming mode now uses the same logic as regular item moves to choose your lowest-value item to send to the vault when a bucket is full. Favorite/keep your items and they'll stay put!
+* Removed the option to move tokens to the vault in farming mode.
+
+## 5.70.0 <span className="changelog-date">(2020-02-16)</span>
+
+* Removed community reviews and ratings functionality. It may return in the future, but it was broken since Shadowkeep.
+* Updated Search suggestions to sort "armor" above "armor2.0"
+* Fixed ghosts not being draggable in the Loadout Optimizer.
+* Fixed the Infusion tool not showing all possible items.
+
+## 5.69.0 <span className="changelog-date">(2020-02-09)</span>
+
+## 5.68.0 <span className="changelog-date">(2020-02-02)</span>
+
+* `wishlistnotes` autocompletes in the search filters now.
+
+## 5.67.0 <span className="changelog-date">(2020-01-26)</span>
+
+## 5.66.0 <span className="changelog-date">(2020-01-19)</span>
+
+## 5.65.0 <span className="changelog-date">(2020-01-12)</span>
+
+* Setting added for DIM to grab wish lists from external source (defaults to voltron.txt). Choose "Clear Wish List" to remove the default.
+* Avoid a bug where users who logged in via Stadia would get caught in a login loop. If you are having trouble with login, try using a non-Stadia login linked to your Bungie.net account.
+* Remove "Store" buttons from Finishers, Clan Banners, and Seasonal Artifacts.
+* Add links to YouTube tutorials for Search and Loadout Optimizer.
+
+## 5.64.0 <span className="changelog-date">(2020-01-05)</span>
+
+* Integrating with vendorengrams.xyz to find at-level vendor drops.
+* Wish lists - trash list icon works with ratings turned off.
+
+## 5.63.0 <span className="changelog-date">(2019-12-29)</span>
+
+## 5.62.0 <span className="changelog-date">(2019-12-22)</span>
+
+## 5.61.1 <span className="changelog-date">(2019-12-17)</span>
+
+* Auto refresh is disabled while Bungie.net is under heavy load.
+
+## 5.61.0 <span className="changelog-date">(2019-12-15)</span>
+
 ## 5.60.0 <span className="changelog-date">(2019-12-08)</span>
 
 * Bulk tagging no longer erroneously removes notes from selected items.

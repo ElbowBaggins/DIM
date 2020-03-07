@@ -10,8 +10,7 @@ import {
   DestinyAmmunitionType,
   ItemState,
   DestinyCollectibleComponent,
-  DestinyObjectiveProgress,
-  DamageType
+  DestinyObjectiveProgress
 } from 'bungie-api-ts/destiny2';
 import _ from 'lodash';
 import { D2ManifestDefinitions } from '../../destiny2/d2-definitions';
@@ -35,20 +34,10 @@ import { buildSockets } from './sockets';
 import { buildMasterwork } from './masterwork';
 import { buildObjectives, buildFlavorObjective } from './objectives';
 import { buildTalentGrid } from './talent-grids';
-import { energyCapacityTypeNames } from 'app/item-popup/EnergyMeter';
 import definitionReplacements from 'data/d2/item-def-workaround-replacements.json';
 
 // Maps tierType to tierTypeName in English
 const tiers = ['Unknown', 'Currency', 'Common', 'Uncommon', 'Rare', 'Legendary', 'Exotic'];
-
-export const damageTypeNames: { [key in DamageType]: string | null } = {
-  [DamageType.None]: null,
-  [DamageType.Kinetic]: 'kinetic',
-  [DamageType.Arc]: 'arc',
-  [DamageType.Thermal]: 'solar',
-  [DamageType.Void]: 'void',
-  [DamageType.Raid]: 'raid'
-};
 
 /**
  * A factory service for producing DIM inventory items.
@@ -284,10 +273,11 @@ export function makeItem(
       : instanceDef?.primaryStat || null;
 
   // if a damageType isn't found, use the item's energy capacity element instead
-  const damageType = instanceDef?.damageType || itemDef.defaultDamageType || DamageType.None;
-  const dmgName =
-    damageTypeNames[damageType] ||
-    (instanceDef?.energy && energyCapacityTypeNames[instanceDef.energy.energyType]) ||
+  const element =
+    (instanceDef?.damageTypeHash !== undefined &&
+      defs.DamageType.get(instanceDef.damageTypeHash)) ||
+    (instanceDef?.energy?.energyTypeHash !== undefined &&
+      defs.EnergyType.get(instanceDef.energy.energyTypeHash)) ||
     null;
 
   const collectible =
@@ -338,10 +328,9 @@ export function makeItem(
     equipRequiredLevel: instanceDef?.equipRequiredLevel ?? 0,
     maxStackSize: Math.max(itemDef.inventory.maxStackSize, 1),
     uniqueStack: Boolean(itemDef.inventory.stackUniqueLabel?.length),
-    // 0: titan, 1: hunter, 2: warlock, 3: any
-    classType: itemDef.classType,
+    classType: itemDef.classType, // 0: titan, 1: hunter, 2: warlock, 3: any
     classTypeNameLocalized: getClassTypeNameLocalized(itemDef.classType, defs),
-    dmg: dmgName,
+    element,
     energy: instanceDef?.energy ?? null,
     visible: true,
     lockable: item.lockable,
@@ -384,7 +373,9 @@ export function makeItem(
   // *able
   createdItem.taggable = Boolean(createdItem.lockable || createdItem.classified);
   createdItem.comparable = Boolean(createdItem.equipment && createdItem.lockable);
-  createdItem.reviewable = Boolean($featureFlags.reviewsEnabled && isWeaponOrArmor(createdItem));
+  createdItem.reviewable = Boolean(
+    $featureFlags.reviewsEnabled && isWeaponOrArmor1OrExoticArmor2(createdItem)
+  );
 
   if (createdItem.primStat) {
     const statDef = defs.Stat.get(createdItem.primStat.statHash);
@@ -540,12 +531,14 @@ export function makeItem(
   return createdItem;
 }
 
-function isWeaponOrArmor(item: D2Item) {
+function isWeaponOrArmor1OrExoticArmor2(item: D2Item) {
   return (
     item.primStat &&
     (item.primStat.statHash === 1480404414 || // weapon
-      item.primStat.statHash === 3897883278)
-  ); // armor
+      (item.primStat.statHash === 3897883278 && // armor
+        (!item.energy || // energy is an armor 2.0 signifier
+          item.isExotic))) // but we want to allow exotic armor 2.0 reviews
+  );
 }
 
 function isLegendaryOrBetter(item) {

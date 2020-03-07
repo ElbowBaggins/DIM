@@ -1,25 +1,18 @@
 import React from 'react';
 import clsx from 'clsx';
 import { DimItem, DimTalentGrid } from './item-types';
-import { TagValue, itemTagList } from './dim-item-info';
+import { TagValue } from './dim-item-info';
 import BadgeInfo from './BadgeInfo';
 import BungieImage, { bungieNetPath } from '../dim-ui/BungieImage';
 import { percent } from '../shell/filters';
 import { AppIcon, lockIcon, stickyNoteIcon } from '../shell/icons';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { InventoryWishListRoll, toUiWishListRoll } from '../wishlists/wishlists';
 import styles from './InventoryItem.m.scss';
 import NewItemIndicator from './NewItemIndicator';
 import subclassArc from 'images/subclass-arc.png';
 import subclassSolar from 'images/subclass-solar.png';
 import subclassVoid from 'images/subclass-void.png';
-
-const tagIcons: { [tag: string]: IconDefinition | undefined } = {};
-itemTagList.forEach((tag) => {
-  if (tag.type) {
-    tagIcons[tag.type] = tag.icon;
-  }
-});
+import TagIcon from './TagIcon';
 
 interface Props {
   item: DimItem;
@@ -117,7 +110,7 @@ export default function InventoryItem({
       {(tag || item.locked || notes) && (
         <div className={styles.icons}>
           {item.locked && <AppIcon className={styles.icon} icon={lockIcon} />}
-          {tag && tagIcons[tag] && <AppIcon className={styles.icon} icon={tagIcons[tag]!} />}
+          {tag && <TagIcon className={styles.icon} tag={tag} />}
           {notes && <AppIcon className={styles.icon} icon={stickyNoteIcon} />}
         </div>
       )}
@@ -183,15 +176,15 @@ const nodeHashToSubclassPath: {
   3006627468: { base: subclassArc,   position: 'middle', superHash: superIconNodeHashes.whirlwindGuard },
   313617030:  { base: subclassArc,   position: 'bottom', superHash: superIconNodeHashes.arcStaff       },
   // Gunslinger
-  637433069:  { base: subclassSolar, position: 'top',    superHash: superIconNodeHashes.goldenGun      },
+  2242504056: { base: subclassSolar, position: 'top',    superHash: superIconNodeHashes.goldenGun      },
   1590824323: { base: subclassSolar, position: 'middle', superHash: superIconNodeHashes.bladeBarrage   },
-  2382523579: { base: subclassSolar, position: 'bottom', superHash: superIconNodeHashes.goldenGun      },
+  2805396803: { base: subclassSolar, position: 'bottom', superHash: superIconNodeHashes.goldenGun      },
   // Nightstalker
   277476372:  { base: subclassVoid,  position: 'top',    superHash: superIconNodeHashes.shadowshot     },
   499823166:  { base: subclassVoid,  position: 'middle', superHash: superIconNodeHashes.spectralBlades },
   4025960910: { base: subclassVoid,  position: 'bottom', superHash: superIconNodeHashes.shadowshot     },
   // Dawnblade
-  3352782816: { base: subclassSolar, position: 'top',    superHash: superIconNodeHashes.daybreak       },
+  1893159641: { base: subclassSolar, position: 'top',    superHash: superIconNodeHashes.daybreak       },
   935376049:  { base: subclassSolar, position: 'middle', superHash: superIconNodeHashes.wellOfRadiance },
   966868917:  { base: subclassSolar, position: 'bottom', superHash: superIconNodeHashes.daybreak       },
   // Stormcaller

@@ -65,12 +65,15 @@ function ItemSockets({
   onShiftClick,
   dispatch
 }: Props) {
-  useEffect(() => {
-    // TODO: want to prevent double loading these
-    if (!bestPerks.size) {
-      dispatch(getItemReviews(item));
-    }
-  }, [item, bestPerks.size, dispatch]);
+  if ($featureFlags.reviewsEnabled) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      // TODO: want to prevent double loading these
+      if (!bestPerks.size) {
+        dispatch(getItemReviews(item));
+      }
+    }, [item, bestPerks.size, dispatch]);
+  }
 
   const [socketInMenu, setSocketInMenu] = useState<DimSocket | null>(null);
 
@@ -156,16 +159,16 @@ export default connect<StoreProps>(mapStateToProps)(ItemSockets);
 function bestRatedIcon(
   category: DimSocketCategory,
   bestPerks: Set<number>,
-  curationEnabled?: boolean,
-  inventoryCuratedRoll?: InventoryWishListRoll
+  wishlistEnabled?: boolean,
+  inventoryWishListRoll?: InventoryWishListRoll
 ) {
   const returnAsWishlisted =
-    (!curationEnabled || !inventoryCuratedRoll) && anyBestRatedUnselected(category, bestPerks)
+    (!wishlistEnabled || !inventoryWishListRoll) && anyBestRatedUnselected(category, bestPerks)
       ? false // false for a review recommendation
-      : curationEnabled &&
-        inventoryCuratedRoll &&
-        !inventoryCuratedRoll.isUndesirable &&
-        anyWishListRolls(category, inventoryCuratedRoll)
+      : wishlistEnabled &&
+        inventoryWishListRoll &&
+        !inventoryWishListRoll.isUndesirable &&
+        anyWishListRolls(category, inventoryWishListRoll)
       ? true // true for a wishlisted perk
       : null; // don't give a thumbs up at all
 

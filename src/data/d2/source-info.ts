@@ -467,7 +467,8 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
     itemHashes: [],
     sourceHashes: [
       594540014, // Source: Exotic quest "Make Bows, Not War." Available only to Season Pass owners.
-      1593696611 // Source: Season Pass Reward
+      1593696611, // Source: Season Pass Reward
+      3073252746 // Source: Earned as a Season of the Undying Season Pass reward.
     ]
   },
   shaxx: {
@@ -529,6 +530,13 @@ const D2Sources: { [key: string]: { itemHashes: number[]; sourceHashes: number[]
       1564061133, // Source: Complete this reward's associated Vanguard quest.
       2317365255, // Source: Complete the "A Loud Racket" quest.
       2527168932 // Source: Complete strikes and earn rank-up packages from Commander Zavala.
+    ]
+  },
+  sundial: {
+    itemHashes: [],
+    sourceHashes: [
+      1618754228, // Source: Acquired from the Sundial activity on Mercury.
+      2627087475 // Source: Complete obelisk bounties and increase the Resonance Rank of obelisks across the system.
     ]
   },
   tangled: {

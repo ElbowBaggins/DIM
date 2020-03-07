@@ -6,7 +6,6 @@ import { AppIcon, starIcon } from '../shell/icons';
 import clsx from 'clsx';
 import { t } from 'app/i18next-t';
 import RecoilStat from 'app/item-popup/RecoilStat';
-import { energyCapacityTypeNames } from '../item-popup/EnergyMeter';
 import ElementIcon from 'app/inventory/ElementIcon';
 
 export default function CompareStat({
@@ -17,21 +16,21 @@ export default function CompareStat({
 }: {
   stat: StatInfo;
   item: DimItem;
-  highlight: number | string | undefined;
-  setHighlight(value?: string | number): void;
+  highlight?: number | string | undefined;
+  setHighlight?(value?: string | number): void;
 }) {
   const itemStat = stat.getStat(item);
 
   return (
     <div
       className={clsx({ highlight: stat.id === highlight })}
-      onMouseOver={() => setHighlight(stat.id)}
+      onMouseOver={() => setHighlight?.(stat.id)}
       style={getColor(statRange(itemStat, stat), 'color')}
     >
       <span>
         {stat.id === 'Rating' && <AppIcon icon={starIcon} />}
-        {stat.id === 'EnergyCapacity' && itemStat && (
-          <ElementIcon element={energyCapacityTypeNames[itemStat.statHash]} />
+        {item.isDestiny2() && stat.id === 'EnergyCapacity' && itemStat && item.energy && (
+          <ElementIcon element={item.element} />
         )}
         {itemStat?.value !== undefined ? (
           itemStat.statHash === 2715839340 ? (
