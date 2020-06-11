@@ -1,3 +1,4 @@
+import { LockableBuckets, LockedModBase, LockedArmor2ModMap } from './../types';
 import _ from 'lodash';
 import { DimSocket, DimItem, D2Item } from '../../inventory/item-types';
 import { ArmorSet, LockedItemType, StatTypes, LockedMap, LockedMod, MinMaxIgnored } from '../types';
@@ -6,10 +7,12 @@ import {
   DestinyInventoryItemDefinition,
   TierType,
   DestinyItemSubType,
-  DestinyEnergyType
+  DestinyEnergyType,
 } from 'bungie-api-ts/destiny2';
 import { chainComparator, compareBy, Comparator } from 'app/utils/comparators';
 import { statKeys } from '../process';
+import { getSpecialtySocketMetadata } from 'app/utils/item-utils';
+import { canSetTakeMods } from './mod-utils';
 
 /**
  * Plug item hashes that should be excluded from the list of selectable perks.
@@ -21,7 +24,7 @@ const unwantedSockets = new Set([
   1514141500, // Solar damage resistance
   2973005342, // Shaders
   3356843615, // Ornaments
-  2457930460 // Empty masterwork slot
+  2457930460, // Empty masterwork slot
 ]);
 
 /**
@@ -112,21 +115,88 @@ function getComparatorsForMatchedSetSorting(statOrder: StatTypes[], enabledStats
 }
 
 /**
+ * This function checks if the first valid set in an ArmorSet slot all the mods in
+ * seasonalMods. Currently it does not care for the element affinity or the armour
+ * of the mod, as that can be switched in game.
+ *
+ * The mods passed in should only be seasonal mods.
+ */
+function canAllModsBeUsed(set: ArmorSet, seasonalMods: readonly LockedModBase[]) {
+  if (seasonalMods.length > 5) {
+    return false;
+  }
+
+  const modArrays = {};
+
+  for (const mod of seasonalMods) {
+    for (const item of set.firstValidSet) {
+      const itemModCategories =
+        getSpecialtySocketMetadata(item)?.compatiblePlugCategoryHashes || [];
+
+      // Not currently checking energy of mod and armour matches.
+      if (itemModCategories.includes(mod.mod.plug.plugCategoryHash)) {
+        if (!modArrays[item.bucket.hash]) {
+          modArrays[item.bucket.hash] = [];
+        }
+
+        modArrays[item.bucket.hash].push(mod);
+      }
+    }
+  }
+
+  for (const helmetMod of modArrays[LockableBuckets.helmet] || [null]) {
+    for (const armsMod of modArrays[LockableBuckets.gauntlets] || [null]) {
+      for (const chestMod of modArrays[LockableBuckets.chest] || [null]) {
+        for (const legsMod of modArrays[LockableBuckets.leg] || [null]) {
+          for (const classMod of modArrays[LockableBuckets.classitem] || [null]) {
+            const applicableMods = [helmetMod, armsMod, chestMod, legsMod, classMod].filter(
+              Boolean
+            );
+            const containsAllLocked = seasonalMods.every((item) => applicableMods.includes(item));
+
+            if (containsAllLocked) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
  * Filter sets down based on stat filters, locked perks, etc.
  */
 export function filterGeneratedSets(
   sets: readonly ArmorSet[],
   minimumPower: number,
   lockedMap: LockedMap,
+  lockedArmor2ModMap: LockedArmor2ModMap,
+  lockedSeasonalMods: readonly LockedModBase[],
   stats: Readonly<{ [statType in StatTypes]: MinMaxIgnored }>,
   statOrder: StatTypes[],
   enabledStats: Set<StatTypes>
 ) {
   let matchedSets = Array.from(sets);
-  // Filter before set tiers are generated
-  if (minimumPower > 0) {
-    matchedSets = matchedSets.filter((set) => set.maxPower >= minimumPower);
-  }
+
+  matchedSets = matchedSets.filter((set) => {
+    if (set.maxPower < minimumPower) {
+      return false;
+    }
+
+    if (lockedSeasonalMods.length && !canAllModsBeUsed(set, lockedSeasonalMods)) {
+      return false;
+    }
+
+    // TODO this is too restrictive as there may be other combinations that can take the mods
+    if ($featureFlags.armor2ModPicker && !canSetTakeMods(set.firstValidSet, lockedArmor2ModMap)) {
+      return false;
+    }
+
+    return true;
+  });
 
   matchedSets = matchedSets.sort(
     chainComparator(...getComparatorsForMatchedSetSorting(statOrder, enabledStats))

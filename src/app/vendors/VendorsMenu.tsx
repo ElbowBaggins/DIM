@@ -1,16 +1,17 @@
-import React from 'react';
+import BungieImage from 'app/dim-ui/BungieImage';
 import { D2VendorGroup } from './d2-vendors';
 import PageWithMenu from 'app/dim-ui/PageWithMenu';
-import BungieImage from 'app/dim-ui/BungieImage';
+import React from 'react';
 import { VendorDrop } from 'app/vendorEngramsXyzApi/vendorDrops';
 import { isDroppingHigh } from 'app/vendorEngramsXyzApi/vendorEngramsXyzService';
-import vendorEngramSvg from '../../images/engram.svg';
+import menuStyles from 'app/dim-ui/PageWithMenu.m.scss';
 import styles from './VendorsMenu.m.scss';
 import { t } from 'app/i18next-t';
+import vendorEngramSvg from '../../images/engram.svg';
 
 export default function VendorsMenu({
   groups,
-  vendorEngramDrops
+  vendorEngramDrops,
 }: {
   groups: readonly D2VendorGroup[];
   vendorEngramDrops: readonly VendorDrop[] | undefined;
@@ -21,11 +22,14 @@ export default function VendorsMenu({
         <React.Fragment key={group.def.hash}>
           <PageWithMenu.MenuHeader>{group.def.categoryName}</PageWithMenu.MenuHeader>
           {group.vendors.map((vendor) => {
-            const matchingVendor =
-              vendorEngramDrops && vendorEngramDrops.find((vd) => vd.vendorId === vendor.def.hash);
+            const matchingVendor = vendorEngramDrops?.find((vd) => vd.vendorId === vendor.def.hash);
             const droppingHigh = matchingVendor && isDroppingHigh(matchingVendor);
             return (
-              <PageWithMenu.MenuButton anchor={vendor.def.hash.toString()} key={vendor.def.hash}>
+              <PageWithMenu.MenuButton
+                className={menuStyles.withEngram}
+                anchor={vendor.def.hash.toString()}
+                key={vendor.def.hash}
+              >
                 {droppingHigh && (
                   <img
                     className={styles.xyzEngram}

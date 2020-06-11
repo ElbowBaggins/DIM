@@ -31,6 +31,22 @@
   position: relative;
   margin-right: var(--item-margin);
   margin-bottom: var(--item-margin);
+  .close {
+    right: 2px;
+  }
+}
+
+.loadout-item-class-icon {
+  box-sizing: border-box;
+  width: calc(var(--item-size) / 4) !important;
+  height: calc(var(--item-size) / 4) !important;
+  font-size: calc(var(--item-size) * 0.71);
+  color: white;
+  position: absolute;
+  z-index: 1;
+  left: 1px;
+  bottom: 1px;
+  display: block;
 }
 
 .loadout-content {
@@ -86,12 +102,7 @@
       margin-bottom: 0;
     }
 
-    > * {
-      margin-right: 4px;
-      &:last-child {
-        margin-right: 0;
-      }
-    }
+    @include horizontal-space-children(4px);
   }
 }
 
@@ -191,14 +202,12 @@
     align-items: center;
     justify-content: center;
     margin: 0;
+    text-decoration: none;
   }
 
   .equipped {
     .item {
       margin: 0;
-    }
-    .close {
-      right: 2px;
     }
     .pull-item-button {
       width: var(--item-size);

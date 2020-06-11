@@ -35,14 +35,14 @@ function vendorEngramsFetch(url: string) {
   const request = new Request(url, {
     method: 'POST',
     headers: {
-      Accept: 'application/json'
-    }
+      Accept: 'application/json',
+    },
   });
 
   return Promise.resolve(fetch(request));
 }
 
-export function getAllVendorDrops(): ThunkResult<Promise<VendorDrop[]>> {
+export function getAllVendorDrops(): ThunkResult<VendorDrop[]> {
   return async (dispatch, getStores) => {
     const vendorDropsState = getStores().vendorDrops;
 

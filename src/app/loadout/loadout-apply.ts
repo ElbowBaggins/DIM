@@ -1,8 +1,8 @@
-import { DimStore, StoreServiceType } from 'app/inventory/store-types';
-import { Loadout } from './loadout-types';
+import { DimStore } from 'app/inventory/store-types';
+import { Loadout, LoadoutItem } from './loadout-types';
 import { queuedAction } from 'app/inventory/action-queue';
 import { loadingTracker } from 'app/shell/loading-tracker';
-import { showNotification, NotificationType } from 'app/notifications/notifications';
+import { showNotification } from 'app/notifications/notifications';
 import { loadoutNotification } from 'app/inventory/MoveNotifications';
 import { t } from 'app/i18next-t';
 import { DimItem } from 'app/inventory/item-types';
@@ -11,14 +11,28 @@ import { dimItemService, MoveReservations } from 'app/inventory/item-move-servic
 import { default as reduxStore } from '../store/store';
 import { savePreviousLoadout } from './actions';
 import copy from 'fast-copy';
+import { loadoutFromAllItems } from './loadout-utils';
+import { getItemAcrossStores, getVault, getStore } from 'app/inventory/stores-helpers';
+import { updateCharacters } from 'app/inventory/d2-stores';
 
 const outOfSpaceWarning = _.throttle((store) => {
   showNotification({
     type: 'info',
     title: t('FarmingMode.OutOfRoomTitle'),
-    body: t('FarmingMode.OutOfRoom', { character: store.name })
+    body: t('FarmingMode.OutOfRoom', { character: store.name }),
   });
 }, 60000);
+
+interface Scope {
+  failed: number;
+  total: number;
+  successfulItems: DimItem[];
+  errors: {
+    item: DimItem | null;
+    message: string;
+    level: string;
+  }[];
+}
 
 /**
  * Apply a loadout - a collection of items to be moved and possibly equipped all at once.
@@ -42,76 +56,50 @@ export async function applyLoadout(
   const loadoutPromise = applyLoadoutFn(store, loadout, allowUndo);
   loadingTracker.addPromise(loadoutPromise);
 
-  if ($featureFlags.moveNotifications) {
-    showNotification(
-      loadoutNotification(
-        loadout,
-        store,
-        // TODO: allow for an error view function to be passed in
-        // TODO: cancel button!
-        loadoutPromise.then((scope) => {
-          if (scope.failed > 0) {
-            if (scope.failed === scope.total) {
-              throw new Error(t('Loadouts.AppliedError'));
-            } else {
-              throw new Error(
-                t('Loadouts.AppliedWarn', { failed: scope.failed, total: scope.total })
-              );
-            }
+  showNotification(
+    loadoutNotification(
+      loadout,
+      store,
+      // TODO: allow for an error view function to be passed in
+      // TODO: cancel button!
+      loadoutPromise.then((scope) => {
+        if (scope.failed > 0) {
+          if (scope.failed === scope.total) {
+            throw new Error(t('Loadouts.AppliedError'));
+          } else {
+            throw new Error(
+              t('Loadouts.AppliedWarn', { failed: scope.failed, total: scope.total })
+            );
           }
-        })
-      )
-    );
-  }
+        }
+      })
+    )
+  );
 
-  const scope = await loadoutPromise;
-
-  if (!$featureFlags.moveNotifications) {
-    let value: NotificationType = 'success';
-
-    let message = t('Loadouts.Applied', {
-      // t('Loadouts.Applied_male')
-      // t('Loadouts.Applied_female')
-      // t('Loadouts.Applied_male_plural')
-      // t('Loadouts.Applied_female_plural')
-      count: scope.total,
-      store: store.name,
-      context: store.genderName
-    });
-
-    if (scope.failed > 0) {
-      if (scope.failed === scope.total) {
-        value = 'error';
-        message = t('Loadouts.AppliedError');
-      } else {
-        value = 'warning';
-        message = t('Loadouts.AppliedWarn', { failed: scope.failed, total: scope.total });
-      }
-    }
-
-    showNotification({ type: value, title: loadout.name, body: message });
-  }
+  await loadoutPromise;
 }
 
-async function doApplyLoadout(store: DimStore, loadout: Loadout, allowUndo = false) {
+async function doApplyLoadout(
+  store: DimStore,
+  loadout: Loadout,
+  allowUndo = false
+): Promise<Scope> {
   const storeService = store.getStoresService();
   if (allowUndo && !store.isVault) {
     reduxStore.dispatch(
       savePreviousLoadout({
         storeId: store.id,
         loadoutId: loadout.id,
-        previousLoadout: store.loadoutFromCurrentlyEquipped(
-          t('Loadouts.Before', { name: loadout.name })
-        )
+        previousLoadout: loadoutFromAllItems(store, t('Loadouts.Before', { name: loadout.name })),
       })
     );
   }
 
-  let items: DimItem[] = copy(Object.values(loadout.items)).flat();
+  let items: LoadoutItem[] = copy(loadout.items);
 
   const loadoutItemIds = items.map((i) => ({
     id: i.id,
-    hash: i.hash
+    hash: i.hash,
   }));
 
   // Only select stuff that needs to change state
@@ -121,7 +109,15 @@ async function doApplyLoadout(store: DimStore, loadout: Loadout, allowUndo = fal
     // provide a more accurate count of total items
     if (!item) {
       totalItems--;
-      return true;
+      return false;
+    }
+
+    // only try to equip items that are equippable - otherwise ignore them
+    const applicableSubclass =
+      item.type !== 'Class' || (pseudoItem.equipped && item.canBeEquippedBy(store));
+    if (!applicableSubclass) {
+      totalItems--;
+      return false;
     }
 
     const notAlreadyThere =
@@ -131,17 +127,7 @@ async function doApplyLoadout(store: DimStore, loadout: Loadout, allowUndo = fal
       // necessarily mean to de-equip it.
       (pseudoItem.equipped && !item.equipped) ||
       pseudoItem.amount > 1;
-
     return notAlreadyThere;
-  });
-
-  // only try to equip subclasses that are equippable, since we allow multiple in a loadout
-  items = items.filter((item) => {
-    const ok = item.type !== 'Class' || !item.equipped || item.canBeEquippedBy(store);
-    if (!ok) {
-      totalItems--;
-    }
-    return ok;
   });
 
   // vault can't equip
@@ -162,11 +148,11 @@ async function doApplyLoadout(store: DimStore, loadout: Loadout, allowUndo = fal
 
   // Stuff that's equipped on another character. We can bulk-dequip these
   const itemsToDequip = items.filter((pseudoItem) => {
-    const item = storeService.getItemAcrossStores(pseudoItem);
+    const item = getItemAcrossStores(storeService.getStores(), pseudoItem);
     return item?.equipped && item.owner !== store.id;
   });
 
-  const scope = {
+  const scope: Scope = {
     failed: 0,
     total: totalItems,
     successfulItems: [] as DimItem[],
@@ -174,20 +160,19 @@ async function doApplyLoadout(store: DimStore, loadout: Loadout, allowUndo = fal
       item: DimItem | null;
       message: string;
       level: string;
-    }[]
+    }[],
   };
 
   if (itemsToDequip.length > 1) {
-    const realItemsToDequip = _.compact(
-      itemsToDequip.map((i) => storeService.getItemAcrossStores(i))
-    );
+    const stores = storeService.getStores();
+    const realItemsToDequip = _.compact(itemsToDequip.map((i) => getItemAcrossStores(stores, i)));
     const dequips = _.map(
       _.groupBy(realItemsToDequip, (i) => i.owner),
       (dequipItems, owner) => {
         const equipItems = _.compact(
           dequipItems.map((i) => dimItemService.getSimilarItem(i, loadoutItemIds))
         );
-        return dimItemService.equipItems(storeService.getStore(owner)!, equipItems);
+        return dimItemService.equipItems(getStore(storeService.getStores(), owner)!, equipItems);
       }
     );
     await Promise.all(dequips);
@@ -195,7 +180,7 @@ async function doApplyLoadout(store: DimStore, loadout: Loadout, allowUndo = fal
 
   await applyLoadoutItems(store, items, loadoutItemIds, scope);
 
-  let equippedItems: DimItem[];
+  let equippedItems: LoadoutItem[];
   if (itemsToEquip.length > 1) {
     // Use the bulk equipAll API to equip all at once.
     itemsToEquip = itemsToEquip.filter((i) => scope.successfulItems.find((si) => si.id === i.id));
@@ -206,28 +191,25 @@ async function doApplyLoadout(store: DimStore, loadout: Loadout, allowUndo = fal
   }
 
   if (equippedItems.length < itemsToEquip.length) {
-    const failedItems = itemsToEquip.filter((i) => !equippedItems.find((it) => it.id === i.id));
+    const failedItems = _.compact(
+      itemsToEquip
+        .filter((i) => !equippedItems.find((it) => it.id === i.id))
+        .map((i) => getLoadoutItem(i, store))
+    );
     failedItems.forEach((item) => {
       scope.failed++;
       scope.errors.push({
         level: 'error',
         item,
-        message: t('Loadouts.CouldNotEquip', { itemname: item.name })
+        message: t('Loadouts.CouldNotEquip', { itemname: item.name }),
       });
-      if (!$featureFlags.moveNotifications) {
-        showNotification({
-          type: 'error',
-          title: loadout.name,
-          body: t('Loadouts.CouldNotEquip', { itemname: item.name })
-        });
-      }
     });
   }
 
   // We need to do this until https://github.com/DestinyItemManager/DIM/issues/323
   // is fixed on Bungie's end. When that happens, just remove this call.
   if (scope.successfulItems.length > 0) {
-    await storeService.updateCharacters();
+    await (reduxStore.dispatch(updateCharacters()) as any);
   }
 
   if (loadout.clearSpace) {
@@ -236,7 +218,8 @@ async function doApplyLoadout(store: DimStore, loadout: Loadout, allowUndo = fal
         .flat()
         .map((i) => getLoadoutItem(i, store))
     );
-    await clearSpaceAfterLoadout(storeService.getStore(store.id)!, allItems, storeService);
+    const stores = storeService.getStores();
+    await clearSpaceAfterLoadout(stores, getStore(stores, store.id)!, allItems);
   }
 
   return scope;
@@ -245,7 +228,7 @@ async function doApplyLoadout(store: DimStore, loadout: Loadout, allowUndo = fal
 // Move one loadout item at a time. Called recursively to move items!
 async function applyLoadoutItems(
   store: DimStore,
-  items: DimItem[],
+  items: LoadoutItem[],
   loadoutItemIds: { id: string; hash: number }[],
   scope: {
     failed: number;
@@ -257,7 +240,7 @@ async function applyLoadoutItems(
       level: string;
     }[];
   }
-) {
+): Promise<void> {
   if (items.length === 0) {
     // We're done!
     return;
@@ -280,9 +263,9 @@ async function applyLoadoutItems(
           const storesByAmount = _.sortBy(
             otherStores.map((store) => ({
               store,
-              amount: store.amountOfItem(pseudoItem)
+              amount: store.amountOfItem(pseudoItem),
             })),
-            'amount'
+            (v) => v.amount
           ).reverse();
 
           let totalAmount = amountAlreadyHave;
@@ -296,7 +279,7 @@ async function applyLoadoutItems(
                 t('Loadouts.TooManyRequested', {
                   total: totalAmount,
                   itemname: item.name,
-                  requested: pseudoItem.amount
+                  requested: pseudoItem.amount,
                 })
               );
               error.level = 'warn';
@@ -322,20 +305,14 @@ async function applyLoadoutItems(
   } catch (e) {
     const level = e.level || 'error';
     if (level === 'error') {
+      console.error('Failed to apply loadout item', item?.name, e);
       scope.failed++;
     }
     scope.errors.push({
       item,
       level: e.level,
-      message: e.message
+      message: e.message,
     });
-    if (!$featureFlags.moveNotifications) {
-      showNotification({
-        type: e.level || 'error',
-        title: item ? item.name : 'Unknown',
-        body: e.message
-      });
-    }
   }
 
   // Keep going
@@ -344,8 +321,9 @@ async function applyLoadoutItems(
 
 // A special getItem that takes into account the fact that
 // subclasses have unique IDs, and emblems/shaders/etc are interchangeable.
-function getLoadoutItem(pseudoItem: DimItem, store: DimStore): DimItem | null {
-  let item = store.getStoresService().getItemAcrossStores(_.omit(pseudoItem, 'amount'));
+function getLoadoutItem(pseudoItem: LoadoutItem, store: DimStore): DimItem | null {
+  const stores = store.getStoresService().getStores();
+  let item = getItemAcrossStores(stores, _.omit(pseudoItem, 'amount'));
   if (!item) {
     return null;
   }
@@ -354,18 +332,14 @@ function getLoadoutItem(pseudoItem: DimItem, store: DimStore): DimItem | null {
     item =
       store.items.find((i) => i.hash === pseudoItem.hash) ||
       // Then other characters
-      store.getStoresService().getItemAcrossStores({ hash: item.hash }) ||
+      getItemAcrossStores(stores, { hash: item.hash }) ||
       item;
   }
   return item;
 }
 
-function clearSpaceAfterLoadout(
-  store: DimStore,
-  items: DimItem[],
-  storesService: StoreServiceType
-) {
-  const itemsByType = _.groupBy(items, (i) => i.bucket.id);
+function clearSpaceAfterLoadout(stores: DimStore[], store: DimStore, items: DimItem[]) {
+  const itemsByType = _.groupBy(items, (i) => i.bucket.hash);
 
   const reservations: MoveReservations = {};
   // reserve one space in the active character
@@ -403,10 +377,11 @@ function clearSpaceAfterLoadout(
     }
 
     // Reserve enough space to only leave the loadout items
-    reservations[store.id] = loadoutItems[0].bucket.capacity - numUnequippedLoadoutItems;
+    reservations[store.id][loadoutItems[0].bucket.type!] =
+      loadoutItems[0].bucket.capacity - numUnequippedLoadoutItems;
   });
 
-  return clearItemsOffCharacter(store, itemsToRemove, reservations, storesService);
+  return clearItemsOffCharacter(stores, store, itemsToRemove, reservations);
 }
 
 /**
@@ -415,21 +390,19 @@ function clearSpaceAfterLoadout(
  * Shows a warning if there isn't any space.
  */
 export async function clearItemsOffCharacter(
+  stores: DimStore[],
   store: DimStore,
   items: DimItem[],
-  reservations: MoveReservations,
-  storesService: StoreServiceType
+  reservations: MoveReservations
 ) {
   for (const item of items) {
     try {
       // Move a single item. We reevaluate each time in case something changed.
-      const vault = storesService.getVault()!;
+      const vault = getVault(stores)!;
       const vaultSpaceLeft = vault.spaceLeftForItem(item);
       if (vaultSpaceLeft <= 1) {
         // If we're down to one space, try putting it on other characters
-        const otherStores = storesService
-          .getStores()
-          .filter((s) => !s.isVault && s.id !== store.id);
+        const otherStores = stores.filter((s) => !s.isVault && s.id !== store.id);
         const otherStoresWithSpace = otherStores.filter((store) => store.spaceLeftForItem(item));
 
         if (otherStoresWithSpace.length) {
@@ -442,7 +415,7 @@ export async function clearItemsOffCharacter(
               'to',
               otherStoresWithSpace[0].name,
               'from',
-              storesService.getStore(item.owner)!.name
+              getStore(stores, item.owner)!.name
             );
           }
           await dimItemService.moveTo(
@@ -468,7 +441,7 @@ export async function clearItemsOffCharacter(
           'to',
           vault.name,
           'from',
-          storesService.getStore(item.owner)!.name
+          getStore(stores, item.owner)!.name
         );
       }
       await dimItemService.moveTo(item, vault, false, item.amount, items, reservations);

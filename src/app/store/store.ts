@@ -16,7 +16,7 @@ const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
       serialize: false,
       actionsBlacklist: [getType(update), getType(setD1Manifest), getType(setD2Manifest)],
       stateSanitizer: (state: RootState) =>
-        state.inventory ? { ...state, inventory: '<<EXCLUDED>>', manifest: '<<EXCLUDED>>' } : state
+        state.inventory ? { ...state, inventory: '<<EXCLUDED>>', manifest: '<<EXCLUDED>>' } : state,
     })
   : compose;
 
@@ -24,5 +24,12 @@ const store = createStore<RootState, any, {}, {}>(
   allReducers,
   composeEnhancers(applyMiddleware(thunk))
 );
+
+// Allow hot-reloading reducers
+if (module.hot) {
+  module.hot.accept('./reducers', () => {
+    store.replaceReducer(allReducers);
+  });
+}
 
 export default store;

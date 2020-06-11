@@ -20,12 +20,12 @@ function mapStateToProps() {
   const storeSelector = farmingStoreSelector();
   return (state: RootState): StoreProps => ({
     makeRoomForItems: settingsSelector(state).farmingMakeRoomForItems,
-    store: storeSelector(state)
+    store: storeSelector(state),
   });
 }
 
 const mapDispatchToProps = {
-  setSetting
+  setSetting,
 };
 type DispatchProps = typeof mapDispatchToProps;
 
@@ -34,7 +34,7 @@ type Props = StoreProps & DispatchProps;
 function D1Farming({ store, makeRoomForItems, setSetting }: Props) {
   const i18nData = {
     store: store?.name,
-    context: store?.genderName
+    context: store?.genderName,
   };
 
   const makeRoomForItemsChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +45,7 @@ function D1Farming({ store, makeRoomForItems, setSetting }: Props) {
   return (
     <TransitionGroup component={null}>
       {store && (
-        <CSSTransition clsx="farming" timeout={{ enter: 500, exit: 500 }}>
+        <CSSTransition classNames="farming" timeout={{ enter: 500, exit: 500 }}>
           <div id="item-farming">
             <div>
               <p>

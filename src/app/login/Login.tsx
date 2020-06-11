@@ -1,15 +1,21 @@
-import React from 'react';
-import { Transition } from '@uirouter/react';
+import React, { useState } from 'react';
 import { t } from 'app/i18next-t';
 import { oauthClientId } from '../bungie-api/bungie-api-utils';
-import uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import './login.scss';
+import HelpLink from 'app/dim-ui/HelpLink';
+import { useLocation } from 'react-router';
+import { parse } from 'simple-query-string';
 
-export default function Login({ transition }: { transition: Transition }) {
+const dimApiHelpLink =
+  'https://github.com/DestinyItemManager/DIM/wiki/DIM-Sync-(new-storage-for-tags,-loadouts,-and-settings)';
+
+export default function Login() {
+  const { search } = useLocation();
+  const { reauth } = parse(search);
   const authorizationState = uuidv4();
   localStorage.setItem('authorizationState', authorizationState);
   const clientId = oauthClientId();
-  const reauth = transition.params().reauth;
 
   const isStandalone =
     (window.navigator as any).standalone === true ||
@@ -24,6 +30,10 @@ export default function Login({ transition }: { transition: Transition }) {
       reauth ? '&reauth=true' : ''
     }`;
 
+  const [apiPermissionGranted, setApiPermissionGranted] = useState(
+    localStorage.getItem('dim-api-enabled') !== 'false'
+  );
+
   if (isOldiOS && isStandalone) {
     return (
       <div className="billboard">
@@ -35,6 +45,13 @@ export default function Login({ transition }: { transition: Transition }) {
     );
   }
 
+  localStorage.setItem('dim-api-enabled', JSON.stringify(apiPermissionGranted));
+
+  const onApiPermissionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    localStorage.setItem('dim-api-enabled', JSON.stringify(event.target.checked));
+    setApiPermissionGranted(event.target.checked);
+  };
+
   return (
     <div className="billboard">
       <div className="content">
@@ -45,6 +62,19 @@ export default function Login({ transition }: { transition: Transition }) {
             {t('Views.Login.Auth')}
           </a>
         </p>
+        <div className="help">
+          <input
+            type="checkbox"
+            id="apiPermissionGranted"
+            name="apiPermissionGranted"
+            checked={apiPermissionGranted}
+            onChange={onApiPermissionChange}
+          />
+          <label htmlFor="apiPermissionGranted">
+            {t('Storage.EnableDimApi')} <HelpLink helpLink={dimApiHelpLink} />
+          </label>
+          <div className="fineprint">{t('Storage.DimApiFinePrint')}</div>
+        </div>
         <p className="help">
           <a
             rel="noopener noreferrer"

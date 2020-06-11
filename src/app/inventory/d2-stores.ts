@@ -5,46 +5,106 @@ import {
   DestinyCollectiblesComponent,
   DestinyProfileCollectiblesComponent,
   DestinyProfileResponse,
-  DestinyGameVersions,
   DestinyCollectibleComponent,
-  DestinyClass
+  DestinyItemComponent,
 } from 'bungie-api-ts/destiny2';
 import _ from 'lodash';
-import { compareAccounts, DestinyAccount } from '../accounts/destiny-account';
+import { DestinyAccount } from '../accounts/destiny-account';
 import { getCharacters, getStores } from '../bungie-api/destiny2-api';
 import { bungieErrorToaster } from '../bungie-api/error-toaster';
 import { getBuckets } from '../destiny2/d2-buckets';
 import { getDefinitions, D2ManifestDefinitions } from '../destiny2/d2-definitions';
 import { bungieNetPath } from '../dim-ui/BungieImage';
 import { reportException } from '../utils/exceptions';
-import { optimalLoadout, getLight } from '../loadout/loadout-utils';
+import { getLight } from '../loadout/loadout-utils';
 import { resetIdTracker, processItems } from './store/d2-item-factory';
-import { makeVault, makeCharacter } from './store/d2-store-factory';
-import { NewItemsService } from './store/new-items';
-import { getItemInfoSource, ItemInfoSource } from './dim-item-info';
+import { makeVault, makeCharacter, getCharacterStatsData } from './store/d2-store-factory';
+import { cleanInfos } from './dim-item-info';
 import { t } from 'app/i18next-t';
-import { D2Vault, D2Store, D2StoreServiceType, DimStore } from './store-types';
-import { DimItem, D2Item } from './item-types';
+import { D2Vault, D2Store, D2StoreServiceType } from './store-types';
 import { InventoryBuckets } from './inventory-buckets';
 import { fetchRatings } from '../item-review/destiny-tracker.service';
 import store from '../store/store';
-import { update } from './actions';
+import { update, loadNewItems, error, charactersUpdated, CharacterInfo } from './actions';
 import { loadingTracker } from '../shell/loading-tracker';
-import { D2SeasonInfo, D2SeasonEnum, D2CurrentSeason, D2CalculatedSeason } from './d2-season-info';
 import { showNotification } from '../notifications/notifications';
-import { clearRatings } from '../item-review/actions';
 import { BehaviorSubject, Subject, ConnectableObservable } from 'rxjs';
-import { distinctUntilChanged, switchMap, publishReplay, merge, take } from 'rxjs/operators';
-import { getActivePlatform } from 'app/accounts/platforms';
+import { switchMap, publishReplay, merge, take } from 'rxjs/operators';
 import helmetIcon from '../../../destiny-icons/armor_types/helmet.svg';
 import xpIcon from '../../images/xpIcon.svg';
+import { maxLightItemSet } from 'app/loadout/auto-loadouts';
+import { storesSelector } from './selectors';
+import { ThunkResult } from 'app/store/reducers';
+import { currentAccountSelector } from 'app/accounts/reducer';
+import { getCharacterStatsData as getD1CharacterStatsData } from './store/character-utils';
+import { getCharacters as d1GetCharacters } from '../bungie-api/destiny1-api';
+import { getArtifactBonus } from './stores-helpers';
+
+/**
+ * Update the high level character information for all the stores
+ * (level, power, stats, etc.). This does not update the
+ * items in the stores.
+ *
+ * This works on both D1 and D2.
+ *
+ * TODO: Instead of this, update per-character after equip/dequip
+ */
+export function updateCharacters(): ThunkResult {
+  return async (dispatch, getState) => {
+    const account = currentAccountSelector(getState());
+    if (!account) {
+      return;
+    }
+
+    const defs =
+      account.destinyVersion === 2
+        ? getState().manifest.d2Manifest
+        : getState().manifest.d1Manifest;
+
+    if (!defs) {
+      return;
+    }
+
+    let characters: CharacterInfo[] = [];
+    if (account.destinyVersion === 2) {
+      const profileInfo = await getCharacters(account);
+      characters = profileInfo.characters.data
+        ? Object.values(profileInfo.characters.data).map((character) => ({
+            characterId: character.characterId,
+            level: character.levelProgression.level,
+            powerLevel: character.light,
+            background: bungieNetPath(character.emblemBackgroundPath),
+            icon: bungieNetPath(character.emblemPath),
+            stats: getCharacterStatsData(getState().manifest.d2Manifest!, character.stats),
+            color: character.emblemColor,
+          }))
+        : [];
+    } else {
+      const profileInfo = await d1GetCharacters(account);
+      characters = profileInfo.map((character) => ({
+        characterId: character.id,
+        level: character.base.characterLevel,
+        powerLevel: character.base.characterBase.powerLevel,
+        percentToNextLevel: character.base.percentToNextLevel / 100,
+        background: bungieNetPath(character.base.backgroundPath),
+        icon: bungieNetPath(character.base.emblemPath),
+        stats: getD1CharacterStatsData(
+          getState().manifest.d1Manifest!,
+          character.base.characterBase
+        ),
+      }));
+    }
+
+    dispatch(charactersUpdated(characters));
+  };
+}
 
 export function mergeCollectibles(
   profileCollectibles: SingleComponentResponse<DestinyProfileCollectiblesComponent>,
   characterCollectibles: DictionaryComponentResponse<DestinyCollectiblesComponent>
 ) {
   const allCollectibles = {
-    ...profileCollectibles.data?.collectibles
+    ...profileCollectibles.data?.collectibles,
   };
 
   _.forIn(characterCollectibles.data || {}, ({ collectibles }) => {
@@ -61,8 +121,6 @@ export const D2StoresService = makeD2StoresService();
  * consolidate them, or at least organize them better.
  */
 function makeD2StoresService(): D2StoreServiceType {
-  let _stores: D2Store[] = [];
-
   // A subject that keeps track of the current account. Because it's a
   // behavior subject, any new subscriber will always see its last
   // value.
@@ -74,8 +132,6 @@ function makeD2StoresService(): D2StoreServiceType {
   // A stream of stores that switches on account changes and supports reloading.
   // This is a ConnectableObservable that must be connected to start.
   const storesStream = accountStream.pipe(
-    // Only emit when the account changes
-    distinctUntilChanged(compareAccounts),
     // But also re-emit the current value of the account stream
     // whenever the force reload triggers
     merge(forceReloadTrigger.pipe(switchMap(() => accountStream.pipe(take(1))))),
@@ -90,65 +146,12 @@ function makeD2StoresService(): D2StoreServiceType {
   //       nothing changed!
 
   const service = {
-    getActiveStore: () => _stores.find((s) => s.current),
-    getStores: () => _stores,
-    getStore: (id: string) => _stores.find((s) => s.id === id),
-    getVault: () => _stores.find((s) => s.isVault) as D2Vault | undefined,
-    getAllItems: () => _stores.flatMap((s) => s.items),
+    getStores: () => storesSelector(store.getState()) as D2Store[],
     getStoresStream,
-    getItemAcrossStores,
-    updateCharacters,
     reloadStores,
-    refreshRatingsData,
-    touch() {
-      store.dispatch(update({ stores: _stores }));
-    }
   };
 
   return service;
-
-  /**
-   * Find an item among all stores that matches the params provided.
-   */
-  function getItemAcrossStores(params: {
-    id?: string;
-    hash?: number;
-    notransfer?: boolean;
-    amount?: number;
-  }) {
-    const predicate = _.iteratee(_.pick(params, 'id', 'hash', 'notransfer', 'amount')) as (
-      i: DimItem
-    ) => boolean;
-    for (const store of _stores) {
-      const result = store.items.find(predicate);
-      if (result) {
-        return result;
-      }
-    }
-    return undefined;
-  }
-
-  /**
-   * Update the high level character information for all the stores
-   * (level, light, int/dis/str, etc.). This does not update the
-   * items in the stores - to do that, call reloadStores.
-   */
-  async function updateCharacters(
-    account: DestinyAccount = getActivePlatform()!
-  ): Promise<D2Store[]> {
-    const [defs, profileInfo] = await Promise.all([getDefinitions(), getCharacters(account)]);
-    // TODO: create a new store
-    _stores.forEach((dStore) => {
-      if (!dStore.isVault) {
-        const bStore = profileInfo.characters.data?.[dStore.id];
-        if (bStore) {
-          dStore.updateCharacterInfo(defs, bStore);
-        }
-      }
-    });
-    service.touch();
-    return _stores;
-  }
 
   /**
    * Set the current account, and get a stream of stores updates.
@@ -185,22 +188,16 @@ function makeD2StoresService(): D2StoreServiceType {
    * Returns a promise for a fresh view of the stores and their items.
    */
   async function loadStores(account: DestinyAccount): Promise<D2Store[] | undefined> {
-    // Save a snapshot of all the items before we update
-    const previousItems = NewItemsService.buildItemSet(_stores);
-
     resetIdTracker();
 
     try {
-      const [defs, buckets, newItems, itemInfoService, profileInfo] = await Promise.all([
+      const [defs, buckets, , profileInfo] = await Promise.all([
         getDefinitions(),
         getBuckets(),
-        NewItemsService.loadNewItems(account),
-        getItemInfoSource(account),
-        getStores(account)
+        store.dispatch(loadNewItems(account)),
+        getStores(account),
       ]);
       console.time('Process inventory');
-
-      NewItemsService.applyRemovedNewItems(newItems);
 
       // TODO: components may be hidden (privacy)
 
@@ -222,15 +219,7 @@ function makeD2StoresService(): D2StoreServiceType {
         profileInfo.characterCollectibles
       );
 
-      const vault = processVault(
-        defs,
-        buckets,
-        profileInfo,
-        mergedCollectibles,
-        previousItems,
-        newItems,
-        itemInfoService
-      );
+      const vault = processVault(defs, buckets, profileInfo, mergedCollectibles);
 
       const characters = Object.keys(profileInfo.characters.data).map((characterId) =>
         processCharacter(
@@ -239,19 +228,11 @@ function makeD2StoresService(): D2StoreServiceType {
           characterId,
           profileInfo,
           mergedCollectibles,
-          previousItems,
-          newItems,
-          itemInfoService,
           lastPlayedDate
         )
       );
 
-      // Save the list of new item IDs
-      NewItemsService.applyRemovedNewItems(newItems);
-      NewItemsService.saveNewItems(newItems, account);
-
       const stores = [...characters, vault];
-      _stores = stores;
 
       updateVaultCounts(buckets, characters.find((c) => c.current)!, vault);
 
@@ -259,26 +240,34 @@ function makeD2StoresService(): D2StoreServiceType {
         store.dispatch(fetchRatings(stores));
       }
 
-      itemInfoService.cleanInfos(stores);
+      store.dispatch(cleanInfos(stores));
 
-      stores.forEach((s) => updateBasePower(account, stores, s, defs));
+      for (const s of stores) {
+        updateBasePower(stores, s, defs);
+      }
 
       // Let our styling know how many characters there are
-      // TODO: this should be an effect on the stores component
+      // TODO: this should be an effect on the stores component, except it's also
+      // used on D1 activities page
       document
         .querySelector('html')!
-        .style.setProperty('--num-characters', String(_stores.length - 1));
+        .style.setProperty('--num-characters', String(stores.length - 1));
       console.timeEnd('Process inventory');
 
       console.time('Inventory state update');
-      store.dispatch(update({ stores, buckets, newItems, profileResponse: profileInfo }));
+      store.dispatch(update({ stores, buckets, profileResponse: profileInfo }));
       console.timeEnd('Inventory state update');
 
       return stores;
     } catch (e) {
       console.error('Error loading stores', e);
       reportException('d2stores', e);
-      showNotification(bungieErrorToaster(e));
+      if (storesSelector(store.getState()).length > 0) {
+        // don't replace their inventory with the error, just notify
+        showNotification(bungieErrorToaster(e));
+      } else {
+        store.dispatch(error(e));
+      }
       // It's important that we swallow all errors here - otherwise
       // our observable will fail on the first error. We could work
       // around that with some rxjs operators, but it's easier to
@@ -298,9 +287,6 @@ function makeD2StoresService(): D2StoreServiceType {
     mergedCollectibles: {
       [hash: number]: DestinyCollectibleComponent;
     },
-    previousItems: Set<string>,
-    newItems: Set<string>,
-    itemInfoService: ItemInfoSource,
     lastPlayedDate: Date
   ): D2Store {
     const character = profileInfo.characters.data![characterId];
@@ -318,15 +304,19 @@ function makeD2StoresService(): D2StoreServiceType {
     store.progression = progressions ? { progressions: Object.values(progressions) } : null;
 
     // We work around the weird account-wide buckets by assigning them to the current character
-    let items = characterInventory.concat(Object.values(characterEquipment));
+    const items = characterInventory.slice();
+    for (const k in characterEquipment) {
+      items.push(characterEquipment[k]);
+    }
+
     if (store.current) {
-      items = items.concat(
-        Object.values(profileInventory).filter((i) => {
-          const bucket = buckets.byHash[i.bucketHash];
-          // items that can be stored in a vault
-          return bucket && (bucket.vaultBucket || bucket.type === 'SpecialOrders');
-        })
-      );
+      for (const i of profileInventory) {
+        const bucket = buckets.byHash[i.bucketHash];
+        // items that can be stored in a vault
+        if (bucket && (bucket.vaultBucket || bucket.type === 'SpecialOrders')) {
+          items.push(i);
+        }
+      }
     }
 
     const processedItems = processItems(
@@ -335,19 +325,16 @@ function makeD2StoresService(): D2StoreServiceType {
       store,
       items,
       itemComponents,
-      previousItems,
-      newItems,
-      itemInfoService,
       mergedCollectibles,
       uninstancedItemObjectives
     );
     store.items = processedItems;
     // by type-bucket
-    store.buckets = _.groupBy(store.items, (i) => i.location.id);
+    store.buckets = _.groupBy(store.items, (i) => i.location.hash);
     // Fill in any missing buckets
     Object.values(buckets.byType).forEach((bucket) => {
-      if (!store.buckets[bucket.id]) {
-        store.buckets[bucket.id] = [];
+      if (!store.buckets[bucket.hash]) {
+        store.buckets[bucket.hash] = [];
       }
     });
     return store;
@@ -359,10 +346,7 @@ function makeD2StoresService(): D2StoreServiceType {
     profileInfo: DestinyProfileResponse,
     mergedCollectibles: {
       [hash: number]: DestinyCollectibleComponent;
-    },
-    previousItems: Set<string>,
-    newItems: Set<string>,
-    itemInfoService: ItemInfoSource
+    }
   ): D2Vault {
     const profileInventory = profileInfo.profileInventory.data
       ? profileInfo.profileInventory.data.items
@@ -374,38 +358,39 @@ function makeD2StoresService(): D2StoreServiceType {
 
     const store = makeVault(defs, profileCurrencies);
 
-    const items = Object.values(profileInventory).filter((i) => {
+    const items: DestinyItemComponent[] = [];
+    for (const i of profileInventory) {
       const bucket = buckets.byHash[i.bucketHash];
       // items that cannot be stored in the vault, and are therefore *in* a vault
-      return bucket && !bucket.vaultBucket && bucket.type !== 'SpecialOrders';
-    });
+      if (bucket && !bucket.vaultBucket && bucket.type !== 'SpecialOrders') {
+        items.push(i);
+      }
+    }
+
     const processedItems = processItems(
       defs,
       buckets,
       store,
       items,
       itemComponents,
-      previousItems,
-      newItems,
-      itemInfoService,
       mergedCollectibles
     );
     store.items = processedItems;
     // by type-bucket
-    store.buckets = _.groupBy(store.items, (i) => i.location.id);
+    store.buckets = _.groupBy(store.items, (i) => i.location.hash);
     store.vaultCounts = {};
     // Fill in any missing buckets
     Object.values(buckets.byType).forEach((bucket) => {
-      if (!store.buckets[bucket.id]) {
-        store.buckets[bucket.id] = [];
+      if (!store.buckets[bucket.hash]) {
+        store.buckets[bucket.hash] = [];
       }
       if (bucket.vaultBucket) {
-        const vaultBucketId = bucket.vaultBucket.id;
+        const vaultBucketId = bucket.vaultBucket.hash;
         store.vaultCounts[vaultBucketId] = store.vaultCounts[vaultBucketId] || {
           count: 0,
-          bucket: bucket.accountWide ? bucket : bucket.vaultBucket
+          bucket: bucket.accountWide ? bucket : bucket.vaultBucket,
         };
-        store.vaultCounts[vaultBucketId].count += store.buckets[bucket.id].length;
+        store.vaultCounts[vaultBucketId].count += store.buckets[bucket.hash].length;
       }
     });
     return store;
@@ -425,16 +410,11 @@ function makeD2StoresService(): D2StoreServiceType {
   }
 
   // Add a fake stat for "max base power"
-  function updateBasePower(
-    account: DestinyAccount,
-    stores: D2Store[],
-    store: D2Store,
-    defs: D2ManifestDefinitions
-  ) {
+  function updateBasePower(stores: D2Store[], store: D2Store, defs: D2ManifestDefinitions) {
     if (!store.isVault) {
       const def = defs.Stat.get(1935470627);
-      const maxBasePower = getLight(store, maxBasePowerLoadout(stores, store));
-      const hasClassified = _stores.some((s) =>
+      const maxBasePower = getLight(store, maxLightItemSet(stores, store));
+      const hasClassified = stores.some((s) =>
         s.items.some(
           (i) =>
             i.classified &&
@@ -443,98 +423,33 @@ function makeD2StoresService(): D2StoreServiceType {
       );
 
       store.stats.maxGearPower = {
-        id: -3,
+        hash: -3,
         name: t('Stats.MaxGearPower'),
         hasClassified,
         description: def.displayProperties.description,
-        value: maxPowerString(maxBasePower, hasClassified),
+        value: maxBasePower,
         icon: helmetIcon,
-        tiers: [maxBasePower],
-        tierMax: getCurrentMaxBasePower(account)
       };
 
       const artifactPower = getArtifactBonus(store);
       store.stats.powerModifier = {
-        id: -2,
+        hash: -2,
         name: t('Stats.PowerModifier'),
         hasClassified: false,
         description: def.displayProperties.description,
         value: artifactPower,
         icon: xpIcon,
-        tiers: [maxBasePower],
-        tierMax: getCurrentMaxBasePower(account)
       };
 
       store.stats.maxTotalPower = {
-        id: -1,
+        hash: -1,
         name: t('Stats.MaxTotalPower'),
         hasClassified,
         description: def.displayProperties.description,
-        value: maxPowerString(maxBasePower, hasClassified, artifactPower),
+        value: maxBasePower + artifactPower,
         icon: bungieNetPath(def.displayProperties.icon),
-        tiers: [maxBasePower],
-        tierMax: getCurrentMaxBasePower(account)
       };
     }
-  }
-
-  function getCurrentMaxBasePower(account: DestinyAccount) {
-    if (!account.versionsOwned || DestinyGameVersions.Forsaken & account.versionsOwned) {
-      return D2SeasonInfo[D2CalculatedSeason].maxPower || D2SeasonInfo[D2CurrentSeason].maxPower;
-    }
-    if (DestinyGameVersions.DLC2 & account.versionsOwned) {
-      return D2SeasonInfo[D2SeasonEnum.WARMIND].maxPower;
-    }
-    if (DestinyGameVersions.DLC1 & account.versionsOwned) {
-      return D2SeasonInfo[D2SeasonEnum.CURSE_OF_OSIRIS].maxPower;
-    }
-    if (DestinyGameVersions.Destiny2 & account.versionsOwned) {
-      return D2SeasonInfo[D2SeasonEnum.RED_WAR].maxPower;
-    }
-    return D2SeasonInfo[D2SeasonEnum.FORSAKEN].maxPower;
-  }
-
-  function maxBasePowerLoadout(stores: D2Store[], store: D2Store) {
-    const statHashes = new Set([
-      1480404414, // Attack
-      3897883278 // Defense
-    ]);
-
-    const applicableItems = stores.flatMap((s) =>
-      s.items.filter(
-        (i) =>
-          (i.canBeEquippedBy(store) ||
-            (i.location.inPostmaster &&
-              (i.classType === DestinyClass.Unknown || i.classType === store.classType) &&
-              // nothing we are too low-level to equip
-              i.equipRequiredLevel <= store.level)) &&
-          i.primStat?.value && // has a primary stat (sanity check)
-          statHashes.has(i.primStat.statHash) // one of our selected stats
-      )
-    );
-
-    const bestItemFn = (item: D2Item) => {
-      let value = item.basePower;
-
-      // Break ties when items have the same stats. Note that this should only
-      // add less than 0.25 total, since in the exotics special case there can be
-      // three items in consideration and you don't want to go over 1 total.
-      if (item.owner === store.id) {
-        // Prefer items owned by this character
-        value += 0.1;
-        if (item.equipped) {
-          // Prefer them even more if they're already equipped
-          value += 0.1;
-        }
-      } else if (item.owner === 'vault') {
-        // Prefer items in the vault over items owned by a different character
-        // (but not as much as items owned by this character)
-        value += 0.05;
-      }
-      return value;
-    };
-
-    return optimalLoadout(applicableItems, bestItemFn, '');
   }
 
   // TODO: vault counts are silly and convoluted. We really need an
@@ -543,36 +458,14 @@ function makeD2StoresService(): D2StoreServiceType {
     // Fill in any missing buckets
     Object.values(buckets.byType).forEach((bucket) => {
       if (bucket.accountWide && bucket.vaultBucket) {
-        const vaultBucketId = bucket.id;
+        const vaultBucketId = bucket.hash;
         vault.vaultCounts[vaultBucketId] = vault.vaultCounts[vaultBucketId] || {
           count: 0,
-          bucket
+          bucket,
         };
-        vault.vaultCounts[vaultBucketId].count += activeStore.buckets[bucket.id].length;
+        vault.vaultCounts[vaultBucketId].count += activeStore.buckets[bucket.hash].length;
       }
     });
     activeStore.vault = vault; // god help me
   }
-
-  function refreshRatingsData() {
-    if ($featureFlags.reviewsEnabled) {
-      store.dispatch(clearRatings());
-      store.dispatch(fetchRatings(_stores));
-    }
-  }
-}
-
-/** Get the bonus power from the Seasonal Artifact */
-export function getArtifactBonus(store: DimStore) {
-  const artifact = (store.buckets[1506418338] || []).find((i) => i.equipped);
-  return artifact?.primStat?.value || 0;
-}
-
-/** The string form of power, with annotations to show has classified and seasonal artifact */
-export function maxPowerString(maxBasePower: number, hasClassified: boolean, powerModifier = 0) {
-  if (powerModifier > 0) {
-    maxBasePower += powerModifier;
-  }
-  const asterisk = hasClassified ? '*' : '';
-  return `${maxBasePower}${asterisk}`;
 }

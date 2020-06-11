@@ -6,9 +6,9 @@ import './ItemSockets.scss';
 import { D2ManifestDefinitions } from '../destiny2/d2-definitions';
 import { D2Item, DimSocketCategory, DimPlug, DimSocket } from '../inventory/item-types';
 import { InventoryWishListRoll } from '../wishlists/wishlists';
-import { connect, DispatchProp } from 'react-redux';
+import { connect } from 'react-redux';
 import { wishListsEnabledSelector, inventoryWishListsSelector } from '../wishlists/reducer';
-import { RootState } from '../store/reducers';
+import { RootState, ThunkDispatchProp } from '../store/reducers';
 import { getReviews } from '../item-review/reducer';
 import { D2ItemUserReview } from '../item-review/d2-dtr-api-types';
 import { ratePerks } from '../destinyTrackerApi/d2-perkRater';
@@ -18,6 +18,7 @@ import BestRatedIcon from './BestRatedIcon';
 import ReactDOM from 'react-dom';
 import SocketDetails from './SocketDetails';
 import { LockedItemType } from 'app/loadout-builder/types';
+import { emptySet } from 'app/utils/empty';
 
 interface ProvidedProps {
   item: D2Item;
@@ -39,19 +40,21 @@ interface StoreProps {
 const EMPTY = [];
 
 function mapStateToProps(state: RootState, { item }: ProvidedProps): StoreProps {
-  const reviewResponse = getReviews(item, state);
+  const reviewResponse = $featureFlags.reviewsEnabled ? getReviews(item, state) : undefined;
   const reviews = reviewResponse ? reviewResponse.reviews : EMPTY;
-  const bestPerks = ratePerks(item, reviews as D2ItemUserReview[]);
+  const bestPerks = $featureFlags.reviewsEnabled
+    ? ratePerks(item, reviews as D2ItemUserReview[])
+    : emptySet<number>();
   return {
     wishListsEnabled: wishListsEnabledSelector(state),
     inventoryWishListRoll: inventoryWishListsSelector(state)[item.id],
     bestPerks,
     defs: state.manifest.d2Manifest,
-    isPhonePortrait: state.shell.isPhonePortrait
+    isPhonePortrait: state.shell.isPhonePortrait,
   };
 }
 
-type Props = ProvidedProps & StoreProps & DispatchProp<any>;
+type Props = ProvidedProps & StoreProps & ThunkDispatchProp;
 
 function ItemSockets({
   defs,
@@ -63,7 +66,7 @@ function ItemSockets({
   classesByHash,
   isPhonePortrait,
   onShiftClick,
-  dispatch
+  dispatch,
 }: Props) {
   if ($featureFlags.reviewsEnabled) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -235,7 +238,7 @@ function Socket({
   bestPerks,
   isPhonePortrait,
   onClick,
-  onShiftClick
+  onShiftClick,
 }: {
   defs: D2ManifestDefinitions;
   item: D2Item;
@@ -254,7 +257,7 @@ function Socket({
   return (
     <div
       className={clsx('item-socket', {
-        hasMenu
+        hasMenu,
       })}
     >
       {socket.plugOptions.map((plug) => (

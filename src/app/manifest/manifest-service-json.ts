@@ -5,36 +5,65 @@ import { reportException } from '../utils/exceptions';
 import { getManifest as d2GetManifest } from '../bungie-api/destiny2-api';
 import { settingsReady } from '../settings/settings';
 import { t } from 'app/i18next-t';
-import { DestinyManifest } from 'bungie-api-ts/destiny2';
+import { DestinyManifest, DestinyInventoryItemDefinition } from 'bungie-api-ts/destiny2';
 import { deepEqual } from 'fast-equals';
 import { showNotification } from '../notifications/notifications';
-import { BehaviorSubject, Subject } from 'rxjs';
 import { settingsSelector } from 'app/settings/reducer';
 import store from 'app/store/store';
+import { emptyObject, emptyArray } from 'app/utils/empty';
+import { loadingStart, loadingEnd } from 'app/shell/actions';
 
 // This file exports D2ManifestService at the bottom of the
 // file (TS wants us to declare classes before using them)!
 
+// TODO: replace this with a redux action!
+
 // Testing flags
 const alwaysLoadRemote = false;
 
-export interface ManifestServiceState {
-  loaded: boolean;
-  error?: Error;
-  statusText?: string;
-}
+type Mutable<T> = { -readonly [P in keyof T]: Mutable<T[P]> };
+/** Functions that can reduce the size of a table after it's downloaded but before it's saved to cache. */
+const tableTrimmers = {
+  DestinyInventoryItemDefinition(table: { [hash: number]: DestinyInventoryItemDefinition }) {
+    for (const key in table) {
+      const def = table[key] as Mutable<DestinyInventoryItemDefinition>;
+
+      // Deleting properties can actually make memory usage go up as V8 replaces some efficient
+      // structures from JSON parsing. Only replace objects with empties, and always test with the
+      // memory profiler. Don't assume that deleting something makes this smaller.
+
+      def.action = emptyObject();
+      def.backgroundColor = emptyObject();
+      def.translationBlock = emptyObject();
+      if (def.equippingBlock?.displayStrings?.length) {
+        def.equippingBlock.displayStrings = emptyArray();
+      }
+      if (def.preview?.derivedItemCategories?.length) {
+        def.preview.derivedItemCategories = emptyArray();
+      }
+      if (def.inventory.bucketTypeHash !== 3284755031) {
+        def.talentGrid = emptyObject();
+      }
+
+      if (def.sockets) {
+        def.sockets.intrinsicSockets = emptyArray();
+        for (const socket of def.sockets.socketEntries) {
+          if (socket.reusablePlugSetHash && socket.reusablePlugItems.length > 0) {
+            socket.reusablePlugItems = emptyArray();
+          }
+        }
+      }
+    }
+
+    return table;
+  },
+};
 
 class ManifestService {
   version: string | null = null;
-  state: ManifestServiceState = {
-    loaded: false
-  };
-  state$ = new BehaviorSubject<ManifestServiceState>(this.state);
-  /** A signal for when we've loaded a new remote manifest. */
-  newManifest$ = new Subject();
 
   /**
-   * This tells users to reload the extension. It fires no more
+   * This tells users to reload the app. It fires no more
    * often than every 10 seconds, and only warns if the manifest
    * version has actually changed.
    */
@@ -50,7 +79,7 @@ class ManifestService {
           showNotification({
             type: 'warning',
             title: t('Manifest.Outdated'),
-            body: t('Manifest.OutdatedExplanation')
+            body: t('Manifest.OutdatedExplanation'),
           });
         }
       });
@@ -58,7 +87,7 @@ class ManifestService {
     10000,
     {
       leading: true,
-      trailing: false
+      trailing: false,
     }
   );
 
@@ -70,40 +99,19 @@ class ManifestService {
     readonly getManifestApi: () => Promise<DestinyManifest>
   ) {}
 
-  set loaded(loaded: boolean) {
-    this.setState({ loaded, error: undefined });
-  }
-
-  set statusText(statusText: string) {
-    this.setState({ statusText });
-  }
-
   getManifest(tableWhitelist: string[]): Promise<object> {
     if (this.manifestPromise) {
       return this.manifestPromise;
     }
-
-    this.loaded = false;
 
     this.manifestPromise = this.doGetManifest(tableWhitelist);
 
     return this.manifestPromise;
   }
 
-  getRecord(db: object, table: string, id: number): object | null {
-    const dbTable = db[table];
-    if (!dbTable) {
-      throw new Error(`Table ${table} does not exist in the manifest`);
-    }
-    return dbTable[id];
-  }
-
-  getAllRecords(db: object, table: string): object {
-    return db[table];
-  }
-
   // This is not an anonymous arrow function inside getManifest because of https://bugs.webkit.org/show_bug.cgi?id=166879
   private async doGetManifest(tableWhitelist: string[]) {
+    store.dispatch(loadingStart(t('Manifest.Load')));
     try {
       console.time('Load manifest');
       const manifest = await this.loadManifest(tableWhitelist);
@@ -113,7 +121,6 @@ class ManifestService {
       return manifest;
     } catch (e) {
       let message = e.message || e;
-      const statusText = t('Manifest.Error', { error: message });
 
       if (e instanceof TypeError || e.status === -1) {
         message = navigator.onLine
@@ -124,38 +131,58 @@ class ManifestService {
       } else if (e.status < 200 || e.status >= 400) {
         message = t('BungieService.NetworkError', {
           status: e.status,
-          statusText: e.statusText
+          statusText: e.statusText,
         });
       } else {
         // Something may be wrong with the manifest
-        this.deleteManifestFile();
+        await this.deleteManifestFile();
       }
 
+      const statusText = t('Manifest.Error', { error: message });
       this.manifestPromise = null;
-      this.setState({ error: e, statusText });
       console.error('Manifest loading error', { error: e }, e);
       reportException('manifest load', e);
-      throw new Error(message);
+      const error = new Error(statusText);
+      error.name = 'ManifestError';
+      throw error;
     } finally {
+      store.dispatch(loadingEnd(t('Manifest.Load')));
       console.timeEnd('Load manifest');
     }
   }
 
   private async loadManifest(tableWhitelist: string[]): Promise<any> {
-    const data = await this.getManifestApi();
-    await settingsReady; // wait for settings to be ready
-    const language = settingsSelector(store.getState()).language;
-    const path = data.jsonWorldContentPaths[language] || data.jsonWorldContentPaths.en;
+    let version: string | null = null;
+    let components: {
+      [key: string]: string;
+    } | null = null;
+    try {
+      const data = await this.getManifestApi();
+      await settingsReady; // wait for settings to be ready
+      const language = settingsSelector(store.getState()).language;
+      const path = data.jsonWorldContentPaths[language] || data.jsonWorldContentPaths.en;
+      components =
+        data.jsonWorldComponentContentPaths[language] || data.jsonWorldComponentContentPaths.en;
 
-    // Use the path as the version, rather than the "version" field, because
-    // Bungie can update the manifest file without changing that version.
-    const version = path;
-    this.version = version;
+      // Use the path as the version, rather than the "version" field, because
+      // Bungie can update the manifest file without changing that version.
+      version = path;
+      this.version = version;
+    } catch (e) {
+      // If we can't get info about the current manifest, try to just use whatever's already saved.
+      version = localStorage.getItem(this.localStorageKey);
+      if (version) {
+        this.version = version;
+        return this.loadManifestFromCache(version, tableWhitelist);
+      } else {
+        throw e;
+      }
+    }
 
     try {
       return await this.loadManifestFromCache(version, tableWhitelist);
     } catch (e) {
-      return this.loadManifestRemote(version, path, tableWhitelist);
+      return this.loadManifestRemote(version, components, tableWhitelist);
     }
   }
 
@@ -164,22 +191,50 @@ class ManifestService {
    */
   private async loadManifestRemote(
     version: string,
-    path: string,
+    components: {
+      [key: string]: string;
+    },
     tableWhitelist: string[]
   ): Promise<object> {
-    this.statusText = `${t('Manifest.Download')}...`;
+    store.dispatch(loadingStart(t('Manifest.Download')));
+    try {
+      const manifest = {};
+      // Adding a cache buster to work around bad cached CloudFlare data: https://github.com/DestinyItemManager/DIM/issues/5101
+      // try canonical component URL which should likely be already cached,
+      // then fall back to appending "?dim" then "?dim-[random numbers]",
+      // in case cloudflare has inappropriately cached another domain's CORS headers or a 404 that's no longer a 404
+      const cacheBusterStrings = [
+        '',
+        '?dim',
+        `?dim-${Math.random().toString().split('.')[1] ?? 'dimCacheBust'}`,
+      ];
+      const futures = tableWhitelist
+        .map((t) => `Destiny${t}Definition`)
+        .map(async (table) => {
+          let response: Response | null = null;
+          let error: any = null;
 
-    const response = await fetch(`https://www.bungie.net${path}`);
-    const body = await (response.ok ? response.json() : Promise.reject(response));
-    this.statusText = `${t('Manifest.Build')}...`;
+          for (const query of cacheBusterStrings) {
+            try {
+              response = await fetch(`https://www.bungie.net${components[table]}${query}`);
+              if (response.ok) break;
+              error = error ?? response;
+            } catch (e) {
+              error = error ?? e;
+            }
+          }
+          const body = await (response?.ok ? response.json() : Promise.reject(error));
+          manifest[table] = tableTrimmers[table] ? tableTrimmers[table](body) : body;
+        });
 
-    const manifest = _.pick(body, ...tableWhitelist.map((t) => `Destiny${t}Definition`));
+      await Promise.all(futures);
 
-    // We intentionally don't wait on this promise
-    this.saveManifestToIndexedDB(manifest, version, tableWhitelist);
-
-    this.newManifest$.next();
-    return manifest;
+      // We intentionally don't wait on this promise
+      this.saveManifestToIndexedDB(manifest, version, tableWhitelist);
+      return manifest;
+    } finally {
+      store.dispatch(loadingEnd(t('Manifest.Download')));
+    }
   }
 
   // This is not an anonymous arrow function inside loadManifestRemote because of https://bugs.webkit.org/show_bug.cgi?id=166879
@@ -198,14 +253,14 @@ class ManifestService {
       showNotification({
         title: t('Help.NoStorage'),
         body: t('Help.NoStorageMessage'),
-        type: 'error'
+        type: 'error',
       });
     }
   }
 
   private deleteManifestFile() {
     localStorage.removeItem(this.localStorageKey);
-    del(this.idbKey);
+    return del(this.idbKey);
   }
 
   /**
@@ -217,7 +272,6 @@ class ManifestService {
       throw new Error('Testing - always load remote');
     }
 
-    this.statusText = `${t('Manifest.Load')}...`;
     const currentManifestVersion = localStorage.getItem(this.localStorageKey);
     const currentWhitelist = JSON.parse(
       localStorage.getItem(this.localStorageKey + '-whitelist') || '[]'
@@ -225,17 +279,15 @@ class ManifestService {
     if (currentManifestVersion === version && deepEqual(currentWhitelist, tableWhitelist)) {
       const manifest = await get<object>(this.idbKey);
       if (!manifest) {
+        await this.deleteManifestFile();
         throw new Error('Empty cached manifest file');
       }
       return manifest;
     } else {
+      // Delete the existing manifest first, to make space
+      await this.deleteManifestFile();
       throw new Error(`version mismatch: ${version} ${currentManifestVersion}`);
     }
-  }
-
-  private setState(newState: Partial<ManifestServiceState>) {
-    this.state = { ...this.state, ...newState };
-    this.state$.next(this.state);
   }
 }
 

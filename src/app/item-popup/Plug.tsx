@@ -24,7 +24,7 @@ export default function Plug({
   hasMenu,
   isPhonePortrait,
   onClick,
-  onShiftClick
+  onShiftClick,
 }: {
   defs: D2ManifestDefinitions;
   plug: DimPlug;
@@ -46,10 +46,7 @@ export default function Plug({
   }
 
   const energyType =
-    (modDef &&
-      modDef.plug &&
-      modDef.plug.energyCost &&
-      modDef.plug.energyCost.energyTypeHash &&
+    (modDef?.plug?.energyCost?.energyTypeHash &&
       defs.EnergyType.get(modDef.plug.energyCost.energyTypeHash)) ||
     undefined;
   const energyCostStat = energyType && defs.Stat.get(energyType.costStatHash);
@@ -84,7 +81,7 @@ export default function Plug({
       {costElementIcon && (
         <>
           <div
-            style={{ backgroundImage: `url(${bungieNetPath(costElementIcon)}` }}
+            style={{ backgroundImage: `url("${bungieNetPath(costElementIcon)}")` }}
             className="energyCostOverlay"
           />
           <div className="energyCost">{modDef.plug.energyCost.energyCost}</div>
@@ -99,13 +96,13 @@ export default function Plug({
       className={clsx('socket-container', className, {
         disabled: !plug.enabled,
         notChosen: plug !== socketInfo.plug,
-        notIntrinsic: !itemCategories.includes(INTRINSIC_PLUG_CATEGORY)
+        notIntrinsic: !itemCategories.includes(INTRINSIC_PLUG_CATEGORY),
       })}
       onClick={handleShiftClick}
     >
       {!(hasMenu && isPhonePortrait) ? (
         <PressTip
-          tooltip={
+          tooltip={() => (
             <PlugTooltip
               item={item}
               plug={plug}
@@ -114,7 +111,7 @@ export default function Plug({
               bestPerks={bestPerks}
               inventoryWishListRoll={inventoryWishListRoll}
             />
-          }
+          )}
         >
           {contents}
         </PressTip>

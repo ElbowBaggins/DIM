@@ -42,10 +42,10 @@ function getBulkFetchPromise(
 /**
  * Fetch the DTR community scores for all weapon items found in the supplied stores.
  */
-export function bulkFetch(stores: D1Store[]): ThunkResult<Promise<DtrRating[]>> {
+export function bulkFetch(stores: D1Store[]): ThunkResult<DtrRating[]> {
   return async (dispatch, getState) => {
     if (!getState().reviews.loadedFromIDB) {
-      await loadReviewsFromIndexedDB()(dispatch, getState, {});
+      await dispatch(loadReviewsFromIndexedDB());
     }
     const bulkRankings = await getBulkFetchPromise(stores, ratingsSelector(getState()));
     return attachRankings(bulkRankings, dispatch);
@@ -57,7 +57,7 @@ export function bulkFetch(stores: D1Store[]): ThunkResult<Promise<DtrRating[]>> 
  */
 export function bulkFetchVendorItems(vendorContainer: {
   [key: number]: Vendor;
-}): ThunkResult<Promise<DtrRating[]>> {
+}): ThunkResult<DtrRating[]> {
   return async (dispatch, getState) => {
     const vendors = Object.values(vendorContainer);
 
@@ -81,7 +81,7 @@ function makeRating(dtrRating: D1ItemFetchResponse): DtrRating {
     overallScore: dtrRating.rating || 0,
     ratingCount: dtrRating.ratingCount,
     highlightedRatingCount: dtrRating.highlightedRatingCount,
-    roll: dtrRating.roll
+    roll: dtrRating.roll,
   };
 }
 

@@ -19,32 +19,32 @@ const lazyTables = [
   'ScriptedSkull',
   'Activity',
   'ActivityType',
-  'DamageType'
+  'DamageType',
 ];
 
 const eagerTables = ['InventoryBucket', 'Class', 'Race', 'Faction', 'Vendor'];
 
-export interface LazyDefinition<T> {
+export interface DefinitionTable<T> {
   get(hash: number): T;
 }
 
 // D1 types don't exist yet
 export interface D1ManifestDefinitions extends ManifestDefinitions {
-  InventoryItem: LazyDefinition<any>;
-  Objective: LazyDefinition<any>;
-  SandboxPerk: LazyDefinition<any>;
-  Stat: LazyDefinition<any>;
-  TalentGrid: LazyDefinition<any>;
-  Progression: LazyDefinition<any>;
-  Record: LazyDefinition<any>;
-  ItemCategory: LazyDefinition<any>;
-  VendorCategory: LazyDefinition<any>;
-  RecordBook: LazyDefinition<any>;
-  ActivityCategory: LazyDefinition<any>;
-  ScriptedSkull: LazyDefinition<any>;
-  Activity: LazyDefinition<any>;
-  ActivityType: LazyDefinition<any>;
-  DamageType: LazyDefinition<any>;
+  InventoryItem: DefinitionTable<any>;
+  Objective: DefinitionTable<any>;
+  SandboxPerk: DefinitionTable<any>;
+  Stat: DefinitionTable<any>;
+  TalentGrid: DefinitionTable<any>;
+  Progression: DefinitionTable<any>;
+  Record: DefinitionTable<any>;
+  ItemCategory: DefinitionTable<any>;
+  VendorCategory: DefinitionTable<any>;
+  RecordBook: DefinitionTable<any>;
+  ActivityCategory: DefinitionTable<any>;
+  ScriptedSkull: DefinitionTable<any>;
+  Activity: DefinitionTable<any>;
+  ActivityType: DefinitionTable<any>;
+  DamageType: DefinitionTable<any>;
 
   InventoryBucket: { [hash: number]: any };
   Class: { [hash: number]: any };
@@ -65,7 +65,7 @@ async function getUncachedDefinitions() {
     const db = await D1ManifestService.getManifest();
     const defs = {
       isDestiny1: () => true,
-      isDestiny2: () => false
+      isDestiny2: () => false,
     };
     // Load objects that lazily load their properties from the sqlite DB.
     lazyTables.forEach((tableShort) => {
@@ -78,7 +78,7 @@ async function getUncachedDefinitions() {
           const val = D1ManifestService.getRecord(db, table, name);
           this[name] = val;
           return val;
-        }
+        },
       };
     });
     // Resources that need to be fully loaded (because they're iterated over)
@@ -87,7 +87,6 @@ async function getUncachedDefinitions() {
       defs[tableShort] = D1ManifestService.getAllRecords(db, table);
     });
     store.dispatch(setD1Manifest(defs as D1ManifestDefinitions));
-    D1ManifestService.loaded = true;
     return defs as D1ManifestDefinitions;
   } catch (e) {
     console.error(e);

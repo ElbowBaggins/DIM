@@ -1,5 +1,5 @@
 export const enum DimWishList {
-  WildcardItemId = -69420 // nice
+  WildcardItemId = -69420, // nice
 }
 
 /**
@@ -44,4 +44,6 @@ export interface WishListAndInfo {
   wishListRolls: WishListRoll[];
   title?: string;
   description?: string;
+  /** The URL we fetched the wish list from */
+  source?: string;
 }

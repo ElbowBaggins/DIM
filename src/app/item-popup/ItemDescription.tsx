@@ -8,9 +8,11 @@ import styles from './ItemDescription.m.scss';
 import { AppIcon, editIcon } from 'app/shell/icons';
 import { connect } from 'react-redux';
 import { getNotes } from 'app/inventory/dim-item-info';
-import { RootState } from 'app/store/reducers';
+import { RootState, ThunkDispatchProp } from 'app/store/reducers';
 import { inventoryWishListsSelector } from 'app/wishlists/reducer';
 import { InventoryWishListRoll } from 'app/wishlists/wishlists';
+import { setItemNote } from 'app/inventory/actions';
+import { itemInfosSelector } from 'app/inventory/selectors';
 
 interface ProvidedProps {
   item: DimItem;
@@ -23,14 +25,14 @@ interface StoreProps {
 
 function mapStateToProps(state: RootState, props: ProvidedProps): StoreProps {
   return {
-    notes: getNotes(props.item, state.inventory.itemInfos),
-    inventoryWishListRoll: inventoryWishListsSelector(state)[props.item.id]
+    notes: getNotes(props.item, itemInfosSelector(state)),
+    inventoryWishListRoll: inventoryWishListsSelector(state)[props.item.id],
   };
 }
 
-type Props = ProvidedProps & StoreProps;
+type Props = ProvidedProps & StoreProps & ThunkDispatchProp;
 
-function ItemDescription({ item, notes, inventoryWishListRoll }: Props) {
+function ItemDescription({ item, notes, inventoryWishListRoll, dispatch }: Props) {
   const showDescription = Boolean(item.description?.length);
 
   const loreLink = item.loreHash
@@ -39,23 +41,22 @@ function ItemDescription({ item, notes, inventoryWishListRoll }: Props) {
 
   const [notesOpen, setNotesOpen] = useState(false);
 
-  // TODO: close notes button
+  const saveNotes = (note: string) => dispatch(setItemNote({ itemId: item.id, note }));
 
+  // TODO: close notes button
   return (
     <>
       {showDescription && <div className={styles.officialDescription}>{item.description}</div>}
       {item.isDestiny2() && Boolean(item.displaySource?.length) && (
         <div className={styles.officialDescription}>{item.displaySource}</div>
       )}
-      {inventoryWishListRoll &&
-        inventoryWishListRoll.notes &&
-        inventoryWishListRoll.notes.length > 0 && (
-          <div className={styles.wishListNotes}>
-            {t('WishListRoll.WishListNotes', { notes: inventoryWishListRoll.notes })}
-          </div>
-        )}
+      {inventoryWishListRoll?.notes && inventoryWishListRoll.notes.length > 0 && (
+        <div className={styles.wishListNotes}>
+          {t('WishListRoll.WishListNotes', { notes: inventoryWishListRoll.notes })}
+        </div>
+      )}
       {notesOpen ? (
-        <NotesForm item={item} notes={notes} />
+        <NotesForm item={item} notes={notes} onSaveNotes={saveNotes} />
       ) : (
         notes && (
           <div

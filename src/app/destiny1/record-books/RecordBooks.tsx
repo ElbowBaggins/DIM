@@ -7,10 +7,9 @@ import _ from 'lodash';
 import { count } from '../../utils/util';
 import { setSetting } from '../../settings/actions';
 import { D1Store } from '../../inventory/store-types';
-import { storesSelector } from '../../inventory/reducer';
+import { storesSelector } from '../../inventory/selectors';
 import { RootState } from '../../store/reducers';
 import { connect } from 'react-redux';
-import { Loading } from '../../dim-ui/Loading';
 import { D1StoresService } from '../../inventory/d1-stores';
 import { refresh$ } from '../../shell/refresh';
 import BungieImage, { bungieBackgroundStyle } from '../../dim-ui/BungieImage';
@@ -19,6 +18,7 @@ import { DestinyAccount } from '../../accounts/destiny-account';
 import { Subscriptions } from '../../utils/rx-utils';
 import './record-books.scss';
 import { settingsSelector } from 'app/settings/reducer';
+import ShowPageLoading from 'app/dim-ui/ShowPageLoading';
 
 interface ProvidedProps {
   account: DestinyAccount;
@@ -31,7 +31,7 @@ interface StoreProps {
 }
 
 const mapDispatchToProps = {
-  setSetting
+  setSetting,
 };
 type DispatchProps = typeof mapDispatchToProps;
 
@@ -40,7 +40,7 @@ function mapStateToProps(state: RootState): StoreProps {
   return {
     hideCompletedRecords: settings.hideCompletedRecords,
     stores: storesSelector(state) as D1Store[],
-    defs: state.manifest.d1Manifest
+    defs: state.manifest.d1Manifest,
   };
 }
 
@@ -90,11 +90,7 @@ class RecordBooks extends React.Component<Props> {
     const { defs, stores, hideCompletedRecords } = this.props;
 
     if (!defs || !stores.length) {
-      return (
-        <div className="dim-page">
-          <Loading />
-        </div>
-      );
+      return <ShowPageLoading message={t('Loading.Profile')} />;
     }
 
     const rawRecordBooks = stores[0].advisors.recordBooks;
@@ -106,7 +102,7 @@ class RecordBooks extends React.Component<Props> {
     return (
       <div
         className={clsx('record-books', 'dim-page', {
-          'hide-complete': hideCompletedRecords
+          'hide-complete': hideCompletedRecords,
         })}
       >
         <h1>
@@ -219,7 +215,7 @@ class RecordBooks extends React.Component<Props> {
       expirationDate: rawRecordBook.expirationDate,
       pages: [] as RecordBookPage[],
       complete: false,
-      percentComplete: undefined as number | undefined
+      percentComplete: undefined as number | undefined,
     };
 
     const records = Object.values(rawRecordBook.records).map((r) => this.processRecord(defs, r));
@@ -237,7 +233,7 @@ class RecordBooks extends React.Component<Props> {
         // ItemFactory.processItems({ id: null }
         // may have to extract store service bits...
         complete: false,
-        completedCount: 0
+        completedCount: 0,
       };
 
       createdPage.complete = createdPage.records.every((r) => r.complete);
@@ -249,7 +245,7 @@ class RecordBooks extends React.Component<Props> {
     if (rawRecordBook.progression) {
       rawRecordBook.progression = {
         ...rawRecordBook.progression,
-        ...defs.Progression.get(rawRecordBook.progression.progressionHash)
+        ...defs.Progression.get(rawRecordBook.progression.progressionHash),
       };
       rawRecordBook.progress = rawRecordBook.progression;
       rawRecordBook.percentComplete =
@@ -273,7 +269,7 @@ class RecordBooks extends React.Component<Props> {
       description: recordDef.description,
       name: recordDef.displayName,
       objectives: record.objectives,
-      complete: record.objectives.every((o) => o.isComplete)
+      complete: record.objectives.every((o) => o.isComplete),
     };
   };
 }

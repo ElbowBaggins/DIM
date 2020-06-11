@@ -12,7 +12,7 @@ const raidOrder = [
   2683538554, // sos
   3181387331, // wish
   1342567285, // scourge
-  2590427074 // crown
+  2590427074, // crown
 ];
 
 /**
@@ -22,7 +22,7 @@ const raidOrder = [
 export default function Raids({
   store,
   defs,
-  profileInfo
+  profileInfo,
 }: {
   store: DimStore;
   defs: D2ManifestDefinitions;
@@ -36,12 +36,8 @@ export default function Raids({
   // filter to milestones with child activities of type <ActivityType "Raid" 2043403989>
   const filteredMilestones = allMilestones.filter((milestone) => {
     const milestoneActivities = (defs.Milestone.get(milestone.milestoneHash) || {}).activities;
-    return (
-      milestoneActivities &&
-      milestoneActivities.some(
-        (activity) =>
-          (defs.Activity.get(activity.activityHash) || {}).activityTypeHash === 2043403989
-      )
+    return milestoneActivities?.some(
+      (activity) => (defs.Activity.get(activity.activityHash) || {}).activityTypeHash === 2043403989
     );
   });
 

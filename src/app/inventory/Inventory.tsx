@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DestinyAccount } from '../accounts/destiny-account';
-import { Loading } from '../dim-ui/Loading';
 import Stores from './Stores';
 import { D1StoresService } from './d1-stores';
 import { D2StoresService } from './d2-stores';
@@ -9,7 +8,6 @@ import { RootState } from '../store/reducers';
 import ClearNewItems from './ClearNewItems';
 import StackableDragHelp from './StackableDragHelp';
 import LoadoutDrawer from '../loadout/LoadoutDrawer';
-import { Subscriptions } from '../utils/rx-utils';
 import { refresh$ } from '../shell/refresh';
 import Compare from '../compare/Compare';
 import D2Farming from '../farming/D2Farming';
@@ -18,15 +16,24 @@ import InfusionFinder from '../infuse/InfusionFinder';
 import { queueAction } from './action-queue';
 import ErrorBoundary from 'app/dim-ui/ErrorBoundary';
 import DragPerformanceFix from 'app/inventory/DragPerformanceFix';
+import { storesLoadedSelector } from './selectors';
+import { useSubscription } from 'app/utils/hooks';
+import ShowPageLoading from 'app/dim-ui/ShowPageLoading';
+import { t } from 'app/i18next-t';
 
-interface Props {
+interface ProvidedProps {
   account: DestinyAccount;
+}
+
+interface StoreProps {
   storesLoaded: boolean;
 }
 
-function mapStateToProps(state: RootState): Partial<Props> {
+type Props = ProvidedProps & StoreProps;
+
+function mapStateToProps(state: RootState): StoreProps {
   return {
-    storesLoaded: state.inventory.stores.length > 0
+    storesLoaded: storesLoadedSelector(state),
   };
 }
 
@@ -34,53 +41,36 @@ function getStoresService(account: DestinyAccount) {
   return account.destinyVersion === 1 ? D1StoresService : D2StoresService;
 }
 
-class Inventory extends React.Component<Props> {
-  private subscriptions = new Subscriptions();
+function Inventory({ storesLoaded, account }: Props) {
+  useSubscription(() => {
+    const storesService = getStoresService(account);
+    return refresh$.subscribe(() => queueAction(() => storesService.reloadStores()));
+  });
 
-  constructor(props) {
-    super(props);
-  }
-
-  componentDidMount() {
-    const storesService = getStoresService(this.props.account);
-
-    // TODO: Dispatch an action to load stores
-    storesService.getStoresStream(this.props.account);
-
-    if (storesService.getStores().length && !this.props.storesLoaded) {
-      // TODO: Don't really have to fully reload!
-      queueAction(() => storesService.reloadStores());
-    }
-
-    this.subscriptions.add(
-      refresh$.subscribe(() => queueAction(() => storesService.reloadStores()))
-    );
-  }
-
-  componentWillUnmount() {
-    this.subscriptions.unsubscribe();
-  }
-
-  render() {
-    const { storesLoaded, account } = this.props;
-
+  useEffect(() => {
+    const storesService = getStoresService(account);
     if (!storesLoaded) {
-      return <Loading />;
+      // TODO: Dispatch an action to load stores instead
+      storesService.getStoresStream(account);
     }
+  }, [account, storesLoaded]);
 
-    return (
-      <ErrorBoundary name="Inventory">
-        <Stores />
-        <LoadoutDrawer />
-        <Compare />
-        <StackableDragHelp />
-        <DragPerformanceFix />
-        {account.destinyVersion === 1 ? <D1Farming /> : <D2Farming />}
-        <InfusionFinder destinyVersion={account.destinyVersion} />
-        <ClearNewItems account={account} />
-      </ErrorBoundary>
-    );
+  if (!storesLoaded) {
+    return <ShowPageLoading message={t('Loading.Profile')} />;
   }
+
+  return (
+    <ErrorBoundary name="Inventory">
+      <Stores />
+      <LoadoutDrawer />
+      <Compare />
+      <StackableDragHelp />
+      <DragPerformanceFix />
+      {account.destinyVersion === 1 ? <D1Farming /> : <D2Farming />}
+      <InfusionFinder destinyVersion={account.destinyVersion} />
+      <ClearNewItems account={account} />
+    </ErrorBoundary>
+  );
 }
 
-export default connect(mapStateToProps)(Inventory);
+export default connect<StoreProps>(mapStateToProps)(Inventory);

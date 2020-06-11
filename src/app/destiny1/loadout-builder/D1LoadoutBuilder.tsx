@@ -8,17 +8,16 @@ import {
   ClassTypes,
   SetType,
   PerkCombination,
-  D1ItemWithNormalStats
+  D1ItemWithNormalStats,
 } from './types';
 import _ from 'lodash';
 import { connect } from 'react-redux';
 import { DestinyAccount } from '../../accounts/destiny-account';
 import { D1Store } from '../../inventory/store-types';
 import { RootState } from '../../store/reducers';
-import { storesSelector } from '../../inventory/reducer';
+import { storesSelector } from '../../inventory/selectors';
 import { currentAccountSelector } from '../../accounts/reducer';
 import { D1StoresService } from '../../inventory/d1-stores';
-import { Loading } from '../../dim-ui/Loading';
 import CollapsibleTitle from '../../dim-ui/CollapsibleTitle';
 import { t } from 'app/i18next-t';
 import LoadoutDrawer from '../../loadout/LoadoutDrawer';
@@ -30,7 +29,7 @@ import {
   getActiveBuckets,
   loadVendorsBucket,
   mergeBuckets,
-  getActiveHighestSets
+  getActiveHighestSets,
 } from './utils';
 import LoadoutBuilderItem from './LoadoutBuilderItem';
 import { getSetBucketsStep } from './calculate';
@@ -41,8 +40,9 @@ import LoadoutBuilderLockPerk from './LoadoutBuilderLockPerk';
 import ExcludeItemsDropTarget from './ExcludeItemsDropTarget';
 import { dimVendorService, Vendor } from '../vendors/vendor.service';
 import ErrorBoundary from '../../dim-ui/ErrorBoundary';
-import { filterLoadoutToEquipped } from '../../loadout/LoadoutPopup';
 import { DestinyClass } from 'bungie-api-ts/destiny2';
+import { getCurrentStore } from 'app/inventory/stores-helpers';
+import ShowPageLoading from 'app/dim-ui/ShowPageLoading';
 
 interface StoreProps {
   account: DestinyAccount;
@@ -60,7 +60,7 @@ function mapStateToProps(state: RootState): StoreProps {
     buckets: state.inventory.buckets,
     stores: storesSelector(state) as D1Store[],
     defs: state.manifest.d1Manifest,
-    isPhonePortrait: state.shell.isPhonePortrait
+    isPhonePortrait: state.shell.isPhonePortrait,
   };
 }
 
@@ -108,7 +108,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
       Leg: null,
       ClassItem: null,
       Artifact: null,
-      Ghost: null
+      Ghost: null,
     },
     lockedperks: {
       Helmet: {},
@@ -117,12 +117,12 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
       Leg: {},
       ClassItem: {},
       Artifact: {},
-      Ghost: {}
-    }
+      Ghost: {},
+    },
   };
 
   private cancelToken: { cancelled: boolean } = {
-    cancelled: false
+    cancelled: false,
   };
 
   componentDidMount() {
@@ -137,7 +137,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
       );
       if (felwinters.length) {
         this.setState(({ excludeditems }) => ({
-          excludeditems: _.uniqBy([...excludeditems, ...felwinters], (i) => i.id)
+          excludeditems: _.uniqBy([...excludeditems, ...felwinters], (i) => i.id),
         }));
       }
     }
@@ -151,7 +151,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
       );
       if (felwinters.length) {
         this.setState(({ excludeditems }) => ({
-          excludeditems: _.uniqBy([...excludeditems, ...felwinters], (i) => i.id)
+          excludeditems: _.uniqBy([...excludeditems, ...felwinters], (i) => i.id),
         }));
       }
     }
@@ -178,7 +178,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
           excludeditems: _.uniqBy(
             [...excludeditems, ...felwinters.map((si) => si.item)],
             (i) => i.id
-          )
+          ),
         }));
       }
     }
@@ -201,11 +201,11 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
       lockeditems,
       lockedperks,
       highestsets,
-      vendors
+      vendors,
     } = this.state;
 
     if (!stores.length || !buckets || !defs) {
-      return <Loading />;
+      return <ShowPageLoading message={t('Loading.Profile')} />;
     }
 
     const active = this.getSelectedCharacter();
@@ -270,24 +270,23 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
               ).map((item) => (
                 <div key={item.index} className="item-container">
                   <div className="item-stats">
-                    {item.stats &&
-                      item.stats.map((stat) => (
-                        <div
-                          key={stat.statHash}
-                          style={getColor(
-                            item.normalStats![stat.statHash].qualityPercentage,
-                            'color'
-                          )}
-                        >
-                          {item.normalStats![stat.statHash].scaled === 0 && <small>-</small>}
-                          {item.normalStats![stat.statHash].scaled > 0 && (
-                            <span>
-                              <small>{item.normalStats![stat.statHash].scaled}</small>/
-                              <small>{stat.split}</small>
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                    {item.stats?.map((stat) => (
+                      <div
+                        key={stat.statHash}
+                        style={getColor(
+                          item.normalStats![stat.statHash].qualityPercentage,
+                          'color'
+                        )}
+                      >
+                        {item.normalStats![stat.statHash].scaled === 0 && <small>-</small>}
+                        {item.normalStats![stat.statHash].scaled > 0 && (
+                          <span>
+                            <small>{item.normalStats![stat.statHash].scaled}</small>/
+                            <small>{stat.split}</small>
+                          </span>
+                        )}
+                      </div>
+                    ))}
                   </div>
                   <div>
                     <LoadoutBuilderItem shiftClickCallback={this.excludeItem} item={item} />
@@ -476,7 +475,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
         Leg: [],
         ClassItem: [],
         Ghost: [],
-        Artifact: []
+        Artifact: [],
       },
       [DestinyClass.Titan]: {
         Helmet: [],
@@ -485,7 +484,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
         Leg: [],
         ClassItem: [],
         Ghost: [],
-        Artifact: []
+        Artifact: [],
       },
       [DestinyClass.Hunter]: {
         Helmet: [],
@@ -494,8 +493,8 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
         Leg: [],
         ClassItem: [],
         Ghost: [],
-        Artifact: []
-      }
+        Artifact: [],
+      },
     };
 
     const vendorPerks: { [classType in ClassTypes]: PerkCombination } = {
@@ -506,7 +505,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
         Leg: [],
         ClassItem: [],
         Ghost: [],
-        Artifact: []
+        Artifact: [],
       },
       [DestinyClass.Titan]: {
         Helmet: [],
@@ -515,7 +514,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
         Leg: [],
         ClassItem: [],
         Ghost: [],
-        Artifact: []
+        Artifact: [],
       },
       [DestinyClass.Hunter]: {
         Helmet: [],
@@ -524,8 +523,8 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
         Leg: [],
         ClassItem: [],
         Ghost: [],
-        Artifact: []
-      }
+        Artifact: [],
+      },
     };
 
     function filterItems(items: D1Item[]) {
@@ -607,13 +606,13 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
   };
 
   private getSelectedCharacter = () =>
-    this.state.selectedCharacter || this.props.stores.find((s) => s.current)!;
+    this.state.selectedCharacter || getCurrentStore(this.props.stores)!;
 
   private calculateSets = () => {
     const active = this.getSelectedCharacter();
     this.cancelToken.cancelled = true;
     this.cancelToken = {
-      cancelled: false
+      cancelled: false,
     };
     getSetBucketsStep(
       active,
@@ -655,7 +654,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
   private onActiveSetsChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
     const activesets = e.target.value;
     this.setState({
-      activesets
+      activesets,
     });
   };
 
@@ -663,7 +662,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
     // TODO: reset more state??
     this.setState({
       selectedCharacter: this.props.stores.find((s) => s.id === storeId),
-      progress: 0
+      progress: 0,
     });
   };
 
@@ -690,7 +689,7 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
         lockedperks[type][perk.hash] = {
           icon: perk.icon,
           description: perk.description,
-          lockType: activeType
+          lockType: activeType,
         };
       }
     });
@@ -701,43 +700,50 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
   private onItemLocked = (item: DimItem) => {
     this.setState(({ lockeditems }) => ({
       lockeditems: { ...lockeditems, [item.type]: item },
-      progress: 0
+      progress: 0,
     }));
   };
 
   private onRemove = ({ type }: { type: ArmorTypes }) => {
     this.setState(({ lockeditems }) => ({
       lockeditems: { ...lockeditems, [type]: null },
-      progress: 0
+      progress: 0,
     }));
   };
 
   private excludeItem = (item: D1Item) => {
     this.setState(({ excludeditems }) => ({
       excludeditems: [...excludeditems, item],
-      progress: 0
+      progress: 0,
     }));
   };
 
   private onExcludedRemove = (item: DimItem) => {
     this.setState(({ excludeditems }) => ({
       excludeditems: excludeditems.filter((excludeditem) => excludeditem.index !== item.index),
-      progress: 0
+      progress: 0,
     }));
   };
 
   private lockEquipped = () => {
     const store = this.getSelectedCharacter();
-    const loadout = filterLoadoutToEquipped(store.loadoutFromCurrentlyEquipped(''));
-    const items = _.pick(
-      loadout.items,
+    const lockEquippedTypes = [
       'helmet',
       'gauntlets',
       'chest',
       'leg',
       'classitem',
       'artifact',
-      'ghost'
+      'ghost',
+    ];
+    const items = _.groupBy(
+      store.items.filter(
+        (item) =>
+          item.canBeInLoadout() &&
+          item.equipped &&
+          lockEquippedTypes.includes(item.type.toLowerCase())
+      ),
+      (i) => i.type.toLowerCase()
     );
 
     function nullWithoutStats(items: DimItem[]) {
@@ -753,9 +759,9 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
         Leg: nullWithoutStats(items.leg),
         ClassItem: nullWithoutStats(items.classitem),
         Artifact: nullWithoutStats(items.artifact),
-        Ghost: nullWithoutStats(items.ghost)
+        Ghost: nullWithoutStats(items.ghost),
       },
-      progress: 0
+      progress: 0,
     });
   };
 
@@ -768,10 +774,10 @@ class D1LoadoutBuilder extends React.Component<Props, State> {
         Leg: null,
         ClassItem: null,
         Artifact: null,
-        Ghost: null
+        Ghost: null,
       },
       activesets: '',
-      progress: 0
+      progress: 0,
     });
   };
 }
@@ -790,7 +796,7 @@ const unwantedPerkHashes = [
   1034209669,
   1263323987,
   193091484,
-  2133116599
+  2133116599,
 ];
 
 function filterPerks(perks: D1GridNode[], item: D1Item) {

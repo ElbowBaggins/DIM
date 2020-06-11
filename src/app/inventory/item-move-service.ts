@@ -5,13 +5,13 @@ import {
   equip as d1equip,
   equipItems as d1EquipItems,
   transfer as d1Transfer,
-  setItemState as d1SetItemState
+  setItemState as d1SetItemState,
 } from '../bungie-api/destiny1-api';
 import {
   equip as d2equip,
   equipItems as d2EquipItems,
   transfer as d2Transfer,
-  setLockState as d2SetLockState
+  setLockState as d2SetLockState,
 } from '../bungie-api/destiny2-api';
 import { chainComparator, compareBy, reverseComparator } from '../utils/comparators';
 import { createItemIndex as d2CreateItemIndex } from './store/d2-item-factory';
@@ -27,16 +27,19 @@ import {
   getTag,
   vaultDisplacePriority,
   characterDisplacePriority,
-  DimItemInfo
+  ItemInfos,
 } from './dim-item-info';
 import reduxStore from '../store/store';
 import { count } from 'app/utils/util';
+import { itemInfosSelector } from './selectors';
+import { getStore, getItemAcrossStores, getCurrentStore, getVault } from './stores-helpers';
+import { touch } from './actions';
 
 /**
  * You can reserve a number of each type of item in each store.
  */
 export interface MoveReservations {
-  [storeId: number]: {
+  [storeId: string]: {
     [type: string]: number;
   };
 }
@@ -76,16 +79,16 @@ export async function setItemLockState(
   state: boolean,
   type: 'lock' | 'track' = 'lock'
 ) {
-  const store =
-    item.owner === 'vault'
-      ? item.getStoresService().getActiveStore()!
-      : item.getStoresService().getStore(item.owner)!;
+  const stores = item.getStoresService().getStores();
+  const store = item.owner === 'vault' ? getCurrentStore(stores)! : getStore(stores, item.owner)!;
 
   if (item.isDestiny2()) {
     await d2SetLockState(store, item, state);
   } else if (item.isDestiny1()) {
     await d1SetItemState(item, store, state, type);
   }
+
+  // TODO: dispatch an action to mutate the item!
 }
 
 export const dimItemService = ItemService();
@@ -99,17 +102,17 @@ function ItemService(): ItemServiceType {
   // throttle these calls so we don't just keep refreshing over and over.
   // This needs to be up here because of how we return the service object.
   const throttledReloadStores = _.throttle(() => D1StoresService.reloadStores(), 10000, {
-    trailing: false
+    trailing: false,
   });
 
   const throttledD2ReloadStores = _.throttle(() => D2StoresService.reloadStores(), 10000, {
-    trailing: false
+    trailing: false,
   });
 
   return {
     getSimilarItem,
     moveTo,
-    equipItems
+    equipItems,
   };
 
   function equipApi(item: DimItem): (item: DimItem) => Promise<any> {
@@ -149,10 +152,11 @@ function ItemService(): ItemServiceType {
   ) {
     // Refresh all the items - they may have been reloaded!
     const storeService = item.getStoresService();
-    source = storeService.getStore(source.id)!;
-    target = storeService.getStore(target.id)!;
+    const stores = storeService.getStores();
+    source = getStore(stores, source.id)!;
+    target = getStore(stores, target.id)!;
     // We really shouldn't do this!
-    item = storeService.getItemAcrossStores(item) || item;
+    item = getItemAcrossStores(stores, item) || item;
 
     // If we've moved to a new place
     if (source.id !== target.id || item.location.inPostmaster) {
@@ -161,7 +165,7 @@ function ItemService(): ItemServiceType {
       // Items to be decremented
       const sourceItems = stackable
         ? _.sortBy(
-            source.buckets[item.location.id].filter(
+            source.buckets[item.location.hash].filter(
               (i) => i.hash === item.hash && i.id === item.id
             ),
             (i) => i.amount
@@ -171,7 +175,7 @@ function ItemService(): ItemServiceType {
       // it's easier to deal with as a list.
       const targetItems = stackable
         ? _.sortBy(
-            target.buckets[item.bucket.id].filter(
+            target.buckets[item.bucket.hash].filter(
               (i) =>
                 i.hash === item.hash &&
                 i.id === item.id &&
@@ -243,14 +247,14 @@ function ItemService(): ItemServiceType {
     }
 
     if (equip) {
-      target.buckets[item.bucket.id] = target.buckets[item.bucket.id].map((i) => {
+      target.buckets[item.bucket.hash] = target.buckets[item.bucket.hash].map((i) => {
         // TODO: this state needs to be moved out
         i.equipped = i.index === item.index;
         return i;
       });
     }
 
-    storeService.touch();
+    reduxStore.dispatch(touch());
 
     return item;
   }
@@ -260,9 +264,9 @@ function ItemService(): ItemServiceType {
     exclusions?: DimItem[],
     excludeExotic = false
   ): DimItem | null {
-    const storeService = item.getStoresService();
-    const target = storeService.getStore(item.owner)!;
-    const sortedStores = _.sortBy(storeService.getStores(), (store) => {
+    const stores = item.getStoresService().getStores();
+    const target = getStore(stores, item.owner)!;
+    const sortedStores = _.sortBy(stores, (store) => {
       if (target.id === store.id) {
         return 0;
       } else if (store.isVault) {
@@ -299,7 +303,7 @@ function ItemService(): ItemServiceType {
     let candidates = store.items.filter(
       (i) =>
         i.canBeEquippedBy(target) &&
-        i.location.id === item.location.id &&
+        i.location.hash === item.location.hash &&
         !i.equipped &&
         // Not the same item
         i.id !== item.id &&
@@ -322,7 +326,7 @@ function ItemService(): ItemServiceType {
         Rare: 3,
         Uncommon: 2,
         Common: 1,
-        Exotic: 0
+        Exotic: 0,
       }[i.tier];
       if (item.isExotic && i.isExotic) {
         value += 5;
@@ -367,7 +371,7 @@ function ItemService(): ItemServiceType {
                 new Error(t('ItemService.Deequip', { itemname: otherExotic.name }))
               );
             }
-            const target = similarItem.getStoresService().getStore(similarItem.owner)!;
+            const target = getStore(similarItem.getStoresService().getStores(), similarItem.owner)!;
 
             if (store.id === target.id) {
               return Promise.resolve(similarItem);
@@ -396,12 +400,11 @@ function ItemService(): ItemServiceType {
   }
 
   async function equipItem(item: DimItem) {
-    const storeService = item.getStoresService();
+    const store = getStore(item.getStoresService().getStores(), item.owner)!;
     if ($featureFlags.debugMoves) {
-      console.log('Equip', item.name, item.type, 'to', storeService.getStore(item.owner)!.name);
+      console.log('Equip', item.name, item.type, 'to', store.name);
     }
     await equipApi(item)(item);
-    const store = storeService.getStore(item.owner)!;
     return updateItemModel(item, store, store, true);
   }
 
@@ -412,13 +415,13 @@ function ItemService(): ItemServiceType {
       throw new Error(t('ItemService.Deequip', { itemname: item.name }));
     }
 
-    const ownerStore = item.getStoresService().getStore(item.owner)!;
+    const ownerStore = getStore(item.getStoresService().getStores(), item.owner)!;
     await moveTo(similarItem, ownerStore, true);
     return item;
   }
 
   function moveToVault(item: DimItem, amount: number = item.amount) {
-    return moveToStore(item, item.getStoresService().getVault()!, false, amount);
+    return moveToStore(item, getVault(item.getStoresService().getStores())!, false, amount);
   }
 
   async function moveToStore(
@@ -427,7 +430,7 @@ function ItemService(): ItemServiceType {
     equip = false,
     amount: number = item.amount
   ) {
-    const ownerStore = item.getStoresService().getStore(item.owner)!;
+    const ownerStore = getStore(item.getStoresService().getStores(), item.owner)!;
 
     if ($featureFlags.debugMoves) {
       item.location.inPostmaster
@@ -448,7 +451,7 @@ function ItemService(): ItemServiceType {
     // Note that this can result in the wrong lock state if DIM is out of date (they've locked/unlocked in game but we haven't refreshed).
     // Only apply this hack if the source bucket contains duplicates of the same item hash.
     const overrideLockState =
-      count(ownerStore.buckets[item.location.id], (i) => i.hash === item.hash) > 1
+      count(ownerStore.buckets[item.location.hash], (i) => i.hash === item.hash) > 1
         ? item.locked
         : undefined;
 
@@ -463,7 +466,7 @@ function ItemService(): ItemServiceType {
         throw e;
       }
     }
-    const source = item.getStoresService().getStore(item.owner)!;
+    const source = getStore(item.getStoresService().getStores(), item.owner)!;
     const newItem = updateItemModel(item, source, store, false, amount);
     item = newItem.owner !== 'vault' && equip ? await equipItem(newItem) : newItem;
 
@@ -504,7 +507,7 @@ function ItemService(): ItemServiceType {
           t('ItemService.ExoticError', {
             itemname: item.name,
             slot: otherExotic.type,
-            error: e.message
+            error: e.message,
           })
         );
       }
@@ -525,7 +528,7 @@ function ItemService(): ItemServiceType {
     // Find an item that's not in the slot we're equipping, but has a matching equipping label
     return store.items.find(
       (i) =>
-        i.equipped && i.equippingLabel === item.equippingLabel && i.bucket.id !== item.bucket.id
+        i.equipped && i.equippingLabel === item.equippingLabel && i.bucket.hash !== item.bucket.hash
     );
   }
 
@@ -580,9 +583,9 @@ function ItemService(): ItemServiceType {
             (i) =>
               i.bucket.vaultBucket &&
               item.bucket.vaultBucket &&
-              i.bucket.vaultBucket.id === item.bucket.vaultBucket.id
+              i.bucket.vaultBucket.hash === item.bucket.vaultBucket.hash
           )
-        : store.buckets[item.bucket.id];
+        : store.buckets[item.bucket.hash];
     } catch (e) {
       if (store.isVault && !item.bucket.vaultBucket) {
         console.error(
@@ -631,11 +634,11 @@ function ItemService(): ItemServiceType {
     if (stackable && otherStore) {
       return {
         item: stackable,
-        target: otherStore
+        target: otherStore,
       };
     }
 
-    const itemInfos = reduxStore.getState().inventory.itemInfos;
+    const itemInfos = itemInfosSelector(reduxStore.getState());
 
     // A cached version of the space-left function
     const cachedSpaceLeft = _.memoize(
@@ -657,7 +660,7 @@ function ItemService(): ItemServiceType {
         }
       | undefined;
 
-    const vault = item.getStoresService().getVault()!;
+    const vault = getVault(item.getStoresService().getStores())!;
 
     // Iterate through other stores from least recently played to most recently played.
     // The concept is that we prefer filling up the least-recently-played character before even
@@ -681,7 +684,7 @@ function ItemService(): ItemServiceType {
           if (candidate.amount <= spaceLeft) {
             moveAsideCandidate = {
               item: candidate,
-              target: targetStore
+              target: targetStore,
             };
             return true;
           }
@@ -700,7 +703,7 @@ function ItemService(): ItemServiceType {
           if (openVaultSlotsBeforeMove === 1 && openVaultSlotsAfterMove === 0 && spaceLeft) {
             moveAsideCandidate = {
               item: candidate,
-              target: targetStore
+              target: targetStore,
             };
             return true;
           }
@@ -715,7 +718,7 @@ function ItemService(): ItemServiceType {
     if (!moveAsideCandidate && !store.isVault) {
       moveAsideCandidate = {
         item: moveAsideCandidates[0],
-        target: vault
+        target: vault,
       };
     }
 
@@ -754,12 +757,11 @@ function ItemService(): ItemServiceType {
     } = {}
   ): Promise<boolean> {
     const { triedFallback = false, excludes = [], reservations = {}, numRetries = 0 } = options;
-    const storeService = item.getStoresService();
 
     function spaceLeftWithReservations(s: DimStore, i: DimItem) {
       let left = s.spaceLeftForItem(i);
       // minus any reservations
-      if (reservations[s.id] && reservations[s.id][i.type]) {
+      if (reservations[s.id]?.[i.type]) {
         left -= reservations[s.id][i.type];
       }
       // but not counting the original item that's moving
@@ -780,6 +782,7 @@ function ItemService(): ItemServiceType {
       throw error;
     }
 
+    const storeService = item.getStoresService();
     const stores = storeService.getStores();
 
     // How much space will be needed (in amount, not stacks) in the target store in order to make the transfer?
@@ -815,14 +818,14 @@ function ItemService(): ItemServiceType {
             left = left - storeReservations[s.id];
           }
           return Math.max(0, left);
-        }
+        },
       };
 
       // Move starting from the vault (which is always last)
       const moves = Object.entries(movesNeeded)
         .reverse()
         .find(([_, moveAmount]) => moveAmount > 0)!;
-      const moveAsideSource = storeService.getStore(moves[0])!;
+      const moveAsideSource = getStore(stores, moves[0])!;
       const { item: moveAsideItem, target: moveAsideTarget } = chooseMoveAsideItem(
         moveAsideSource,
         item,
@@ -842,7 +845,7 @@ function ItemService(): ItemServiceType {
         const errorData = {
           itemtype,
           store: moveAsideTarget.name,
-          context: moveAsideTarget.genderName
+          context: moveAsideTarget.genderName,
         };
 
         const error: DimError = new Error(
@@ -904,7 +907,7 @@ function ItemService(): ItemServiceType {
           ? t('ItemService.OnlyEquippedLevel', { level: item.equipRequiredLevel })
           : t('ItemService.OnlyEquippedClassLevel', {
               class: item.classTypeNameLocalized.toLowerCase(),
-              level: item.equipRequiredLevel
+              level: item.equipRequiredLevel,
             });
 
       const error: DimError = new Error(message);
@@ -952,17 +955,17 @@ function ItemService(): ItemServiceType {
     excludes?: DimItem[],
     reservations?: MoveReservations
   ): Promise<DimItem> {
+    const storeService = item.getStoresService();
     // Reassign the target store to the active store if we're moving the item to an account-wide bucket
     if (!target.isVault && item.bucket.accountWide) {
-      target = item.getStoresService().getActiveStore()!;
+      target = getCurrentStore(storeService.getStores())!;
     }
 
     await isValidTransfer(equip, target, item, amount, excludes, reservations);
 
-    const storeService = item.getStoresService();
     // Replace the target store - isValidTransfer may have reloaded it
-    target = storeService.getStore(target.id)!;
-    let source = storeService.getStore(item.owner)!;
+    target = getStore(storeService.getStores(), target.id)!;
+    let source = getStore(storeService.getStores(), item.owner)!;
 
     // Get from postmaster first
     if (item.location.inPostmaster) {
@@ -970,8 +973,8 @@ function ItemService(): ItemServiceType {
         item = await moveToStore(item, target, equip, amount);
       } else {
         item = await moveTo(item, source, equip, amount, excludes, reservations);
-        target = storeService.getStore(target.id)!;
-        source = storeService.getStore(item.owner)!;
+        target = getStore(storeService.getStores(), target.id)!;
+        source = getStore(storeService.getStores(), item.owner)!;
       }
     }
 
@@ -1012,9 +1015,7 @@ export function sortMoveAsideCandidatesForStore(
   moveAsideCandidates: DimItem[],
   fromStore: DimStore,
   targetStore: DimStore,
-  itemInfos: {
-    [key: string]: DimItemInfo;
-  },
+  itemInfos: ItemInfos,
   /** The item we're trying to make space for. May be missing. */
   item?: DimItem
 ) {
@@ -1023,7 +1024,7 @@ export function sortMoveAsideCandidatesForStore(
     Uncommon: 1,
     Rare: 2,
     Legendary: 4,
-    Exotic: 3
+    Exotic: 3,
   };
 
   // A sort for items to use for ranking *which item to move*

@@ -11,13 +11,14 @@ import { ThunkResult } from '../store/reducers';
 import { handleSubmitErrors } from './trackerErrorHandler';
 import { WorkingD1Rating } from '../item-review/d1-dtr-api-types';
 import { getRollAndPerks as getRollAndPerksD1 } from './itemTransformer';
+import { delay } from 'app/utils/util';
 
 /** Submit a user review for an item. This should be dispatched as a Redux action. */
 export function submitReview(
   item: DimItem,
   membershipInfo?: DestinyAccount,
   userReview?: WorkingD2Rating | WorkingD1Rating
-): ThunkResult<Promise<WorkingD2Rating | WorkingD1Rating | undefined>> {
+): ThunkResult<WorkingD2Rating | WorkingD1Rating | undefined> {
   return async (dispatch) => {
     if (!userReview) {
       return;
@@ -27,7 +28,7 @@ export function submitReview(
 
     dispatch(
       markReviewSubmitted({
-        key: getItemReviewsKey(item)
+        key: getItemReviewsKey(item),
       })
     );
 
@@ -54,7 +55,7 @@ function submitReviewPromise(
   const reviewer = {
     membershipId: membershipInfo.membershipId,
     membershipType: membershipInfo.originalPlatformType,
-    displayName: membershipInfo.displayName
+    displayName: membershipInfo.displayName,
   };
 
   const review = isD2UserReview(item, userReview)
@@ -63,13 +64,13 @@ function submitReviewPromise(
         text: userReview.text,
         pros: userReview.pros,
         cons: userReview.cons,
-        mode: userReview.mode
+        mode: userReview.mode,
       }
     : {
         rating: userReview.rating,
         review: userReview.review,
         pros: userReview.pros,
-        cons: userReview.cons
+        cons: userReview.cons,
       };
 
   const rating = { ...rollAndPerks, ...review, reviewer };
@@ -97,10 +98,11 @@ function submitReviewPromise(
  *
  * Item is just an item from DIM's stores.
  */
-function eventuallyPurgeCachedData(item: DimItem): ThunkResult<void> {
+function eventuallyPurgeCachedData(item: DimItem): ThunkResult {
   const tenMinutes = 1000 * 60 * 10;
-  return (dispatch) => {
-    setTimeout(() => dispatch(purgeCachedReview({ key: getItemReviewsKey(item) })), tenMinutes);
+  return async (dispatch) => {
+    await delay(tenMinutes);
+    dispatch(purgeCachedReview({ key: getItemReviewsKey(item) }));
   };
 }
 

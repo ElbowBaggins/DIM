@@ -12,14 +12,14 @@ export function getAccessTokenFromRefreshToken(refreshToken: Token): Promise<Tok
     fetch(TOKEN_URL, {
       method: 'POST',
       body: stringify({
-        grant_type: 'refresh_token', // eslint-disable-line @typescript-eslint/camelcase
-        refresh_token: refreshToken.value, // eslint-disable-line @typescript-eslint/camelcase
-        client_id: oauthClientId(), // eslint-disable-line @typescript-eslint/camelcase
-        client_secret: oauthClientSecret() // eslint-disable-line @typescript-eslint/camelcase
+        grant_type: 'refresh_token', // eslint-disable-line @typescript-eslint/naming-convention
+        refresh_token: refreshToken.value, // eslint-disable-line @typescript-eslint/naming-convention
+        client_id: oauthClientId(), // eslint-disable-line @typescript-eslint/naming-convention
+        client_secret: oauthClientSecret(), // eslint-disable-line @typescript-eslint/naming-convention
       }),
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     })
       .then((response) => (response.ok ? response.json() : Promise.reject(response)))
       .then(handleAccessToken)
@@ -31,14 +31,14 @@ export function getAccessTokenFromCode(code: number): Promise<Tokens> {
     fetch(TOKEN_URL, {
       method: 'POST',
       body: stringify({
-        grant_type: 'authorization_code', // eslint-disable-line @typescript-eslint/camelcase
+        grant_type: 'authorization_code', // eslint-disable-line @typescript-eslint/naming-convention
         code,
-        client_id: oauthClientId(), // eslint-disable-line @typescript-eslint/camelcase
-        client_secret: oauthClientSecret() // eslint-disable-line @typescript-eslint/camelcase
+        client_id: oauthClientId(), // eslint-disable-line @typescript-eslint/naming-convention
+        client_secret: oauthClientSecret(), // eslint-disable-line @typescript-eslint/naming-convention
       }),
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     })
       .then((response) => (response.ok ? response.json() : Promise.reject(response)))
       .then(handleAccessToken)
@@ -46,7 +46,7 @@ export function getAccessTokenFromCode(code: number): Promise<Tokens> {
 }
 
 function handleAccessToken(response): Tokens {
-  // eslint-disable-next-line @typescript-eslint/camelcase
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   if (response?.access_token) {
     const data = response;
     const inception = Date.now();
@@ -54,12 +54,12 @@ function handleAccessToken(response): Tokens {
       value: data.access_token,
       expires: data.expires_in,
       name: 'access',
-      inception
+      inception,
     };
 
     const tokens: Tokens = {
       accessToken,
-      bungieMembershipId: data.membership_id
+      bungieMembershipId: data.membership_id,
     };
 
     if (data.refresh_token) {
@@ -67,7 +67,7 @@ function handleAccessToken(response): Tokens {
         value: data.refresh_token,
         expires: data.refresh_expires_in,
         name: 'refresh',
-        inception
+        inception,
       };
     }
 

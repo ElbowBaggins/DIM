@@ -6,9 +6,11 @@ import { getActivePlatform } from '../accounts/platforms';
 import { fetchWithBungieOAuth, goToLoginPage } from './authenticated-fetch';
 import { rateLimitedFetch } from './rate-limiter';
 import { stringify } from 'simple-query-string';
-import { router } from '../router';
 import { DimItem } from '../inventory/item-types';
 import { DimStore } from '../inventory/store-types';
+import { delay } from 'app/utils/util';
+import store from 'app/store/store';
+import { needsDeveloper } from 'app/accounts/actions';
 
 export interface DimError extends Error {
   code?: PlatformErrorCodes | string;
@@ -16,11 +18,6 @@ export interface DimError extends Error {
 }
 
 const ourFetch = rateLimitedFetch(fetchWithBungieOAuth);
-
-// setTimeout as a promise
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 let numThrottled = 0;
 
@@ -81,12 +78,12 @@ export function buildOptions(config: HttpClientConfig, skipAuth?: boolean): Requ
     headers: config.body
       ? {
           'X-API-Key': API_KEY,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         }
       : {
-          'X-API-Key': API_KEY
+          'X-API-Key': API_KEY,
         },
-    credentials: skipAuth ? 'omit' : 'include'
+    credentials: skipAuth ? 'omit' : 'include',
   });
 }
 
@@ -123,7 +120,12 @@ export async function handleErrors<T>(response: Response): Promise<ServerRespons
   let data: ServerResponse<any> | undefined;
   try {
     data = await response.json();
-  } catch {}
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      console.error('Error parsing Bungie.net response', e);
+      throw new Error(t('BungieService.Difficulties'));
+    }
+  }
 
   // There's an alternate error response that can be returned during maintenance
   const eMessage = data && (data as any).error && (data as any).error_description;
@@ -170,17 +172,17 @@ export async function handleErrors<T>(response: Response): Promise<ServerRespons
       throw error(t('BungieService.NotLoggedIn'), errorCode);
 
     case PlatformErrorCodes.DestinyAccountNotFound:
-    case PlatformErrorCodes.DestinyUnexpectedError:
       if (response.url.indexOf('/Account/') >= 0 && response.url.indexOf('/Character/') < 0) {
         const account = getActivePlatform();
         throw error(
           t('BungieService.NoAccount', {
-            platform: account ? t(`Accounts.${account.platformLabel}`) : 'Unknown'
+            platform: account ? t(`Accounts.${account.platformLabel}`) : 'Unknown',
           }),
           errorCode
         );
+      } else {
+        throw error(t('BungieService.Difficulties'), errorCode);
       }
-      break;
 
     case PlatformErrorCodes.DestinyLegacyPlatformInaccessible:
       throw error(t('BungieService.DestinyLegacyPlatform'), errorCode);
@@ -189,11 +191,14 @@ export async function handleErrors<T>(response: Response): Promise<ServerRespons
     case PlatformErrorCodes.ApiKeyMissingFromRequest:
     case PlatformErrorCodes.OriginHeaderDoesNotMatchKey:
       if ($DIM_FLAVOR === 'dev') {
-        router.stateService.go('developer');
+        store.dispatch(needsDeveloper());
         throw error(t('BungieService.DevVersion'), errorCode);
       } else {
         throw error(t('BungieService.Difficulties'), errorCode);
       }
+
+    case PlatformErrorCodes.DestinyUnexpectedError:
+      throw error(t('BungieService.Difficulties'), errorCode);
   }
 
   // Token expired and other auth maladies
@@ -201,15 +206,16 @@ export async function handleErrors<T>(response: Response): Promise<ServerRespons
     goToLoginPage();
     throw error(t('BungieService.NotLoggedIn'), errorCode);
   }
-  /* 526 = cloudflare */
-  if (response.status >= 503 && response.status <= 526) {
+  // 526 = cloudflare
+  // We don't catch 500s because the Bungie.net API started returning 500 for legitimate game conditions
+  if (response.status >= 502 && response.status <= 526) {
     throw error(t('BungieService.Difficulties'), errorCode);
   }
   if (errorCode === -1 && (response.status < 200 || response.status >= 400)) {
     throw error(
       t('BungieService.NetworkError', {
         status: response.status,
-        statusText: response.statusText
+        statusText: response.statusText,
       }),
       errorCode
     );
@@ -236,7 +242,7 @@ export function handleUniquenessViolation(e: DimError, item: DimItem, store: Dim
         name: item.name,
         type: item.type.toLowerCase(),
         character: store.name,
-        context: store.genderName
+        context: store.genderName,
       }),
       e.code
     );

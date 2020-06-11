@@ -1,27 +1,28 @@
-import React from 'react';
-import { t } from 'app/i18next-t';
 import './FilterHelp.scss';
-import { destinyVersionSelector } from '../accounts/reducer';
+
+import React from 'react';
 import { RootState } from '../store/reducers';
 import { connect } from 'react-redux';
-
-const youTubeLink =
-  "<a href='https://www.youtube.com/watch?v=TDMiysNXoOo&list=PLwhQ0xgGDsPuKwoA8nBxeb9Gin-UcUf6d' target='_blank' rel='noopener noreferrer'>YouTube</a>";
+import { destinyVersionSelector } from '../accounts/reducer';
+import { t } from 'app/i18next-t';
+import { DestinyVersion } from '@destinyitemmanager/dim-api-types';
+import UserGuideLink from 'app/dim-ui/UserGuideLink';
 
 function mapStateToProps(state: RootState) {
   return {
-    destinyVersion: destinyVersionSelector(state)
+    destinyVersion: destinyVersionSelector(state),
   };
 }
 
-function FilterHelp({ destinyVersion }: { destinyVersion: 1 | 2 }) {
+function FilterHelp({ destinyVersion }: { destinyVersion: DestinyVersion }) {
   return (
     <div className="dim-page dim-static-page filter-view">
       <div>
         <p>{t('Filter.Combine', { example: 'is:arc light:>300' })}</p>
         <p>{t('Filter.Negate', { notexample: '-is:engram' })}</p>
-
-        <p dangerouslySetInnerHTML={{ __html: t('Filter.VideoExample', { link: youTubeLink }) }} />
+        <p>
+          <UserGuideLink topic="Item_Search" title={t('Filter.VideoExample')} />
+        </p>
         <table>
           <tbody>
             <tr>
@@ -132,14 +133,34 @@ function FilterHelp({ destinyVersion }: { destinyVersion: 1 | 2 }) {
               </tr>
             )}
             {destinyVersion === 2 && (
-              <tr>
-                <td>
-                  <span>power:value</span> <span>power:&gt;=value</span>{' '}
-                  <span>power:&gt;value</span> <span>power:&lt;value</span>{' '}
-                  <span>power:&lt;=value</span>
-                </td>
-                <td>{t('Filter.PowerLevel')}</td>
-              </tr>
+              <>
+                <tr>
+                  <td>
+                    <span>power:value</span> <span>power:&gt;=value</span>{' '}
+                    <span>power:&gt;value</span> <span>power:&lt;value</span>{' '}
+                    <span>power:&lt;=value</span>
+                  </td>
+                  <td>{t('Filter.PowerLevel')}</td>
+                </tr>
+                <tr>
+                  <td>
+                    powerlimit
+                    <span>powerlimit:value</span> <span>powerlimit:&gt;=value</span>{' '}
+                    <span>powerlimit:&gt;value</span> <span>powerlimit:&lt;value</span>{' '}
+                    <span>powerlimit:&lt;=value</span>
+                  </td>
+                  <td>{t('Filter.PowerLimit')}</td>
+                </tr>
+                <tr>
+                  <td>
+                    sunsetsafter / powerlimitseason
+                    <span>sunsetsafter:value</span> <span>sunsetsafter:&gt;=value</span>{' '}
+                    <span>sunsetsafter:&gt;value</span> <span>sunsetsafter:&lt;value</span>{' '}
+                    <span>sunsetsafter:&lt;=value</span>
+                  </td>
+                  <td>{t('Filter.SunsetAfter')}</td>
+                </tr>
+              </>
             )}
             <tr>
               <td>
@@ -535,14 +556,29 @@ function FilterHelp({ destinyVersion }: { destinyVersion: 1 | 2 }) {
                   <span>modslot:opulent</span>
                   <span>modslot:outlaw</span>
                   <span>modslot:undying</span>
+                  <span>modslot:worthy</span>
                 </td>
                 <td>{t('Filter.ModSlot')}</td>
               </tr>
             )}
+            {destinyVersion === 2 && (
+              <tr>
+                <td>
+                  <span>holdsmod:none</span>
+                  <span>holdsmod:any</span>
+                  <span>holdsmod:forge</span>
+                  <span>holdsmod:opulent</span>
+                  <span>holdsmod:outlaw</span>
+                  <span>holdsmod:undying</span>
+                  <span>holdsmod:worthy</span>
+                </td>
+                <td>{t('Filter.HoldsMod')}</td>
+              </tr>
+            )}
             <tr>
               <td>
-                <span>is:dawning</span> <span>is:crimsondays</span> <span>is:solstice</span>
-                <span>is:fotl</span> <span>is:revelry</span>
+                <span>source:dawning</span> <span>source:crimsondays</span>{' '}
+                <span>source:solstice</span> <span>source:fotl</span> <span>source:revelry</span>
               </td>
               <td>{t('Filter.Event')}</td>
             </tr>
@@ -577,89 +613,89 @@ function FilterHelp({ destinyVersion }: { destinyVersion: 1 | 2 }) {
                     dangerouslySetInnerHTML={{
                       __html: t('Filter.Vendor', {
                         vendor: t('Filter.Vendors.FWC'),
-                        context: 'noname'
-                      })
+                        context: 'noname',
+                      }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
                       __html: t('Filter.Vendor', {
                         vendor: t('Filter.Vendors.DO'),
-                        context: 'noname'
-                      })
+                        context: 'noname',
+                      }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
                       __html: t('Filter.Vendor', {
                         vendor: t('Filter.Vendors.NM'),
-                        context: 'noname'
-                      })
+                        context: 'noname',
+                      }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
                       __html: t('Filter.Vendor', {
                         vendor: t('Filter.Vendors.Speaker'),
-                        context: 'noname'
-                      })
+                        context: 'noname',
+                      }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Vendor', { vendor: 'Variks', context: 'noname' })
+                      __html: t('Filter.Vendor', { vendor: 'Variks', context: 'noname' }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
                       __html: t('Filter.Vendor', {
                         vendor: t('Filter.Vendors.Shipwright'),
-                        context: 'noname'
-                      })
+                        context: 'noname',
+                      }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Vendor', { vendor: 'Osiris', context: 'noname' })
+                      __html: t('Filter.Vendor', { vendor: 'Osiris', context: 'noname' }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Vendor', { vendor: 'Xûr', context: 'noname' })
+                      __html: t('Filter.Vendor', { vendor: 'Xûr', context: 'noname' }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Vendor', { vendor: 'Shaxx', context: 'noname' })
+                      __html: t('Filter.Vendor', { vendor: 'Shaxx', context: 'noname' }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
                       __html: t('Filter.Vendor', {
                         vendor: t('Filter.Vendors.CQ'),
-                        context: 'noname'
-                      })
+                        context: 'noname',
+                      }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Vendor', { vendor: 'Eris Morn', context: 'noname' })
+                      __html: t('Filter.Vendor', { vendor: 'Eris Morn', context: 'noname' }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
                       __html: t('Filter.Vendor', {
                         vendor: t('Filter.Vendors.EV'),
-                        context: 'noname'
-                      })
+                        context: 'noname',
+                      }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
                       __html: t('Filter.Vendor', {
                         vendor: t('Filter.Vendors.Gunsmith'),
-                        context: 'noname'
-                      })
+                        context: 'noname',
+                      }),
                     }}
                   />
                 </td>
@@ -736,87 +772,87 @@ function FilterHelp({ destinyVersion }: { destinyVersion: 1 | 2 }) {
                 <td>
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Release', { release: t('Filter.Releases.Vanilla') })
+                      __html: t('Filter.Release', { release: t('Filter.Releases.Vanilla') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.QW') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.QW') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.IB') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.IB') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.VoG') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.VoG') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.CE') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.CE') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.PoE') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.PoE') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.ToO') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.ToO') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Release', { release: t('Filter.Releases.tTK') })
+                      __html: t('Filter.Release', { release: t('Filter.Releases.tTK') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.CoE') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.CoE') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.KF') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.KF') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.SRL') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.SRL') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.CD') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.CD') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Release', { release: t('Filter.Releases.RoI') })
+                      __html: t('Filter.Release', { release: t('Filter.Releases.RoI') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.AF') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.AF') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.WotM') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.WotM') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.Dawning') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.Dawning') }),
                     }}
                   />
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: t('Filter.Activity', { release: t('Filter.Activities.AoT') })
+                      __html: t('Filter.Activity', { release: t('Filter.Activities.AoT') }),
                     }}
                   />
                 </td>

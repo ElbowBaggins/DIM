@@ -1,4 +1,5 @@
-import _, { Dictionary } from 'lodash';
+import { doEnergiesMatch } from './generated-sets/mod-utils';
+import _ from 'lodash';
 import { DimItem, DimPlug } from '../inventory/item-types';
 import {
   LockableBuckets,
@@ -6,7 +7,9 @@ import {
   StatTypes,
   LockedItemType,
   ItemsByBucket,
-  LockedMap
+  LockedMap,
+  LockedArmor2Mod,
+  LockedArmor2ModMap,
 } from './types';
 import { statTier, canSlotMod } from './generated-sets/utils';
 import { reportException } from 'app/utils/exceptions';
@@ -14,7 +17,7 @@ import { compareBy } from 'app/utils/comparators';
 import { DimStat } from 'app/inventory/item-types';
 import { getMasterworkSocketHashes } from '../utils/socket-utils';
 import { DestinySocketCategoryStyle } from 'bungie-api-ts/destiny2';
-import { getItemDamageShortName } from 'app/utils/item-utils';
+import { getItemDamageShortName, Armor2ModPlugCategories } from 'app/utils/item-utils';
 
 export const statHashes: { [type in StatTypes]: number } = {
   Mobility: 2996146975,
@@ -22,10 +25,18 @@ export const statHashes: { [type in StatTypes]: number } = {
   Recovery: 1943323491,
   Discipline: 1735777505,
   Intellect: 144602215,
-  Strength: 4244567218
+  Strength: 4244567218,
 };
 export const statValues = Object.values(statHashes);
 export const statKeys = Object.keys(statHashes) as StatTypes[];
+
+const bucketsToCategories = {
+  [LockableBuckets.helmet]: Armor2ModPlugCategories.helmet,
+  [LockableBuckets.gauntlets]: Armor2ModPlugCategories.gauntlets,
+  [LockableBuckets.chest]: Armor2ModPlugCategories.chest,
+  [LockableBuckets.leg]: Armor2ModPlugCategories.leg,
+  [LockableBuckets.classitem]: Armor2ModPlugCategories.classitem,
+};
 
 /**
  * Filter the items map down given the locking and filtering configs.
@@ -33,6 +44,7 @@ export const statKeys = Object.keys(statHashes) as StatTypes[];
 export function filterItems(
   items: ItemsByBucket,
   lockedMap: LockedMap,
+  lockedArmor2ModMap: LockedArmor2ModMap,
   filter: (item: DimItem) => boolean
 ): ItemsByBucket {
   const filteredItems: { [bucket: number]: readonly DimItem[] } = {};
@@ -58,14 +70,16 @@ export function filterItems(
     }
   });
 
-  // filter to only include items that are in the locked map
-  Object.keys(lockedMap).forEach((bucketStr) => {
-    const bucket = parseInt(bucketStr, 10);
+  // filter to only include items that are in the locked map and items that have the correct energy
+  Object.values(LockableBuckets).forEach((bucket) => {
     const locked = lockedMap[bucket];
-    // if there are locked items for this bucket
-    if (locked?.length && filteredItems[bucket]) {
-      filteredItems[bucket] = filteredItems[bucket].filter((item) =>
-        locked.every((lockedItem) => matchLockedItem(item, lockedItem))
+    const lockedMods = lockedArmor2ModMap[bucketsToCategories[bucket]];
+
+    if (lockedMods?.length || (locked?.length && filteredItems[bucket])) {
+      filteredItems[bucket] = filteredItems[bucket].filter(
+        (item) =>
+          (!locked || locked.every((lockedItem) => matchLockedItem(item, lockedItem))) &&
+          (!lockedMods || lockedMods.every((mod) => doEnergiesMatch(mod, item)))
       );
     }
   });
@@ -73,7 +87,7 @@ export function filterItems(
   return filteredItems;
 }
 
-function matchLockedItem(item: DimItem, lockedItem: LockedItemType) {
+export function matchLockedItem(item: DimItem, lockedItem: LockedItemType) {
   switch (lockedItem.type) {
     case 'exclude':
       return item.id !== lockedItem.item.id;
@@ -101,6 +115,7 @@ function matchLockedItem(item: DimItem, lockedItem: LockedItemType) {
 export function process(
   filteredItems: ItemsByBucket,
   lockedItems: LockedMap,
+  lockedArmor2ModMap: LockedArmor2ModMap,
   selectedStoreId: string,
   assumeMasterwork: boolean
 ): { sets: ArmorSet[]; combos: number; combosWithoutCaps: number } {
@@ -125,7 +140,11 @@ export function process(
       (i) => -i.basePower,
       (i) => !i.equipped
     ),
-    byStatMix(lockedItems[LockableBuckets.helmet], assumeMasterwork)
+    byStatMix(
+      assumeMasterwork,
+      lockedItems[LockableBuckets.helmet],
+      lockedArmor2ModMap[Armor2ModPlugCategories.helmet]
+    )
   );
   const gaunts = multiGroupBy(
     _.sortBy(
@@ -133,7 +152,11 @@ export function process(
       (i) => -i.basePower,
       (i) => !i.equipped
     ),
-    byStatMix(lockedItems[LockableBuckets.gauntlets], assumeMasterwork)
+    byStatMix(
+      assumeMasterwork,
+      lockedItems[LockableBuckets.gauntlets],
+      lockedArmor2ModMap[Armor2ModPlugCategories.gauntlets]
+    )
   );
   const chests = multiGroupBy(
     _.sortBy(
@@ -141,7 +164,11 @@ export function process(
       (i) => -i.basePower,
       (i) => !i.equipped
     ),
-    byStatMix(lockedItems[LockableBuckets.chest], assumeMasterwork)
+    byStatMix(
+      assumeMasterwork,
+      lockedItems[LockableBuckets.chest],
+      lockedArmor2ModMap[Armor2ModPlugCategories.chest]
+    )
   );
   const legs = multiGroupBy(
     _.sortBy(
@@ -149,7 +176,11 @@ export function process(
       (i) => -i.basePower,
       (i) => !i.equipped
     ),
-    byStatMix(lockedItems[LockableBuckets.leg], assumeMasterwork)
+    byStatMix(
+      assumeMasterwork,
+      lockedItems[LockableBuckets.leg],
+      lockedArmor2ModMap[Armor2ModPlugCategories.leg]
+    )
   );
   const classitems = multiGroupBy(
     _.sortBy(
@@ -157,7 +188,11 @@ export function process(
       (i) => -i.basePower,
       (i) => !i.equipped
     ),
-    byStatMix(lockedItems[LockableBuckets.classitem], assumeMasterwork)
+    byStatMix(
+      assumeMasterwork,
+      lockedItems[LockableBuckets.classitem],
+      lockedArmor2ModMap[Armor2ModPlugCategories.classitem]
+    )
   );
 
   // Ghosts don't have power, so sort them with exotics first
@@ -166,7 +201,7 @@ export function process(
       filteredItems[LockableBuckets.ghost] || [],
       (i) => !(i.owner === selectedStoreId && i.equipped)
     ),
-    byStatMix(lockedItems[LockableBuckets.ghost], assumeMasterwork)
+    byStatMix(assumeMasterwork, lockedItems[LockableBuckets.ghost])
   );
 
   // We won't search through more than this number of stat combos - it can cause us to run out of memory.
@@ -220,7 +255,7 @@ export function process(
       'combinations'
     );
     reportException('Loadout Optimizer', new Error('Loadout Optimizer crash while processing'), {
-      combos: existingTask
+      combos: existingTask,
     });
   }
   localStorage.setItem('loadout-optimizer', combos.toString());
@@ -244,7 +279,7 @@ export function process(
                 chests[chestsKey],
                 legs[legsKey],
                 classitems[classItemsKey],
-                ghosts[ghostsKey]
+                ghosts[ghostsKey],
               ];
 
               const firstValidSet = getFirstValidSet(armor);
@@ -255,7 +290,7 @@ export function process(
                   keyToStats(chestsKey),
                   keyToStats(legsKey),
                   keyToStats(classItemsKey),
-                  keyToStats(ghostsKey)
+                  keyToStats(ghostsKey),
                 ];
 
                 const maxPower = getPower(firstValidSet);
@@ -285,7 +320,7 @@ export function process(
                 if (existingSetAtTier) {
                   existingSetAtTier.sets.push({
                     armor,
-                    statChoices
+                    statChoices,
                   });
                   if (maxPower > existingSetAtTier.maxPower) {
                     existingSetAtTier.firstValidSet = firstValidSet;
@@ -298,8 +333,8 @@ export function process(
                     sets: [
                       {
                         armor,
-                        statChoices
-                      }
+                        statChoices,
+                      },
                     ],
                     stats: stats as {
                       [statType in StatTypes]: number;
@@ -307,7 +342,7 @@ export function process(
                     // TODO: defer calculating first valid set / statchoices / maxpower?
                     firstValidSet,
                     firstValidSetStatChoices: statChoices,
-                    maxPower
+                    maxPower,
                   };
                 }
               }
@@ -352,8 +387,13 @@ const emptyStats = [JSON.stringify(new Array(_.size(statHashes)).fill(0))];
  * Generate all possible stat mixes this item can contribute from different perk options,
  * expressed as comma-separated strings in the same order as statHashes.
  */
-function byStatMix(lockedItems: readonly LockedItemType[] | undefined, assumeMasterwork: boolean) {
+function byStatMix(
+  assumeMasterwork: boolean,
+  lockedItems?: readonly LockedItemType[],
+  lockedArmor2Mods?: LockedArmor2Mod[]
+) {
   const lockedModStats: { [statHash: number]: number } = {};
+  // Handle old armour mods
   if (lockedItems) {
     for (const lockedItem of lockedItems) {
       if (lockedItem.type === 'mod') {
@@ -361,6 +401,16 @@ function byStatMix(lockedItems: readonly LockedItemType[] | undefined, assumeMas
           lockedModStats[stat.statTypeHash] = lockedModStats[stat.statTypeHash] || 0;
           lockedModStats[stat.statTypeHash] += stat.value;
         }
+      }
+    }
+  }
+
+  // Handle armour 2.0 mods
+  if (lockedArmor2Mods) {
+    for (const lockedMod of lockedArmor2Mods) {
+      for (const stat of lockedMod.mod.investmentStats) {
+        lockedModStats[stat.statTypeHash] = lockedModStats[stat.statTypeHash] || 0;
+        lockedModStats[stat.statTypeHash] += stat.value;
       }
     }
   }
@@ -425,7 +475,7 @@ function generateMixesFromPerksOrStats(
 
   const statsByHash = _.keyBy(stats, (stat) => stat.statHash);
   const mixes: number[][] = [
-    getBaseStatValues(statsByHash, item, assumeArmor2IsMasterwork, lockedModStats)
+    getBaseStatValues(statsByHash, item, assumeArmor2IsMasterwork, lockedModStats),
   ];
 
   const altPerks: (DimPlug[] | null)[] = [null];
@@ -441,7 +491,7 @@ function generateMixesFromPerksOrStats(
               const existingMix = mixes[mixIndex];
               const optionStat = statValues.map((statHash, index) => {
                 const currentPlugValue = (socket.plug?.stats && socket.plug.stats[statHash]) ?? 0;
-                const optionPlugValue = (plug.stats && plug.stats[statHash]) || 0;
+                const optionPlugValue = plug.stats?.[statHash] || 0;
                 return existingMix[index] - currentPlugValue + optionPlugValue;
               });
 
@@ -465,7 +515,9 @@ function generateMixesFromPerksOrStats(
 }
 
 function getBaseStatValues(
-  stats: Dictionary<DimStat>,
+  stats: {
+    [index: string]: DimStat;
+  },
   item: DimItem,
   assumeMasterwork: boolean | null,
   lockedModStats: { [statHash: number]: number }
@@ -538,7 +590,7 @@ function getFirstValidSet(armors: readonly DimItem[][]) {
       const firstValid = armors.map((a, i) =>
         exoticIndices.includes(i) ? a.find((item) => !item.equippingLabel) : a[0]
       );
-      // If we found something for every slot
+
       if (firstValid.every(Boolean)) {
         return _.compact(firstValid);
       }

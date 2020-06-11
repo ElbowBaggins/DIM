@@ -1,20 +1,16 @@
 import { t } from 'app/i18next-t';
-import React from 'react';
+import React, { Dispatch } from 'react';
 import { DimStore } from '../../inventory/store-types';
-import { ArmorSet, LockedItemType, StatTypes, LockedMap } from '../types';
+import { ArmorSet, StatTypes, LockedMap, LockedArmor2ModMap } from '../types';
 import { WindowScroller, List } from 'react-virtualized';
 import GeneratedSet from './GeneratedSet';
 import { newLoadout } from 'app/loadout/loadout-utils';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
 import styles from './GeneratedSets.m.scss';
 import _ from 'lodash';
-import { addLockedItem, removeLockedItem } from './utils';
 import { editLoadout } from 'app/loadout/LoadoutDrawer';
-import ExternalLink from 'app/dim-ui/ExternalLink';
-import { AppIcon, faYoutube } from 'app/shell/icons';
-
-const youtubeLink =
-  'https://www.youtube.com/watch?v=IEN8Bnehlx4&list=PLwhQ0xgGDsPuKwoA8nBxeb9Gin-UcUf6d';
+import UserGuideLink from 'app/dim-ui/UserGuideLink';
+import { LoadoutBuilderAction } from '../LoadoutBuilder';
 
 interface Props {
   selectedStore: DimStore;
@@ -26,7 +22,8 @@ interface Props {
   statOrder: StatTypes[];
   defs: D2ManifestDefinitions;
   enabledStats: Set<StatTypes>;
-  onLockedMapChanged(lockedMap: Props['lockedMap']): void;
+  lockedArmor2Mods: LockedArmor2ModMap;
+  lbDispatch: Dispatch<LoadoutBuilderAction>;
 }
 
 interface State {
@@ -55,7 +52,7 @@ export default class GeneratedSets extends React.Component<Props, State> {
 
   private handleWindowResize = _.throttle(() => this.setState({ rowHeight: 0, rowWidth: 0 }), 300, {
     leading: false,
-    trailing: true
+    trailing: true,
   });
 
   constructor(props: Props) {
@@ -94,7 +91,9 @@ export default class GeneratedSets extends React.Component<Props, State> {
       isPhonePortrait,
       combos,
       combosWithoutCaps,
-      enabledStats
+      enabledStats,
+      lockedArmor2Mods,
+      lbDispatch,
     } = this.props;
     const { rowHeight, rowWidth, rowColumns } = this.state;
 
@@ -112,7 +111,7 @@ export default class GeneratedSets extends React.Component<Props, State> {
           </span>
           <button
             className={`dim-button ${styles.newLoadout}`}
-            onClick={() => editLoadout(newLoadout('', {}), { showClass: true, isNew: true })}
+            onClick={() => editLoadout(newLoadout('', []), { showClass: true, isNew: true })}
           >
             {t('LoadoutBuilder.NewEmptyLoadout')}
           </button>
@@ -127,9 +126,7 @@ export default class GeneratedSets extends React.Component<Props, State> {
           {!isPhonePortrait && t('LoadoutBuilder.OptimizerExplanationDesktop')}
           {'\n'}
           {t('LoadoutBuilder.OptimizerExplanationArmour2Mods')}{' '}
-          <ExternalLink href={youtubeLink}>
-            <AppIcon icon={faYoutube} /> {t('LoadoutBuilder.YouTubeLink')}
-          </ExternalLink>
+          <UserGuideLink topic="Loadout_Optimizer" />
         </p>
         <p>
           <span className={styles.altPerkKey}>{t('LoadoutBuilder.AltPerkKey')}</span>{' '}
@@ -142,11 +139,11 @@ export default class GeneratedSets extends React.Component<Props, State> {
             set={measureSet}
             selectedStore={selectedStore}
             lockedMap={lockedMap}
-            addLockedItem={this.addLockedItemType}
-            removeLockedItem={this.removeLockedItemType}
+            lbDispatch={lbDispatch}
             defs={defs}
             statOrder={statOrder}
             enabledStats={enabledStats}
+            lockedArmor2Mods={lockedArmor2Mods}
           />
         ) : sets.length > 0 ? (
           <WindowScroller ref={this.windowScroller}>
@@ -167,11 +164,11 @@ export default class GeneratedSets extends React.Component<Props, State> {
                     set={sets[index]}
                     selectedStore={selectedStore}
                     lockedMap={lockedMap}
-                    addLockedItem={this.addLockedItemType}
-                    removeLockedItem={this.removeLockedItemType}
+                    lbDispatch={lbDispatch}
                     defs={defs}
                     statOrder={statOrder}
                     enabledStats={enabledStats}
+                    lockedArmor2Mods={lockedArmor2Mods}
                   />
                 )}
                 scrollTop={scrollTop}
@@ -192,21 +189,5 @@ export default class GeneratedSets extends React.Component<Props, State> {
         0
       );
     }
-  };
-
-  private addLockedItemType = (item: LockedItemType) => {
-    const { lockedMap, onLockedMapChanged } = this.props;
-    onLockedMapChanged({
-      ...lockedMap,
-      [item.bucket.hash]: addLockedItem(item, lockedMap[item.bucket.hash])
-    });
-  };
-
-  private removeLockedItemType = (item: LockedItemType) => {
-    const { lockedMap, onLockedMapChanged } = this.props;
-    onLockedMapChanged({
-      ...lockedMap,
-      [item.bucket.hash]: removeLockedItem(item, lockedMap[item.bucket.hash])
-    });
   };
 }

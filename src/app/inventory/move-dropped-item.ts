@@ -11,6 +11,9 @@ import { showNotification } from '../notifications/notifications';
 import { Subject } from 'rxjs';
 import { hideItemPopup } from 'app/item-popup/item-popup';
 import { moveItemNotification } from './MoveNotifications';
+import { getStore } from './stores-helpers';
+import rxStore from '../store/store';
+import { updateCharacters } from './d2-stores';
 
 export interface MoveAmountPopupOptions {
   item: DimItem;
@@ -35,7 +38,7 @@ export function showMoveAmountPopup(
       amount: item.amount,
       maximum,
       onAmountSelected: resolve,
-      onCancel: reject
+      onCancel: reject,
     });
   });
 }
@@ -56,6 +59,8 @@ export default queuedAction(
       let moveAmount = item.amount || 1;
 
       try {
+        const stores = item.getStoresService().getStores();
+
         // Select how much of a stack to move
         if (
           item.maxStackSize > 1 &&
@@ -64,10 +69,7 @@ export default queuedAction(
           !item.uniqueStack &&
           forceChooseAmount
         ) {
-          const maximum = item
-            .getStoresService()
-            .getStore(item.owner)!
-            .amountOfItem(item);
+          const maximum = getStore(stores, item.owner)!.amountOfItem(item);
 
           try {
             moveAmount = await showMoveAmountPopup(item, target, maximum);
@@ -87,30 +89,25 @@ export default queuedAction(
             'to',
             target.name,
             'from',
-            item.getStoresService().getStore(item.owner)!.name
+            getStore(stores, item.owner)!.name
           );
         }
 
         hideItemPopup();
         const movePromise = dimItemService.moveTo(item, target, equip, moveAmount);
 
-        if ($featureFlags.moveNotifications) {
-          showNotification(moveItemNotification(item, target, movePromise));
-        }
+        showNotification(moveItemNotification(item, target, movePromise));
 
         item = await movePromise;
 
         const reload = item.equipped || equip;
         if (reload) {
-          await item.getStoresService().updateCharacters();
+          await (rxStore.dispatch(updateCharacters()) as any);
         }
 
         item.updateManualMoveTimestamp();
       } catch (e) {
         if (e.message !== 'move-canceled') {
-          if (!$featureFlags.moveNotifications) {
-            showNotification({ type: 'error', title: item.name, body: e.message });
-          }
           console.error('error moving', e, item);
           // Some errors aren't worth reporting
           if (

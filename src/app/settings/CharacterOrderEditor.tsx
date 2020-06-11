@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { DimStore } from '../inventory/store-types';
 import { connect } from 'react-redux';
 import { RootState } from '../store/reducers';
-import { sortedStoresSelector } from '../inventory/reducer';
+import { sortedStoresSelector } from '../inventory/selectors';
 import './CharacterOrderEditor.scss';
 import { AppIcon, refreshIcon } from '../shell/icons';
 
@@ -20,7 +20,7 @@ type Props = ProvidedProps & StoreProps;
 
 function mapStateToProps(state: RootState): StoreProps {
   return {
-    characters: sortedStoresSelector(state)
+    characters: sortedStoresSelector(state),
   };
 }
 
@@ -60,7 +60,7 @@ class CharacterOrderEditor extends React.Component<Props> {
                     {(provided, snapshot) => (
                       <div
                         className={clsx('character-order-editor-item', {
-                          'is-dragging': snapshot.isDragging
+                          'is-dragging': snapshot.isDragging,
                         })}
                         ref={provided.innerRef}
                         {...provided.draggableProps}
@@ -85,7 +85,7 @@ class CharacterOrderEditor extends React.Component<Props> {
     );
   }
 
-  private moveItem(oldIndex, newIndex) {
+  private moveItem(oldIndex: number, newIndex: number) {
     newIndex = Math.min(this.props.characters.length, Math.max(newIndex, 0));
     const order = reorder(
       this.props.characters.filter((c) => !c.isVault).map((c) => c.id),

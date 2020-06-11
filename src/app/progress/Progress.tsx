@@ -1,10 +1,9 @@
 import { t } from 'app/i18next-t';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import _ from 'lodash';
 import { DestinyAccount } from '../accounts/destiny-account';
 import './progress.scss';
 import ErrorBoundary from '../dim-ui/ErrorBoundary';
-import { Loading } from '../dim-ui/Loading';
 import { connect } from 'react-redux';
 import { RootState } from '../store/reducers';
 import { refresh$ } from '../shell/refresh';
@@ -14,7 +13,7 @@ import { InventoryBuckets } from '../inventory/inventory-buckets';
 import { D2ManifestDefinitions, getDefinitions } from '../destiny2/d2-definitions';
 import PageWithMenu from 'app/dim-ui/PageWithMenu';
 import { DimStore } from 'app/inventory/store-types';
-import { sortedStoresSelector, profileResponseSelector } from 'app/inventory/reducer';
+import { sortedStoresSelector, profileResponseSelector } from 'app/inventory/selectors';
 import { D2StoresService } from 'app/inventory/d2-stores';
 import CharacterSelect from 'app/dim-ui/CharacterSelect';
 import { AppIcon, faExternalLinkAlt } from 'app/shell/icons';
@@ -23,15 +22,14 @@ import destinySetsLogo from '../../images/destinySetsLogo.svg';
 import braytechLogo from '../../images/braytechLogo.svg';
 import d2ChecklistLogo from '../../images/d2ChecklistLogo.svg';
 import Pursuits from './Pursuits';
-import Factions from './Factions';
 import Milestones from './Milestones';
 import Ranks from './Ranks';
 import Raids from './Raids';
 import Hammer from 'react-hammerjs';
-import { DestinyProfileResponse, DestinyVendorsResponse } from 'bungie-api-ts/destiny2';
-import { loadingTracker } from 'app/shell/loading-tracker';
+import { DestinyProfileResponse } from 'bungie-api-ts/destiny2';
 import { useSubscription } from 'app/utils/hooks';
-import { getVendors } from '../bungie-api/destiny2-api';
+import { getStore, getCurrentStore } from 'app/inventory/stores-helpers';
+import ShowPageLoading from 'app/dim-ui/ShowPageLoading';
 
 interface ProvidedProps {
   account: DestinyAccount;
@@ -53,22 +51,8 @@ function mapStateToProps(state: RootState): StoreProps {
     stores: sortedStoresSelector(state),
     defs: state.manifest.d2Manifest,
     buckets: state.inventory.buckets,
-    profileInfo: profileResponseSelector(state)
+    profileInfo: profileResponseSelector(state),
   };
-}
-
-async function loadVendors(account: DestinyAccount, profileInfo: DestinyProfileResponse) {
-  const characterIds = profileInfo.characters.data ? Object.keys(profileInfo.characters.data) : [];
-  let vendors: DestinyVendorsResponse[] = [];
-  try {
-    vendors = await Promise.all(
-      characterIds.map((characterId) => getVendors(account, characterId))
-    );
-  } catch (e) {
-    console.error('Failed to load vendors', e);
-  }
-
-  return _.zipObject(characterIds, vendors);
 }
 
 const refreshStores = () =>
@@ -76,33 +60,12 @@ const refreshStores = () =>
 
 function Progress({ account, defs, stores, isPhonePortrait, buckets, profileInfo }: Props) {
   const [selectedStoreId, setSelectedStoreId] = useState<string | undefined>(undefined);
-  const [vendors, setVendors] = useState<
-    { [characterId: string]: DestinyVendorsResponse } | undefined
-  >(undefined);
 
   useEffect(() => {
     if (!defs) {
       getDefinitions();
     }
   }, [defs]);
-
-  useEffect(() => {
-    if (profileInfo && !vendors) {
-      loadingTracker.addPromise(loadVendors(account, profileInfo).then(setVendors));
-    }
-  }, [account, profileInfo, vendors]);
-  useSubscription(
-    useCallback(
-      () =>
-        refresh$.subscribe(() => {
-          if (profileInfo) {
-            const promise = loadVendors(account, profileInfo).then(setVendors);
-            loadingTracker.addPromise(promise);
-          }
-        }),
-      [account, profileInfo]
-    )
-  );
 
   useEffect(() => {
     if (!profileInfo) {
@@ -113,11 +76,7 @@ function Progress({ account, defs, stores, isPhonePortrait, buckets, profileInfo
   useSubscription(refreshStores);
 
   if (!defs || !profileInfo || !stores.length) {
-    return (
-      <div className="progress-page dim-page">
-        <Loading />
-      </div>
-    );
+    return <ShowPageLoading message={t('Loading.Profile')} />;
   }
 
   // TODO: Searchable (item, description)
@@ -159,8 +118,8 @@ function Progress({ account, defs, stores, isPhonePortrait, buckets, profileInfo
   };
 
   const selectedStore = selectedStoreId
-    ? stores.find((s) => s.id === selectedStoreId)!
-    : stores.find((s) => s.current)!;
+    ? getStore(stores, selectedStoreId)!
+    : getCurrentStore(stores)!;
 
   if (!defs || !buckets) {
     return null;
@@ -179,21 +138,20 @@ function Progress({ account, defs, stores, isPhonePortrait, buckets, profileInfo
     { id: 'raids', title: raidTitle },
     { id: 'triumphs', title: triumphTitle },
     { id: 'seals', title: sealTitle },
-    { id: 'factions', title: t('Progress.Factions') }
   ];
   const externalLinks = [
     {
       href: `https://braytech.org/${account.originalPlatformType}/${account.membershipId}/${selectedStore.id}/`,
       title: 'BrayTech.org',
-      logo: braytechLogo
+      logo: braytechLogo,
     },
     { href: 'https://destinysets.com/', title: 'DestinySets', logo: destinySetsLogo },
     { href: 'https://lowlidev.com.au/destiny/maps', title: 'lowlidev maps' },
     {
       href: `https://www.d2checklist.com/${account.originalPlatformType}/${account.membershipId}`,
       title: 'D2Checklist',
-      logo: d2ChecklistLogo
-    }
+      logo: d2ChecklistLogo,
+    },
   ];
 
   return (
@@ -293,21 +251,6 @@ function Progress({ account, defs, stores, isPhonePortrait, buckets, profileInfo
                     profileResponse={profileInfo}
                   />
                 </ErrorBoundary>
-              </section>
-
-              <section id="factions">
-                <CollapsibleTitle title={t('Progress.Factions')} sectionId="progress-factions">
-                  <div className="progress-row">
-                    <ErrorBoundary name="Factions">
-                      <Factions
-                        defs={defs}
-                        profileInfo={profileInfo}
-                        store={selectedStore}
-                        vendors={vendors}
-                      />
-                    </ErrorBoundary>
-                  </div>
-                </CollapsibleTitle>
               </section>
             </div>
           </Hammer>

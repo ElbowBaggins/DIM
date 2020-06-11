@@ -53,9 +53,9 @@ export default class StoreHeading extends React.Component<Props, State> {
       <AppIcon className="loadout-button" icon={openDropdownIcon} title={t('Loadouts.Loadouts')} />
     );
     const background = (
-      <div className="background" style={{ backgroundImage: `url(${store.background})` }} />
+      <div className="background" style={{ backgroundImage: `url("${store.background}")` }} />
     );
-    const emblem = <div className="emblem" style={{ backgroundImage: `url(${store.icon})` }} />;
+    const emblem = <div className="emblem" style={{ backgroundImage: `url("${store.icon}")` }} />;
 
     // TODO: break up into some pure components
 
@@ -89,7 +89,7 @@ export default class StoreHeading extends React.Component<Props, State> {
       <div className={clsx('character', { current: store.current })}>
         <div
           className={clsx('character-box', {
-            destiny2: store.isDestiny2()
+            destiny2: store.isDestiny2(),
           })}
           aria-label={store.name}
           onClick={this.openLoadoutPopup}
@@ -108,7 +108,9 @@ export default class StoreHeading extends React.Component<Props, State> {
               </div>
               <div className="bottom">
                 <div className="race-gender">{store.genderRace}</div>
-                {store.isDestiny1() && <div className="level">{store.level}</div>}
+                {store.isDestiny1() && store.level < 40 && (
+                  <div className="level">{store.level}</div>
+                )}
               </div>
             </div>
             {loadoutButton}
@@ -118,7 +120,7 @@ export default class StoreHeading extends React.Component<Props, State> {
               <div className="level-bar">
                 <div
                   className={clsx('level-bar-progress', {
-                    'mote-progress': !store.percentToNextLevel
+                    'mote-progress': !store.percentToNextLevel,
                   })}
                   style={{ width: percent(levelBar) }}
                 />
@@ -154,13 +156,13 @@ function getLevelBar(store: DimStore) {
   if (store.isDestiny2()) {
     return {
       levelBar: 0,
-      xpTillMote: undefined
+      xpTillMote: undefined,
     };
   }
   if (store.percentToNextLevel) {
     return {
       levelBar: store.percentToNextLevel,
-      xpTillMote: undefined
+      xpTillMote: undefined,
     };
   }
   if (store.progression?.progressions) {
@@ -168,16 +170,16 @@ function getLevelBar(store: DimStore) {
     if (prestige) {
       const data = {
         level: prestige.level,
-        exp: prestige.nextLevelAt - prestige.progressToNextLevel
+        exp: prestige.nextLevelAt - prestige.progressToNextLevel,
       };
       return {
         xpTillMote: t('Stats.Prestige', data),
-        levelBar: prestige.progressToNextLevel / prestige.nextLevelAt
+        levelBar: prestige.progressToNextLevel / prestige.nextLevelAt,
       };
     }
   }
   return {
     levelBar: 0,
-    xpTillMote: undefined
+    xpTillMote: undefined,
   };
 }

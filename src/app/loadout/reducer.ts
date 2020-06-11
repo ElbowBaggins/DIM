@@ -1,40 +1,33 @@
 import { Reducer } from 'redux';
 import * as actions from './actions';
 import { ActionType, getType } from 'typesafe-actions';
-import { AccountsAction, currentAccountSelector } from '../accounts/reducer';
-import { Loadout } from './loadout-types';
+import { currentAccountSelector } from '../accounts/reducer';
+import { Loadout, LoadoutItem } from './loadout-types';
 import { RootState } from '../store/reducers';
 import _ from 'lodash';
 import { createSelector } from 'reselect';
-
-const EMPTY_ARRAY = [];
-
-// TODO: Enable this once the membership ID saving code has been out a while, so we can track how often it happens.
-// const reportOldLoadout = _.once(() => ga('send', 'event', 'Loadouts', 'No Membership ID'));
+import {
+  Loadout as DimApiLoadout,
+  LoadoutItem as DimApiLoadoutItem,
+  DestinyVersion,
+} from '@destinyitemmanager/dim-api-types';
+import { currentProfileSelector } from 'app/dim-api/selectors';
+import { emptyArray } from 'app/utils/empty';
 
 /** All loadouts relevant to the current account */
 export const loadoutsSelector = createSelector(
-  (state: RootState) => state.loadouts.loadouts,
   currentAccountSelector,
-  (allLoadouts, currentAccount) =>
-    currentAccount
-      ? allLoadouts.filter((loadout) => {
-          if (loadout.membershipId !== undefined) {
-            return loadout.membershipId === currentAccount.membershipId;
-          } else if (loadout.platform !== undefined) {
-            // reportOldLoadout();
-            if (loadout.platform === currentAccount.platformLabel) {
-              // Take this opportunity to fix up the membership ID
-              loadout.membershipId = currentAccount.membershipId;
-              return true;
-            } else {
-              return false;
-            }
-          } else {
-            return true;
-          }
-        })
-      : EMPTY_ARRAY
+  currentProfileSelector,
+  (currentAccount, profile) =>
+    profile
+      ? Object.values(profile.loadouts).map((loadout) =>
+          convertDimApiLoadoutToLoadout(
+            currentAccount!.membershipId,
+            currentAccount!.destinyVersion,
+            loadout
+          )
+        )
+      : emptyArray<Loadout>()
 );
 export const previousLoadoutSelector = (state: RootState, storeId: string): Loadout | undefined => {
   if (state.loadouts.previousLoadouts[storeId]) {
@@ -44,7 +37,6 @@ export const previousLoadoutSelector = (state: RootState, storeId: string): Load
 };
 
 export interface LoadoutsState {
-  readonly loadouts: Loadout[];
   /** A stack of previous loadouts by character ID, for undo loadout. */
   readonly previousLoadouts: { [characterId: string]: Loadout[] };
 }
@@ -52,35 +44,14 @@ export interface LoadoutsState {
 export type LoadoutsAction = ActionType<typeof actions>;
 
 const initialState: LoadoutsState = {
-  loadouts: [],
-  previousLoadouts: {}
+  previousLoadouts: {},
 };
 
-export const loadouts: Reducer<LoadoutsState, LoadoutsAction | AccountsAction> = (
+export const loadouts: Reducer<LoadoutsState, LoadoutsAction> = (
   state: LoadoutsState = initialState,
   action: LoadoutsAction
 ) => {
   switch (action.type) {
-    case getType(actions.loaded):
-      return {
-        ...state,
-        loadouts: action.payload
-      };
-
-    case getType(actions.deleteLoadout):
-      return {
-        ...state,
-        loadouts: state.loadouts.filter((l) => l.id !== action.payload)
-      };
-
-    case getType(actions.updateLoadout): {
-      const loadout = action.payload;
-      return {
-        ...state,
-        loadouts: [...state.loadouts.filter((l) => l.id !== loadout.id), loadout]
-      };
-    }
-
     case getType(actions.savePreviousLoadout): {
       const { storeId, loadoutId, previousLoadout } = action.payload;
       let previousLoadouts = state.previousLoadouts[storeId] || [];
@@ -95,8 +66,8 @@ export const loadouts: Reducer<LoadoutsState, LoadoutsAction | AccountsAction> =
         ...state,
         previousLoadouts: {
           ...state.previousLoadouts,
-          [storeId]: previousLoadouts
-        }
+          [storeId]: previousLoadouts,
+        },
       };
     }
 
@@ -104,3 +75,41 @@ export const loadouts: Reducer<LoadoutsState, LoadoutsAction | AccountsAction> =
       return state;
   }
 };
+
+/**
+ * DIM API stores loadouts in a new format, but the app still uses the old format everywhere. This converts the API
+ * storage format to the old loadout format.
+ */
+function convertDimApiLoadoutToLoadout(
+  platformMembershipId: string,
+  destinyVersion: DestinyVersion,
+  loadout: DimApiLoadout
+): Loadout {
+  return {
+    id: loadout.id,
+    classType: loadout.classType,
+    name: loadout.name,
+    clearSpace: loadout.clearSpace || false,
+    membershipId: platformMembershipId,
+    destinyVersion,
+    items: [
+      ...loadout.equipped.map((i) => convertDimApiLoadoutItemToLoadoutItem(i, true)),
+      ...loadout.unequipped.map((i) => convertDimApiLoadoutItemToLoadoutItem(i, false)),
+    ],
+  };
+}
+
+/**
+ * Converts DimApiLoadoutItem to real loadout items.
+ */
+export function convertDimApiLoadoutItemToLoadoutItem(
+  item: DimApiLoadoutItem,
+  equipped: boolean
+): LoadoutItem {
+  return {
+    id: item.id || '0',
+    hash: item.hash,
+    amount: item.amount || 1,
+    equipped,
+  };
+}

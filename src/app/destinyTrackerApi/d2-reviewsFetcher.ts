@@ -20,7 +20,7 @@ export function getItemReviewsD2(
   item: D2Item,
   platformSelection: DtrReviewPlatform,
   mode: DtrD2ActivityModes
-): ThunkResult<Promise<D2ItemReviewResponse | undefined>> {
+): ThunkResult<D2ItemReviewResponse | undefined> {
   return async (dispatch, getState) => {
     if (!item.reviewable) {
       return undefined;
@@ -42,7 +42,7 @@ export function getItemReviewsD2(
     dispatch(
       reviewsLoaded({
         key: getItemReviewsKey(item),
-        reviews: reviewData
+        reviews: reviewData,
       })
     );
     return reviewData;
@@ -78,7 +78,7 @@ function translateReview(returnedUserReview: D2ItemUserReview): D2ItemUserReview
 
   return {
     ...returnedUserReview,
-    timestamp
+    timestamp,
   };
 }
 

@@ -6,14 +6,14 @@ import ConnectedInventoryItem from '../inventory/ConnectedInventoryItem';
 import { connect, MapStateToProps } from 'react-redux';
 import { RootState } from '../store/reducers';
 import { createSelector } from 'reselect';
-import { storesSelector } from '../inventory/reducer';
+import { storesSelector } from '../inventory/selectors';
 import {
   SearchConfig,
   searchConfigSelector,
   SearchFilters,
-  searchFiltersConfigSelector
+  searchFiltersConfigSelector,
 } from '../search/search-filters';
-import SearchFilterInput from '../search/SearchFilterInput';
+import SearchFilterInput, { SearchFilterRef } from '../search/SearchFilterInput';
 import { sortItems } from '../shell/filters';
 import { itemSortOrderSelector } from '../settings/item-sort';
 import clsx from 'clsx';
@@ -50,12 +50,12 @@ function mapStateToProps(): MapStateToProps<StoreProps, ProvidedProps, RootState
     filters: searchFiltersConfigSelector(state),
     itemSortOrder: itemSortOrderSelector(state),
     isPhonePortrait: state.shell.isPhonePortrait,
-    preferEquip: settingsSelector(state).itemPickerEquip
+    preferEquip: settingsSelector(state).itemPickerEquip,
   });
 }
 
 const mapDispatchToProps = {
-  setSetting
+  setSetting,
 };
 type DispatchProps = typeof mapDispatchToProps;
 
@@ -70,10 +70,10 @@ interface State {
 class ItemPicker extends React.Component<Props, State> {
   state: State = {
     query: '',
-    equip: this.props.equip === undefined ? this.props.preferEquip : this.props.equip
+    equip: this.props.equip === undefined ? this.props.preferEquip : this.props.equip,
   };
   private itemContainer = React.createRef<HTMLDivElement>();
-  private filterInput = React.createRef<SearchFilterInput>();
+  private filterInput = React.createRef<SearchFilterRef>();
 
   componentDidMount() {
     if (this.itemContainer.current) {
@@ -95,7 +95,7 @@ class ItemPicker extends React.Component<Props, State> {
       filters,
       itemSortOrder,
       hideStoreEquip,
-      sortBy
+      sortBy,
     } = this.props;
     const { query, equip, height } = this.state;
 

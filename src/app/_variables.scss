@@ -78,3 +78,44 @@ $header-height: 44px;
     outline: none;
   }
 }
+
+// Apply spacing between children
+@mixin vertical-space-children($space) {
+  > * {
+    margin-bottom: $space;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// Apply spacing between children
+@mixin horizontal-space-children($space) {
+  > * {
+    margin-right: $space;
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+// Show visibile scrollbars when scrollable, even if the OS (e.g. macOS) prefers hidden scrollbars
+@mixin visible-scrollbars {
+  &::-webkit-scrollbar {
+    width: 10px;
+
+    &:horizontal {
+      height: 10px;
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(228, 228, 228, 0.2);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #e4e4e4;
+    border-radius: 3px;
+  }
+}

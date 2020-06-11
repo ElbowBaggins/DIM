@@ -2,10 +2,11 @@ import React from 'react';
 import clsx from 'clsx';
 import { DimStore } from './store-types';
 import { AppIcon, powerActionIcon } from '../shell/icons';
+import './StoreHeading.scss';
 
 export default function SimpleCharacterTile({
   character,
-  onClick
+  onClick,
 }: {
   character: DimStore;
   onClick?(id: string): void;
@@ -16,12 +17,12 @@ export default function SimpleCharacterTile({
     <div onClick={handleClick} className={clsx('character', { current: character.current })}>
       <div
         className={clsx('character-box', {
-          destiny2: character.isDestiny2()
+          destiny2: character.isDestiny2(),
         })}
       >
-        <div className="background" style={{ backgroundImage: `url(${character.background})` }} />
+        <div className="background" style={{ backgroundImage: `url("${character.background}")` }} />
         <div className="details">
-          <div className="emblem" style={{ backgroundImage: `url(${character.icon})` }} />
+          <div className="emblem" style={{ backgroundImage: `url("${character.icon}")` }} />
           <div className="character-text">
             <div className="top">
               <div className="class">{character.className}</div>

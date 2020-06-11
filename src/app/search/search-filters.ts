@@ -1,50 +1,57 @@
-import _ from 'lodash';
-import memoizeOne from 'memoize-one';
-import latinise from 'voca/latinise';
-import { createSelector } from 'reselect';
+import * as hashes from './search-filter-hashes';
 
-import { compareBy, chainComparator, reverseComparator } from '../utils/comparators';
-import { DimItem, D1Item, D2Item } from '../inventory/item-types';
-import { DimStore } from '../inventory/store-types';
-import { Loadout } from '../loadout/loadout-types';
+import { D1Item, D2Item, DimItem } from '../inventory/item-types';
+import {
+  DEFAULT_GLOW,
+  DEFAULT_GLOW_CATEGORY,
+  DEFAULT_ORNAMENTS,
+  DEFAULT_SHADER,
+} from 'app/inventory/store/sockets';
 import {
   DestinyAmmunitionType,
-  DestinyCollectibleState,
   DestinyClass,
-  DestinyItemSubType
+  DestinyCollectibleState,
+  DestinyItemSubType,
 } from 'bungie-api-ts/destiny2';
-import { destinyVersionSelector } from '../accounts/reducer';
-import { D1Categories } from '../destiny1/d1-buckets';
-import { D2Categories } from '../destiny2/d2-buckets';
-import { querySelector } from '../shell/reducer';
-import { sortedStoresSelector } from '../inventory/reducer';
-import { maxLightLoadout, maxStatLoadout } from '../loadout/auto-loadouts';
-import { itemTagSelectorList, DimItemInfo, getTag, getNotes } from '../inventory/dim-item-info';
-import store from '../store/store';
-import { loadoutsSelector } from '../loadout/reducer';
-import { InventoryWishListRoll } from '../wishlists/wishlists';
-import { inventoryWishListsSelector } from '../wishlists/reducer';
-import { D2SeasonInfo } from '../inventory/d2-season-info';
-import { getRating, ratingsSelector, ReviewsState, shouldShowRating } from '../item-review/reducer';
-import { RootState } from '../store/reducers';
-import { getLoadouts as getLoadoutsFromStorage } from '../loadout/loadout-storage';
-
-import { D2EventPredicateLookup } from 'data/d2/d2-event-info';
-import * as hashes from './search-filter-hashes';
-import D2Sources from 'data/d2/source-info';
-import S8Sources from 'data/d2/s8-source-info';
-import seasonTags from 'data/d2/season-tags.json';
+import { ItemInfos, getNotes, getTag, itemTagSelectorList } from '../inventory/dim-item-info';
+import { ReviewsState, getRating, ratingsSelector, shouldShowRating } from '../item-review/reducer';
+import { chainComparator, compareBy, reverseComparator } from '../utils/comparators';
 import {
-  getItemSpecialtyModSlotFilterName,
-  specialtyModSlotFilterNames,
-  getItemDamageShortName
+  getItemDamageShortName,
+  getSpecialtySocketMetadata,
+  modSlotTags,
+  getItemPowerCapFinalSeason,
 } from 'app/utils/item-utils';
 import {
-  DEFAULT_SHADER,
-  DEFAULT_ORNAMENTS,
-  DEFAULT_GLOW,
-  DEFAULT_GLOW_CATEGORY
-} from 'app/inventory/store/sockets';
+  itemInfosSelector,
+  sortedStoresSelector,
+  currentStoreSelector,
+} from '../inventory/selectors';
+import { maxLightItemSet, maxStatLoadout } from '../loadout/auto-loadouts';
+
+import { D1Categories } from '../destiny1/d1-buckets';
+import { D2Categories } from '../destiny2/d2-buckets';
+import { D2EventPredicateLookup } from 'data/d2/d2-event-info';
+import { D2SeasonInfo } from 'data/d2/d2-season-info';
+import D2Sources from 'data/d2/source-info';
+import { DimStore } from '../inventory/store-types';
+import { InventoryWishListRoll } from '../wishlists/wishlists';
+import { Loadout } from '../loadout/loadout-types';
+import { RootState } from '../store/reducers';
+import missingSources from 'data/d2/missing-source-info';
+import _ from 'lodash';
+import { createSelector } from 'reselect';
+import { destinyVersionSelector } from '../accounts/reducer';
+import { inventoryWishListsSelector } from '../wishlists/reducer';
+import latinise from 'voca/latinise';
+import { loadoutsSelector } from '../loadout/reducer';
+import memoizeOne from 'memoize-one';
+import { querySelector } from '../shell/reducer';
+import seasonTags from 'data/d2/season-tags.json';
+import { settingsSelector } from 'app/settings/reducer';
+import store from '../store/store';
+import { getStore } from 'app/inventory/stores-helpers';
+import { DestinyVersion } from '@destinyitemmanager/dim-api-types';
 
 /**
  * (to the tune of TMNT) ♪ string processing helper functions ♫
@@ -52,9 +59,10 @@ import {
  */
 
 /** global language bool. "latin" character sets are the main driver of string processing changes */
-const isLatinBased = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'pl', 'pt-br'].includes(
-  store.getState().settings.language
-);
+const isLatinBased = () =>
+  ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'pl', 'pt-br'].includes(
+    settingsSelector(store.getState()).language
+  );
 
 /** escape special characters for a regex */
 export const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -63,11 +71,11 @@ export const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$
 const startWordRegexp = memoizeOne(
   (predicate: string) =>
     // Only some languages effectively use the \b regex word boundary
-    new RegExp(`${isLatinBased ? '\\b' : ''}${escapeRegExp(predicate)}`, 'i')
+    new RegExp(`${isLatinBased() ? '\\b' : ''}${escapeRegExp(predicate)}`, 'i')
 );
 
 /** returns input string toLower, and stripped of accents if it's a latin language */
-const plainString = (s: string): string => (isLatinBased ? latinise(s) : s).toLowerCase();
+const plainString = (s: string): string => (isLatinBased() ? latinise(s) : s).toLowerCase();
 
 /** remove starting and ending quotes ('") e.g. for notes:"this string" */
 const trimQuotes = (s: string) => s.replace(/(^['"]|['"]$)/g, '');
@@ -96,11 +104,12 @@ export const searchConfigSelector = createSelector(destinyVersionSelector, build
 export const searchFiltersConfigSelector = createSelector(
   searchConfigSelector,
   sortedStoresSelector,
+  currentStoreSelector,
   loadoutsSelector,
   inventoryWishListsSelector,
   ratingsSelector,
   (state: RootState) => state.inventory.newItems,
-  (state: RootState) => state.inventory.itemInfos,
+  itemInfosSelector,
   searchFilters
 );
 
@@ -116,14 +125,14 @@ export const searchFilterSelector = createSelector(
  */
 
 export interface SearchConfig {
-  destinyVersion: 1 | 2;
+  destinyVersion: DestinyVersion;
   keywords: string[];
   categoryHashFilters: { [key: string]: number };
   keywordToFilter: { [key: string]: string };
 }
 
 /** Builds an object that describes the available search keywords and category mappings. */
-export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
+export function buildSearchConfig(destinyVersion: DestinyVersion): SearchConfig {
   const isD1 = destinyVersion === 1;
   const isD2 = destinyVersion === 2;
   const categories = isD1 ? D1Categories : D2Categories;
@@ -134,7 +143,7 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
   // Add new ItemCategoryHash hashes to this, to add new category searches
   const categoryHashFilters: { [key: string]: number } = {
     ...hashes.D1CategoryHashes,
-    ...(isD2 ? hashes.D2CategoryHashes : {})
+    ...(isD2 ? hashes.D2CategoryHashes : {}),
   };
 
   const stats = [
@@ -157,7 +166,7 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
     ...(isD1 ? ['rof'] : []),
     ...(isD2
       ? ['rpm', 'mobility', 'recovery', 'resilience', 'drawtime', 'inventorysize', 'total', 'any']
-      : [])
+      : []),
   ];
 
   /**
@@ -180,7 +189,7 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
       'green',
       'blue',
       'purple',
-      'yellow'
+      'yellow',
     ],
     classType: ['titan', 'hunter', 'warlock'],
     dupe: ['dupe', 'duplicate'],
@@ -194,7 +203,7 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
     inloadout: ['inloadout'],
     maxpower: ['maxpower'],
     new: ['new'],
-    tag: ['tagged'],
+    tagged: ['tagged'],
     level: ['level'],
     equipment: ['equipment', 'equippable'],
     postmaster: ['postmaster', 'inpostmaster'],
@@ -238,7 +247,7 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
             'cq',
             'eris',
             'ev',
-            'gunsmith'
+            'gunsmith',
           ],
           activity: [
             'vanilla',
@@ -257,8 +266,8 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
             'coe',
             'af',
             'dawning',
-            'aot'
-          ]
+            'aot',
+          ],
         }
       : {}),
     ...(isD2
@@ -267,23 +276,22 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
           hascapacity: ['hascapacity', 'armor2.0'],
           complete: ['goldborder', 'yellowborder', 'complete'],
           curated: ['curated'],
-          event: ['dawning', 'crimsondays', 'solstice', 'fotl', 'revelry'],
           hasLight: ['light', 'haslight', 'haspower'],
           hasMod: ['hasmod'],
           modded: ['modded'],
           hasShader: ['shaded', 'hasshader'],
           hasOrnament: ['ornamented', 'hasornament'],
           ikelos: ['ikelos'],
-          masterwork: ['masterwork', 'masterworks'],
+          masterworked: ['masterwork', 'masterworks'],
           powerfulreward: ['powerfulreward'],
           randomroll: ['randomroll'],
           reacquirable: ['reacquirable'],
           trashlist: ['trashlist'],
           wishlist: ['wishlist'],
-          wishlistdupe: ['wishlistdupe']
+          wishlistdupe: ['wishlistdupe'],
         }
       : {}),
-    ...($featureFlags.reviewsEnabled ? { hasRating: ['rated', 'hasrating'] } : {})
+    ...($featureFlags.reviewsEnabled ? { hasRating: ['rated', 'hasrating'] } : {}),
   };
 
   // Filters that operate on numeric ranges with comparison operators
@@ -294,8 +302,8 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
     'count',
     'year',
     ...(isD1 ? ['level', 'quality', 'percentage'] : []),
-    ...(isD2 ? ['masterwork', 'season'] : []),
-    ...($featureFlags.reviewsEnabled ? ['rating', 'ratingcount'] : [])
+    ...(isD2 ? ['masterwork', 'season', 'powerlimit', 'sunsetsafter', 'powerlimitseason'] : []),
+    ...($featureFlags.reviewsEnabled ? ['rating', 'ratingcount'] : []),
   ];
 
   // Filters that operate with fixed predicate values or freeform text, plus the processed above ranges
@@ -312,34 +320,40 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
       operators.map((comparison) => `basestat:${stat}:${comparison}`)
     ),
     // keywords for checking which stat is masterworked
-    ...stats.map((stat) => `masterwork:${stat}`),
+    ...(isD2 ? stats.map((stat) => `masterwork:${stat}`) : []),
     // keywords for named seasons. reverse so newest seasons are first
-    ...Object.keys(seasonTags)
-      .reverse()
-      .map((tag) => `season:${tag}`),
+    ...(isD2
+      ? Object.keys(seasonTags)
+          .reverse()
+          .map((tag) => `season:${tag}`)
+      : []),
     // keywords for seasonal mod slots
-    ...specialtyModSlotFilterNames
-      .concat(['any', 'none'])
-      .map((modSlotName) => `modslot:${modSlotName}`),
+    ...(isD2
+      ? modSlotTags.concat(['any', 'none']).map((modSlotName) => `modslot:${modSlotName}`)
+      : []),
+    ...(isD2
+      ? modSlotTags.concat(['any', 'none']).map((modSlotName) => `holdsmod:${modSlotName}`)
+      : []),
     // a keyword for every combination of a DIM-processed stat and mathmatical operator
     ...ranges.flatMap((range) => operators.map((comparison) => `${range}:${comparison}`)),
     // energy capacity elements and ranges
-    ...hashes.energyCapacityTypes.map((element) => `energycapacity:${element}`),
-    ...operators.map((comparison) => `energycapacity:${comparison}`),
+    ...(isD2 ? hashes.energyCapacityTypes.map((element) => `energycapacity:${element}`) : []),
+    ...(isD2 ? operators.map((comparison) => `energycapacity:${comparison}`) : []),
     // "source:" keyword plus one for each source
     ...(isD2
       ? [
           'source:',
           'wishlistnotes:',
           ...Object.keys(D2Sources).map((word) => `source:${word}`),
+          ...Object.keys(D2EventPredicateLookup).map((word) => `source:${word}`),
           // maximum stat finders
           ...hashes.armorStatNames.map((armorStat) => `maxbasestatvalue:${armorStat}`),
           ...hashes.armorStatNames.map((armorStat) => `maxstatvalue:${armorStat}`),
-          ...hashes.armorStatNames.map((armorStat) => `maxstatloadout:${armorStat}`)
+          ...hashes.armorStatNames.map((armorStat) => `maxstatloadout:${armorStat}`),
         ]
       : []),
     // all the free text searches that support quotes
-    ...['notes:', 'perk:', 'perkname:', 'name:', 'description:']
+    ...['notes:', 'perk:', 'perkname:', 'name:', 'description:'],
   ];
 
   // create suggestion stubs for filter names
@@ -367,7 +381,7 @@ export function buildSearchConfig(destinyVersion: 1 | 2): SearchConfig {
     keywordToFilter,
     keywords: [...new Set(keywords)], // de-dupe kinetic (dmg) & kinetic (slot)
     destinyVersion,
-    categoryHashFilters
+    categoryHashFilters,
   };
 }
 /**
@@ -423,12 +437,14 @@ export interface SearchFilters {
 function searchFilters(
   searchConfig: SearchConfig,
   stores: DimStore[],
+  currentStore: DimStore,
   loadouts: Loadout[],
   inventoryWishListRolls: { [key: string]: InventoryWishListRoll },
   ratings: ReviewsState['ratings'],
   newItems: Set<string>,
-  itemInfos: { [key: string]: DimItemInfo }
+  itemInfos: ItemInfos
 ): SearchFilters {
+  // TODO: do these with memoize-one
   let _duplicates: { [dupeID: string]: DimItem[] } | null = null; // Holds a map from item hash to count of occurrances of that hash
   const _maxPowerLoadoutItems: string[] = [];
   const _maxStatLoadoutItems: { [key: string]: string[] } = {};
@@ -437,7 +453,6 @@ function searchFilters(
   } | null = null;
   const _lowerDupes = {};
   let _loadoutItemIds: Set<string> | undefined;
-  const getLoadouts = _.once(getLoadoutsFromStorage);
 
   function initDupes() {
     // The comparator for sorting dupes - the first item will be the "best" and all others are "dupelower".
@@ -449,7 +464,7 @@ function searchFilters(
         compareBy((item) => item.locked),
         compareBy((item) => {
           const tag = getTag(item, itemInfos);
-          return tag && ['favorite', 'keep'].includes(tag);
+          return Boolean(tag && ['favorite', 'keep'].includes(tag));
         }),
         compareBy((i) => i.id) // tiebreak by ID
       )
@@ -508,7 +523,7 @@ function searchFilters(
                     : // else we are looking for the biggest stat
                       {
                         value: Math.max(_maxStatValues[itemSlot][stat.statHash].value, stat.value),
-                        base: Math.max(_maxStatValues[itemSlot][stat.statHash].base, stat.base)
+                        base: Math.max(_maxStatValues[itemSlot][stat.statHash].base, stat.base),
                       };
               }
             }
@@ -527,11 +542,9 @@ function searchFilters(
     const statHashes: number[] =
       statType === 'any' ? hashes.anyArmorStatHashes : [hashes.statHashByName[statType]];
     return (item: DimItem, predicate: string) => {
-      const matchingStats =
-        item.stats &&
-        item.stats.filter(
-          (s) => statHashes.includes(s.statHash) && compareByOperator(s[byWhichValue], predicate)
-        );
+      const matchingStats = item.stats?.filter(
+        (s) => statHashes.includes(s.statHash) && compareByOperator(s[byWhichValue], predicate)
+      );
       return matchingStats && Boolean(matchingStats.length);
     };
   };
@@ -541,10 +554,11 @@ function searchFilters(
     /**
      * Build a complex predicate function from a full query string.
      */
-    filterFunction: memoizeOne(function(query: string): (item: DimItem) => boolean {
+    filterFunction: memoizeOne(function (query: string): (item: DimItem) => boolean {
       query = query.trim().toLowerCase();
       if (!query.length) {
-        query = '-tag:archive';
+        // By default, show anything that doesn't have the archive tag
+        return (item: DimItem) => getTag(item, itemInfos) !== 'archive';
       }
 
       // http://blog.tatedavies.com/2012/08/28/replace-microsoft-chars-in-javascript/
@@ -575,7 +589,7 @@ function searchFilters(
             predicate: 'or',
             invert: false,
             value: '',
-            orFilters: [...(lastFilter!.orFilters! || [lastFilter]), filterDef]
+            orFilters: [...(lastFilter!.orFilters! || [lastFilter]), filterDef],
           });
         } else {
           filterStack.push(filterDef);
@@ -595,7 +609,7 @@ function searchFilters(
           switch (filterName) {
             case 'not':
               invert = !invert;
-            // fall through intentionally after setting "not" inversion eslint demands this comment :|
+            // fall through intentionally after setting "not" inversion. eslint demands this comment :|
             case 'is': {
               // do a lookup by filterValue (i.e. arc)
               // to find the appropriate predicate (i.e. dmg)
@@ -605,10 +619,6 @@ function searchFilters(
               }
               break;
             }
-            // translate this filter name from search field name to actual name
-            case 'tag':
-              addPredicate('itemtags', filterValue, invert);
-              break;
             // filters whose filterValue needs outer quotes trimmed
             case 'notes':
             case 'perk':
@@ -627,13 +637,14 @@ function searchFilters(
             case 'percentage':
               addPredicate('quality', filterValue, invert);
               break;
-            // filter names with "Value" in the actual filter name but not in search bar
-            // currently just masterworkValue but depends on name collisions
-            case 'masterwork':
-              addPredicate(`${filterName}Value`, filterValue, invert);
+            case 'powerlimitseason':
+              addPredicate('sunsetsafter', filterValue, invert);
               break;
             // pass these filter names and values unaltered
+            case 'masterwork':
             case 'season':
+            case 'powerlimit':
+            case 'sunsetsafter':
             case 'year':
             case 'stack':
             case 'count':
@@ -641,6 +652,7 @@ function searchFilters(
             case 'maxbasestatvalue':
             case 'maxstatloadout':
             case 'maxstatvalue':
+            case 'tag':
             case 'level':
             case 'rating':
             case 'ratingcount':
@@ -648,6 +660,7 @@ function searchFilters(
             case 'hash':
             case 'source':
             case 'modslot':
+            case 'holdsmod':
               addPredicate(filterName, filterValue, invert);
               break;
             // stat filter has sub-searchterm and needs further separation
@@ -674,15 +687,11 @@ function searchFilters(
           let result;
           if (filter.orFilters) {
             result = filter.orFilters.some((filter) => {
-              const result =
-                this.filters[filter.predicate] &&
-                this.filters[filter.predicate](item, filter.value);
-
+              const result = this.filters[filter.predicate]?.(item, filter.value);
               return filter.invert ? !result : result;
             });
           } else {
-            result =
-              this.filters[filter.predicate] && this.filters[filter.predicate](item, filter.value);
+            result = this.filters[filter.predicate]?.(item, filter.value);
           }
           return filter.invert ? !result : result;
         });
@@ -714,7 +723,7 @@ function searchFilters(
           green: 'uncommon',
           blue: 'rare',
           purple: 'legendary',
-          yellow: 'exotic'
+          yellow: 'exotic',
         };
         return item.tier.toLowerCase() === (tierMap[predicate] || predicate);
       },
@@ -773,17 +782,13 @@ function searchFilters(
       locked(item: DimItem) {
         return item.locked;
       },
-      masterwork(item: DimItem) {
+      masterworked(item: DimItem) {
         return item.masterwork;
       },
       maxpower(item: DimItem) {
         if (!_maxPowerLoadoutItems.length) {
           stores.forEach((store) => {
-            _maxPowerLoadoutItems.push(
-              ...Object.values(maxLightLoadout(store.getStoresService(), store).items)
-                .flat()
-                .map((i) => i.id)
-            );
+            _maxPowerLoadoutItems.push(...maxLightItemSet(stores, store).map((i) => i.id));
           });
         }
 
@@ -802,9 +807,7 @@ function searchFilters(
         if (!_maxStatLoadoutItems[predicate].length) {
           stores.forEach((store) => {
             _maxStatLoadoutItems[predicate].push(
-              ...Object.values(maxStatLoadout(maxStatHash, store.getStoresService(), store).items)
-                .flat()
-                .map((i) => i.id)
+              ...maxStatLoadout(maxStatHash, stores, store).items.map((i) => i.id)
             );
           });
         }
@@ -824,13 +827,11 @@ function searchFilters(
         const byWhichValue = byBaseValue ? 'base' : 'value';
         const itemSlot = `${item.classType}${item.type}`;
 
-        const matchingStats =
-          item.stats &&
-          item.stats.filter(
-            (s) =>
-              statHashes.includes(s.statHash) &&
-              s[byWhichValue] === _maxStatValues![itemSlot][s.statHash][byWhichValue]
-          );
+        const matchingStats = item.stats?.filter(
+          (s) =>
+            statHashes.includes(s.statHash) &&
+            s[byWhichValue] === _maxStatValues![itemSlot][s.statHash][byWhichValue]
+        );
 
         return matchingStats && Boolean(matchingStats.length);
       },
@@ -861,6 +862,7 @@ function searchFilters(
           _duplicates &&
           !item.itemCategoryHashes.includes(58) &&
           item.hash !== DEFAULT_SHADER &&
+          item.bucket.hash !== 1506418338 &&
           _duplicates[dupeId] &&
           _duplicates[dupeId].length > 1
         );
@@ -880,9 +882,8 @@ function searchFilters(
             desiredStore = 'vault';
             break;
           case 'incurrentchar': {
-            const activeStore = stores[0].getStoresService().getActiveStore();
-            if (activeStore) {
-              desiredStore = activeStore.id;
+            if (currentStore) {
+              desiredStore = currentStore.id;
             } else {
               return false;
             }
@@ -916,7 +917,7 @@ function searchFilters(
           : item.owner === stores[storeIndex].id;
       },
       onwrongclass(item: DimItem) {
-        const ownerStore = item.getStoresService().getStore(item.owner);
+        const ownerStore = getStore(stores, item.owner);
 
         return (
           !item.classified &&
@@ -947,7 +948,7 @@ function searchFilters(
         }
         return false;
       },
-      itemtags(item: DimItem, predicate: string) {
+      tag(item: DimItem, predicate: string) {
         const tag = getTag(item, itemInfos);
         return (tag || 'none') === predicate;
       },
@@ -959,11 +960,8 @@ function searchFilters(
         return Boolean(getNotes(item, itemInfos));
       },
       stattype(item: DimItem, predicate: string) {
-        return (
-          item.stats &&
-          item.stats.some((s) =>
-            Boolean(s.displayProperties.name.toLowerCase() === predicate && s.value > 0)
-          )
+        return item.stats?.some((s) =>
+          Boolean(s.displayProperties.name.toLowerCase() === predicate && s.value > 0)
         );
       },
       stackable(item: DimItem) {
@@ -1005,10 +1003,9 @@ function searchFilters(
       perk(item: DimItem, predicate: string) {
         const regex = startWordRegexp(predicate);
         return (
-          (item.talentGrid &&
-            item.talentGrid.nodes.some(
-              (node) => regex.test(node.name) || regex.test(node.description)
-            )) ||
+          item.talentGrid?.nodes.some(
+            (node) => regex.test(node.name) || regex.test(node.description)
+          ) ||
           (item.isDestiny2() &&
             item.sockets &&
             item.sockets.sockets.some((socket) =>
@@ -1045,18 +1042,22 @@ function searchFilters(
         );
       },
       modslot(item: DimItem, predicate: string) {
-        const modSlotType = getItemSpecialtyModSlotFilterName(item);
+        const modSocketTypeHash = getSpecialtySocketMetadata(item);
         return (
-          Boolean(predicate === 'any' && modSlotType) ||
-          (predicate === 'none' && !modSlotType) ||
-          predicate === modSlotType
+          (predicate === 'none' && !modSocketTypeHash) ||
+          (modSocketTypeHash && (predicate === 'any' || modSocketTypeHash.tag === predicate))
+        );
+      },
+      holdsmod(item: DimItem, predicate: string) {
+        const modSocketTypeHash = getSpecialtySocketMetadata(item);
+        return (
+          (predicate === 'none' && !modSocketTypeHash) ||
+          (modSocketTypeHash &&
+            (predicate === 'any' || modSocketTypeHash.compatibleTags.includes(predicate)))
         );
       },
       powerfulreward(item: D2Item) {
-        return (
-          item.pursuit &&
-          item.pursuit.rewards.some((r) => hashes.powerfulSources.includes(r.itemHash))
-        );
+        return item.pursuit?.rewards.some((r) => hashes.powerfulSources.includes(r.itemHash));
       },
       light(item: DimItem, predicate: string) {
         if (!item.primStat) {
@@ -1064,7 +1065,7 @@ function searchFilters(
         }
         return compareByOperator(item.primStat.value, predicate);
       },
-      masterworkValue(item: D2Item, predicate: string) {
+      masterwork(item: D2Item, predicate: string) {
         if (!item.masterworkInfo) {
           return false;
         }
@@ -1091,7 +1092,7 @@ function searchFilters(
         if (item.isDestiny1()) {
           return compareByOperator(item.year, predicate);
         } else if (item.isDestiny2()) {
-          return compareByOperator(D2SeasonInfo[item.season].year, predicate);
+          return compareByOperator(D2SeasonInfo[item.season]?.year, predicate);
         }
       },
       level(item: DimItem, predicate: string) {
@@ -1109,6 +1110,20 @@ function searchFilters(
       hascapacity(item: D2Item) {
         return Boolean(item.energy);
       },
+      powerlimit(item: D2Item, predicate: string) {
+        // anything with no powerCap has no known limit, so treat it like it's 99999999
+        return mathCheck.test(predicate) && compareByOperator(item.powerCap ?? 99999999, predicate);
+        // hypothetically we can use this mathcheck to divert if we decided to support something like "powerlimit:arrivals"
+      },
+      sunsetsafter(item: D2Item, predicate: string) {
+        const itemFinalSeason = getItemPowerCapFinalSeason(item);
+        return (
+          itemFinalSeason &&
+          mathCheck.test(predicate) &&
+          compareByOperator(itemFinalSeason, predicate)
+        );
+        // hypothetically we can use this mathcheck to divert if we decided to support something like "sunsetsafter:arrivals"
+      },
       quality(item: D1Item, predicate: string) {
         if (!item.quality) {
           return false;
@@ -1116,26 +1131,26 @@ function searchFilters(
         return compareByOperator(item.quality.min, predicate);
       },
       hasRating(item: DimItem, predicate: string) {
-        const dtrRating = getRating(item, ratings);
-        return predicate.length !== 0 && dtrRating?.overallScore;
+        if ($featureFlags.reviewsEnabled) {
+          const dtrRating = getRating(item, ratings);
+          return predicate.length !== 0 && dtrRating?.overallScore;
+        }
       },
       randomroll(item: D2Item) {
         return Boolean(item.energy) || item.sockets?.sockets.some((s) => s.hasRandomizedPlugItems);
       },
       rating(item: DimItem, predicate: string) {
-        const dtrRating = getRating(item, ratings);
-        const showRating = dtrRating && shouldShowRating(dtrRating) && dtrRating.overallScore;
-        return showRating && compareByOperator(dtrRating?.overallScore, predicate);
+        if ($featureFlags.reviewsEnabled) {
+          const dtrRating = getRating(item, ratings);
+          const showRating = dtrRating && shouldShowRating(dtrRating) && dtrRating.overallScore;
+          return showRating && compareByOperator(dtrRating?.overallScore, predicate);
+        }
       },
       ratingcount(item: DimItem, predicate: string) {
-        const dtrRating = getRating(item, ratings);
-        return dtrRating?.ratingCount && compareByOperator(dtrRating.ratingCount, predicate);
-      },
-      event(item: D2Item, predicate: string) {
-        if (!item || !D2EventPredicateLookup[predicate] || !item.event) {
-          return false;
+        if ($featureFlags.reviewsEnabled) {
+          const dtrRating = getRating(item, ratings);
+          return dtrRating?.ratingCount && compareByOperator(dtrRating.ratingCount, predicate);
         }
-        return D2EventPredicateLookup[predicate] === item.event;
       },
       vendor(item: D1Item, predicate: string) {
         if (!item) {
@@ -1157,14 +1172,19 @@ function searchFilters(
         }
       },
       source(item: D2Item, predicate: string) {
-        if (!item || !D2Sources[predicate]) {
+        if (!item && (!D2Sources[predicate] || !D2EventPredicateLookup[predicate])) {
           return false;
         }
-        return (
-          (item.source && D2Sources[predicate].sourceHashes.includes(item.source)) ||
-          D2Sources[predicate].itemHashes.includes(item.hash) ||
-          (S8Sources[predicate] && S8Sources[predicate].includes(item.hash))
-        );
+        if (D2Sources[predicate]) {
+          return (
+            (item.source && D2Sources[predicate].sourceHashes.includes(item.source)) ||
+            D2Sources[predicate].itemHashes.includes(item.hash) ||
+            missingSources[predicate]?.includes(item.hash)
+          );
+        } else if (D2EventPredicateLookup[predicate]) {
+          return D2EventPredicateLookup[predicate] === item?.event;
+        }
+        return false;
       },
       activity(item: D1Item, predicate: string) {
         if (!item) {
@@ -1190,18 +1210,12 @@ function searchFilters(
       inloadout(item: DimItem) {
         // Lazy load loadouts and re-trigger
         if (!_loadoutItemIds) {
-          if (loadouts.length === 0) {
-            getLoadouts();
-            return false;
-          }
           _loadoutItemIds = new Set<string>();
           for (const loadout of loadouts) {
-            if (loadout.destinyVersion === searchConfig.destinyVersion) {
-              _.forIn(loadout.items, (items) => {
-                for (const item of items) {
-                  _loadoutItemIds!.add(item.id);
-                }
-              });
+            for (const item of loadout.items) {
+              if (item.id && item.id !== '0') {
+                _loadoutItemIds.add(item.id);
+              }
             }
           }
         }
@@ -1211,7 +1225,7 @@ function searchFilters(
       new(item: DimItem) {
         return newItems.has(item.id);
       },
-      tag(item: DimItem) {
+      tagged(item: DimItem) {
         return Boolean(getTag(item, itemInfos));
       },
       hasLight(item: DimItem) {
@@ -1229,15 +1243,13 @@ function searchFilters(
         const legendaryWeapon =
           item.bucket?.sort === 'Weapons' && item.tier.toLowerCase() === 'legendary';
 
-        const oneSocketPerPlug =
-          item.sockets &&
-          item.sockets.sockets
-            .filter((socket) =>
-              hashes.curatedPlugsWhitelist.includes(
-                socket?.plug?.plugItem?.plug?.plugCategoryHash || 0
-              )
+        const oneSocketPerPlug = item.sockets?.sockets
+          .filter((socket) =>
+            hashes.curatedPlugsWhitelist.includes(
+              socket?.plug?.plugItem?.plug?.plugCategoryHash || 0
             )
-            .every((socket) => socket?.plugOptions.length === 1);
+          )
+          .every((socket) => socket?.plugOptions.length === 1);
 
         return (
           legendaryWeapon &&
@@ -1246,7 +1258,7 @@ function searchFilters(
         );
       },
       weapon(item: DimItem) {
-        return item.bucket?.sort === 'Weapons';
+        return item.bucket?.sort === 'Weapons' && item.bucket.hash !== 1506418338;
       },
       armor(item: DimItem) {
         return item.bucket?.sort === 'Armor';
@@ -1270,48 +1282,38 @@ function searchFilters(
         return !item.notransfer;
       },
       hasShader(item: D2Item) {
-        return (
-          item.sockets &&
-          item.sockets.sockets.some((socket) =>
-            Boolean(
-              socket.plug &&
-                socket.plug.plugItem.plug &&
-                socket.plug.plugItem.plug.plugCategoryHash === hashes.shaderBucket &&
-                socket.plug.plugItem.hash !== DEFAULT_SHADER
-            )
+        return item.sockets?.sockets.some((socket) =>
+          Boolean(
+            socket.plug?.plugItem.plug &&
+              socket.plug.plugItem.plug.plugCategoryHash === hashes.shaderBucket &&
+              socket.plug.plugItem.hash !== DEFAULT_SHADER
           )
         );
       },
       hasOrnament(item: D2Item) {
-        return (
-          item.sockets &&
-          item.sockets.sockets.some((socket) =>
-            Boolean(
-              socket.plug &&
-                socket.plug.plugItem.itemSubType === DestinyItemSubType.Ornament &&
-                socket.plug.plugItem.hash !== DEFAULT_GLOW &&
-                !DEFAULT_ORNAMENTS.includes(socket.plug.plugItem.hash) &&
-                !socket.plug.plugItem.itemCategoryHashes.includes(DEFAULT_GLOW_CATEGORY)
-            )
+        return item.sockets?.sockets.some((socket) =>
+          Boolean(
+            socket.plug &&
+              socket.plug.plugItem.itemSubType === DestinyItemSubType.Ornament &&
+              socket.plug.plugItem.hash !== DEFAULT_GLOW &&
+              !DEFAULT_ORNAMENTS.includes(socket.plug.plugItem.hash) &&
+              !socket.plug.plugItem.itemCategoryHashes.includes(DEFAULT_GLOW_CATEGORY)
           )
         );
       },
       hasMod(item: D2Item) {
-        return (
-          item.sockets &&
-          item.sockets.sockets.some((socket) =>
-            Boolean(
-              socket.plug &&
-                !hashes.emptySocketHashes.includes(socket.plug.plugItem.hash) &&
-                socket.plug.plugItem.plug &&
-                socket.plug.plugItem.plug.plugCategoryIdentifier.match(
-                  /(v400.weapon.mod_(guns|damage|magazine)|enhancements.)/
-                ) &&
-                // enforce that this provides a perk (excludes empty slots)
-                socket.plug.plugItem.perks.length &&
-                // enforce that this doesn't have an energy cost (y3 reusables)
-                !socket.plug.plugItem.plug.energyCost
-            )
+        return item.sockets?.sockets.some((socket) =>
+          Boolean(
+            socket.plug &&
+              !hashes.emptySocketHashes.includes(socket.plug.plugItem.hash) &&
+              socket.plug.plugItem.plug &&
+              socket.plug.plugItem.plug.plugCategoryIdentifier.match(
+                /(v400.weapon.mod_(guns|damage|magazine)|enhancements.)/
+              ) &&
+              // enforce that this provides a perk (excludes empty slots)
+              socket.plug.plugItem.perks.length &&
+              // enforce that this doesn't have an energy cost (y3 reusables)
+              !socket.plug.plugItem.plug.energyCost
           )
         );
       },
@@ -1334,9 +1336,7 @@ function searchFilters(
         );
       },
       trashlist(item: D2Item) {
-        return Boolean(
-          inventoryWishListRolls[item.id] && inventoryWishListRolls[item.id].isUndesirable
-        );
+        return Boolean(inventoryWishListRolls[item.id]?.isUndesirable);
       },
       wishlist(item: D2Item) {
         return Boolean(
@@ -1367,7 +1367,7 @@ function searchFilters(
           {
             primary: DestinyAmmunitionType.Primary,
             special: DestinyAmmunitionType.Special,
-            heavy: DestinyAmmunitionType.Heavy
+            heavy: DestinyAmmunitionType.Heavy,
           }[predicate]
         );
       },
@@ -1380,7 +1380,7 @@ function searchFilters(
       ...hashes.armorStatNames.reduce((obj, name) => {
         obj[`base${name}`] = filterByStats(name, true);
         return obj;
-      }, {})
-    }
+      }, {}),
+    },
   };
 }

@@ -5,7 +5,7 @@ import { D1StoresService } from '../inventory/d1-stores';
 import { DestinyAccount } from '../accounts/destiny-account';
 import { getBuckets } from '../destiny1/d1-buckets';
 import { refresh } from '../shell/refresh';
-import { D1Store, StoreServiceType, DimStore } from '../inventory/store-types';
+import { D1Store, DimStore } from '../inventory/store-types';
 import * as actions from './actions';
 import rxStore from '../store/store';
 import { InventoryBucket } from '../inventory/inventory-buckets';
@@ -13,28 +13,30 @@ import { clearItemsOffCharacter } from '../loadout/loadout-apply';
 import { Subscription, from } from 'rxjs';
 import { filter, tap, map, exhaustMap } from 'rxjs/operators';
 import { settingsSelector } from 'app/settings/reducer';
+import { itemInfosSelector } from 'app/inventory/selectors';
+import { getVault } from 'app/inventory/stores-helpers';
 
 const glimmerHashes = new Set([
   269776572, // -house-banners
   3632619276, // -silken-codex
   2904517731, // -axiomatic-beads
-  1932910919 // -network-keys
+  1932910919, // -network-keys
 ]);
 
 // These are things you may pick up frequently out in the wild
 const makeRoomTypes = [
-  'BUCKET_PRIMARY_WEAPON',
-  'BUCKET_SPECIAL_WEAPON',
-  'BUCKET_HEAVY_WEAPON',
-  'BUCKET_HEAD',
-  'BUCKET_ARMS',
-  'BUCKET_CHEST',
-  'BUCKET_LEGS',
-  'BUCKET_CLASS_ITEMS',
-  'BUCKET_ARTIFACT',
-  'BUCKET_GHOST',
-  'BUCKET_CONSUMABLES',
-  'BUCKET_MATERIALS'
+  1498876634, // Primary
+  2465295065, // Special
+  953998645, // Heavy
+  3448274439, // Helmet
+  3551918588, // Gauntlets
+  14239492, // Chest
+  20886954, // Legs
+  1585787867, // ClassItem
+  434908299, // Artifact
+  4023194814, // Ghost
+  1469714392, // Consumable
+  3865314626, // Material
 ];
 
 /**
@@ -128,35 +130,35 @@ async function farmItems(store: D1Store) {
     return;
   }
 
-  return moveItemsToVault(store, toMove, [], D1StoresService);
+  return moveItemsToVault(store.getStoresService().getStores(), store, toMove, []);
 }
 
 // Ensure that there's one open space in each category that could
 // hold an item, so they don't go to the postmaster.
 async function makeRoomForItems(store: D1Store) {
   const buckets = await getBuckets();
-  const makeRoomBuckets = makeRoomTypes.map((type) => buckets.byId[type]);
-  makeRoomForItemsInBuckets(store, makeRoomBuckets, D1StoresService);
+  const makeRoomBuckets = makeRoomTypes.map((type) => buckets.byHash[type]);
+  makeRoomForItemsInBuckets(store.getStoresService().getStores(), store, makeRoomBuckets);
 }
 
 // Ensure that there's one open space in each category that could
 // hold an item, so they don't go to the postmaster.
 export async function makeRoomForItemsInBuckets(
+  stores: DimStore[],
   store: DimStore,
-  makeRoomBuckets: InventoryBucket[],
-  storeService: StoreServiceType
+  makeRoomBuckets: InventoryBucket[]
 ) {
   // If any category is full, we'll move one aside
   const itemsToMove: DimItem[] = [];
-  const itemInfos = rxStore.getState().inventory.itemInfos;
+  const itemInfos = itemInfosSelector(rxStore.getState());
   makeRoomBuckets.forEach((bucket) => {
-    const items = store.buckets[bucket.id];
+    const items = store.buckets[bucket.hash];
     if (items.length > 0 && items.length >= store.capacityForItem(items[0])) {
       const moveAsideCandidates = items.filter((i) => !i.equipped && !i.notransfer);
       const prioritizedMoveAsideCandidates = sortMoveAsideCandidatesForStore(
         moveAsideCandidates,
         store,
-        storeService.getVault()!,
+        getVault(stores)!,
         itemInfos
       );
       // We'll move the first one to the vault
@@ -171,14 +173,14 @@ export async function makeRoomForItemsInBuckets(
     return;
   }
 
-  return moveItemsToVault(store, itemsToMove, makeRoomBuckets, storeService);
+  return moveItemsToVault(stores, store, itemsToMove, makeRoomBuckets);
 }
 
 async function moveItemsToVault(
+  stores: DimStore[],
   store: DimStore,
   items: DimItem[],
-  makeRoomBuckets: InventoryBucket[],
-  storesService: StoreServiceType
+  makeRoomBuckets: InventoryBucket[]
 ) {
   const reservations: MoveReservations = {};
   // reserve one space in the active character
@@ -187,5 +189,5 @@ async function moveItemsToVault(
     reservations[store.id][bucket.type!] = 1;
   });
 
-  return clearItemsOffCharacter(store, items, reservations, storesService);
+  return clearItemsOffCharacter(stores, store, items, reservations);
 }

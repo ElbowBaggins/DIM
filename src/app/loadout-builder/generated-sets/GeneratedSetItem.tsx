@@ -1,15 +1,21 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, Dispatch } from 'react';
 import { DimPlug, DimItem } from '../../inventory/item-types';
 import LoadoutBuilderItem from '../LoadoutBuilderItem';
-import { LockedItemType } from '../types';
-import ItemSockets from '../../item-popup/ItemSockets';
+import { LockedItemType, LockedArmor2Mod } from '../types';
+import ItemSockets from 'app/item-popup/ItemSockets';
 import _ from 'lodash';
 import styles from './GeneratedSetItem.m.scss';
 import { AppIcon, faRandom, lockIcon } from 'app/shell/icons';
 import { showItemPicker } from 'app/item-picker/item-picker';
 import { t } from 'app/i18next-t';
 import { lockedItemsEqual } from './utils';
-import { generateMixesFromPerks } from '../process';
+import { generateMixesFromPerks, matchLockedItem } from '../process';
+import { SocketDetailsMod } from 'app/item-popup/SocketDetails';
+import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
+import './GeneratedSetItemLockedMods.scss';
+import { DestinyInventoryItemDefinition } from 'bungie-api-ts/destiny2';
+import clsx from 'clsx';
+import { LoadoutBuilderAction } from '../LoadoutBuilder';
 
 /**
  * Figure out which (if any) non-selected perks should be selected to get the chosen stat mix.
@@ -32,22 +38,28 @@ function identifyAltPerkChoicesForChosenStats(item: DimItem, chosenValues: numbe
 export default function GeneratedSetItem({
   item,
   locked,
+  defs,
   statValues,
   itemOptions,
-  addLockedItem,
-  removeLockedItem
+  lockedMods,
+  lbDispatch,
 }: {
   item: DimItem;
   locked?: readonly LockedItemType[];
+  defs: D2ManifestDefinitions;
   statValues: number[];
   itemOptions: DimItem[];
-  addLockedItem(lockedItem: LockedItemType): void;
-  removeLockedItem(lockedItem: LockedItemType): void;
+  lockedMods?: LockedArmor2Mod[];
+  lbDispatch: Dispatch<LoadoutBuilderAction>;
 }) {
   const altPerks = useMemo(() => identifyAltPerkChoicesForChosenStats(item, statValues), [
     item,
-    statValues
+    statValues,
   ]);
+
+  const addLockedItem = (item: LockedItemType) => lbDispatch({ type: 'addItemToLockedMap', item });
+  const removeLockedItem = (item: LockedItemType) =>
+    lbDispatch({ type: 'removeItemFromLockedMap', item });
 
   const classesByHash = altPerks.reduce(
     (memo, perk) => ({ ...memo, [perk.plugItem.hash]: styles.altPerk }),
@@ -68,7 +80,7 @@ export default function GeneratedSetItem({
       const { item } = await showItemPicker({
         prompt: t('LoadoutBuilder.ChooseAlternate'),
         hideStoreEquip: true,
-        filterItems: (item: DimItem) => ids.has(item.id)
+        filterItems: (item: DimItem) => ids.has(item.id),
       });
 
       addLockedItem({ type: 'item', item, bucket: item.bucket });
@@ -80,6 +92,21 @@ export default function GeneratedSetItem({
       ? removeLockedItem(lockedItem)
       : addLockedItem(lockedItem);
   };
+
+  const lockedPerks: DestinyInventoryItemDefinition[] = [];
+  /*  TODO: atm I just have all mods here but this will move to only old ones
+      when we get closer to releasing as perk picker will only have old mods */
+  const lockedOldMods: DestinyInventoryItemDefinition[] = [];
+
+  if ($featureFlags.armor2ModPicker && locked?.length) {
+    for (const lockedItem of locked) {
+      if (lockedItem.type === 'perk' && matchLockedItem(item, lockedItem)) {
+        lockedPerks.push(lockedItem.perk);
+      } else if (lockedItem.type === 'mod' && matchLockedItem(item, lockedItem)) {
+        lockedOldMods.push(lockedItem.mod);
+      }
+    }
+  }
 
   return (
     <div className={styles.item}>
@@ -94,8 +121,7 @@ export default function GeneratedSetItem({
           <AppIcon icon={faRandom} />
         </button>
       ) : (
-        locked &&
-        locked.some((li) => li.type === 'item') && (
+        locked?.some((li) => li.type === 'item') && (
           <button
             className={styles.swapButton}
             title={t('LoadoutBuilder.UnlockItem')}
@@ -105,13 +131,36 @@ export default function GeneratedSetItem({
           </button>
         )
       )}
-      {item.isDestiny2() && (
+      {!$featureFlags.armor2ModPicker && item.isDestiny2() && (
         <ItemSockets
           item={item}
           minimal={true}
           classesByHash={classesByHash}
           onShiftClick={onShiftClick}
         />
+      )}
+      {$featureFlags.armor2ModPicker && (
+        <div className={styles.lockedSockets}>
+          {Boolean(lockedMods?.length) && (
+            <div className={clsx('lockedItems', styles.lockedSocketsRow)}>
+              {lockedMods?.map((mod) => (
+                <SocketDetailsMod key={mod.key} itemDef={mod.mod} defs={defs} />
+              ))}
+            </div>
+          )}
+          {Boolean(lockedOldMods.length) && (
+            <div className={clsx('lockedItems', styles.lockedSocketsRow)}>
+              {lockedOldMods?.map((def) => (
+                <SocketDetailsMod key={def.hash} itemDef={def} defs={defs} />
+              ))}
+            </div>
+          )}
+          <div className={clsx('lockedItems', 'lockedPerks', styles.lockedSocketsRow)}>
+            {lockedPerks?.map((def) => (
+              <SocketDetailsMod key={def.hash} itemDef={def} defs={defs} />
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

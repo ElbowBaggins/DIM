@@ -35,7 +35,7 @@ const initialState: ReviewsState = {
   ratings: {},
   userReviews: {},
   reviews: {},
-  loadedFromIDB: false
+  loadedFromIDB: false,
 };
 
 export const ratingsSelector = (state: RootState) => state.reviews.ratings;
@@ -55,14 +55,14 @@ export const reviews: Reducer<ReviewsState, ReviewsAction | AccountsAction> = (
         ...state,
         ratings: {
           ...state.ratings,
-          ...convertToRatingMap(action.payload.ratings)
-        }
+          ...convertToRatingMap(action.payload.ratings),
+        },
       };
 
     case getType(setCurrentAccount):
     case getType(actions.clearRatings):
       return {
-        ...initialState
+        ...initialState,
       };
 
     case getType(actions.reviewsLoaded): {
@@ -88,8 +88,8 @@ export const reviews: Reducer<ReviewsState, ReviewsAction | AccountsAction> = (
         ...state,
         userReviews: {
           ...state.userReviews,
-          [getItemReviewsKey(action.payload.item)]: action.payload.review
-        }
+          [getItemReviewsKey(action.payload.item)]: action.payload.review,
+        },
       };
 
     case getType(actions.markReviewSubmitted): {
@@ -122,13 +122,13 @@ export const reviews: Reducer<ReviewsState, ReviewsAction | AccountsAction> = (
         ...state,
         reviews: {
           ...state.reviews,
-          ...action.payload.reviews
+          ...action.payload.reviews,
         },
         ratings: {
           ...state.ratings,
-          ...action.payload.ratings
+          ...action.payload.ratings,
         },
-        loadedFromIDB: true
+        loadedFromIDB: true,
       };
     }
 
@@ -176,7 +176,7 @@ export function getUserReview(item: DimItem, state: RootState): WorkingD2Rating 
           pros: '',
           review: '',
           cons: '',
-          treatAsSubmitted: false
+          treatAsSubmitted: false,
         }
       : {
           voted: 0,
@@ -184,21 +184,22 @@ export function getUserReview(item: DimItem, state: RootState): WorkingD2Rating 
           cons: '',
           text: '',
           mode: settingsSelector(state).reviewsModeSelection,
-          treatAsSubmitted: false
+          treatAsSubmitted: false,
         })
   );
 }
 
 export function shouldShowRating(dtrRating: DtrRating | undefined) {
   return (
-    dtrRating &&
-    dtrRating.overallScore !== undefined &&
+    dtrRating?.overallScore !== undefined &&
     (dtrRating.ratingCount > 2 || dtrRating.highlightedRatingCount > 0)
   );
 }
 
 function convertToRatingMap(ratings: DtrRating[]) {
-  const result = {};
+  const result: {
+    [key: string]: DtrRating;
+  } = {};
   for (const rating of ratings) {
     result[getItemStoreKey(rating.referenceId, rating.roll)] = rating;
   }
@@ -229,7 +230,7 @@ export function saveReviewsToIndexedDB() {
   );
 }
 
-export function loadReviewsFromIndexedDB(): ThunkResult<Promise<void>> {
+export function loadReviewsFromIndexedDB(): ThunkResult {
   return async (dispatch) => {
     const ratingsP = get<{ [key: string]: DtrRating }>('ratings-v2');
     const reviewsP = get<{ [key: string]: D2ItemReviewResponse | D1ItemReviewResponse }>('reviews');

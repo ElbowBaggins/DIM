@@ -16,12 +16,15 @@ import {
   DestinyItemSocketEntryDefinition,
   DestinyItemPlugBase,
   DestinyDamageTypeDefinition,
-  DestinyEnergyTypeDefinition
+  DestinyEnergyTypeDefinition,
 } from 'bungie-api-ts/destiny2';
-import { DimItemInfo } from './dim-item-info';
 import { DimStore, StoreServiceType, D1StoreServiceType, D2StoreServiceType } from './store-types';
 import { InventoryBucket } from './inventory-buckets';
 import { D2EventEnum } from 'data/d2/d2-event-info';
+import { DestinyVersion } from '@destinyitemmanager/dim-api-types';
+
+/** DIM's own Tier type. There's one in the Bungie API but the names are too confusing. */
+export type Tier = 'Exotic' | 'Legendary' | 'Rare' | 'Uncommon' | 'Common';
 
 /**
  * A generic DIM item, representing almost anything. Use this type when you can handle both D1 and D2 items,
@@ -32,7 +35,7 @@ export interface DimItem {
   /** The ID of the store that currently contains this item. */
   owner: string;
   /** The version of Destiny this comes from. */
-  destinyVersion: 1 | 2;
+  destinyVersion: DestinyVersion;
   /** The bucket the item is currently in. */
   location: InventoryBucket;
   /** The bucket the item normally resides in (even though it may currently be elsewhere, such as in the postmaster). */
@@ -44,7 +47,7 @@ export interface DimItem {
   /** Hashes of DestinyItemCategoryDefinitions this item belongs to */
   itemCategoryHashes: number[];
   /** A readable English name for the rarity of the item (e.g. "Exotic", "Rare"). */
-  tier: string;
+  tier: Tier;
   /** Is this an Exotic item? */
   isExotic: boolean;
   /** Did this come from a vendor instead of character inventory? */
@@ -55,10 +58,12 @@ export interface DimItem {
   description: string;
   /** Icon path for the item. */
   icon: string;
+  /** Icon overlay path for the item. Currently used to correct old season icons into new ones for reissued items */
+  iconOverlay: string | null;
   /** Some items have a secondary icon, namely Emblems. */
   secondaryIcon: string;
-  /** The DamageType (or DamageType corresponding to the item's elemental resistance). */
-  element: DestinyDamageTypeDefinition | DestinyEnergyTypeDefinition | D1DamageType | null;
+  /** The damage type this weapon deals, or energy type of armor, or damage type corresponding to the item's elemental resistance. */
+  element: DestinyDamageTypeDefinition | DestinyEnergyTypeDefinition | null;
   /** Whether this item CANNOT be transferred. */
   notransfer: boolean;
   /** Whether we can pull this item from the postmaster */
@@ -89,6 +94,7 @@ export interface DimItem {
         stat: DestinyStatDefinition;
       })
     | null;
+  ammoType: DestinyAmmunitionType;
   /** Localized name of this item's type. */
   typeName: string;
   /** The level a character must be to equip this item. */
@@ -125,15 +131,9 @@ export interface DimItem {
   comparable: boolean;
   /** Can this be reviewed? */
   reviewable: boolean;
-  /**
-   * DIM tagging and notes info.
-   *
-   * @deprecated this must not be used when rendering items in React.
-   */
-  dimInfo: DimItemInfo;
   /** The "base power" without any power-enhancing mods. */
   basePower: number;
-  /** A synthetic unique ID used to help Angular tell items apart. This changes to signal that Angular should re-render the item. */
+  /** A synthetic unique ID used to help React tell items apart. Use this as a "key" property. */
   index: string;
   /** Can this be infused? */
   infusable: boolean;
@@ -146,7 +146,7 @@ export interface DimItem {
   /** Detailed stats for the item. */
   stats: DimStat[] | null;
   /** Any objectives associated with the item. */
-  objectives: DimObjective[] | null;
+  objectives: DestinyObjectiveProgress[] | null;
   /** Is this an engram? */
   isEngram: boolean;
   /** The reference hash for lore attached to this item (D2 only). */
@@ -155,6 +155,12 @@ export interface DimItem {
   lastManuallyMoved: number;
   /** Sometimes the API doesn't return socket info. This tells whether the item *should* have socket info but doesn't. */
   missingSockets: boolean;
+  /** Stat Tracker */
+  metricHash?: number;
+  /** Stat Tracker Progress */
+  metricObjective?: DestinyObjectiveProgress;
+  /** Metrics that can be used with this item. */
+  availableMetricCategoryNodeHashes?: number[];
 
   /** Can this item be equipped by the given store? */
   canBeEquippedBy(store: DimStore): boolean;
@@ -167,7 +173,7 @@ export interface DimItem {
 
   /** Check if this item is from D1. Inside an if statement, this item will be narrowed to type D1Item. */
   isDestiny1(): this is D1Item;
-  /** Check if this item is from D2. Inside an if statement, this item will be narrowed to type D2Item.s */
+  /** Check if this item is from D2. Inside an if statement, this item will be narrowed to type D2Item. */
   isDestiny2(): this is D2Item;
 }
 
@@ -175,12 +181,7 @@ export interface DimItem {
  * A Destiny 1 item. Use this type when you need specific D1 properties.
  */
 export interface D1Item extends DimItem {
-  primStat: D1PrimStat | null;
-  /** The DamageType (or DamageType corresponding to the item's elemental resistance). */
-  element: D1DamageType;
   talentGrid: D1TalentGrid | null;
-  /** The overall item group (e.g. Weapons, Armor) this item is in. See InventoryBuckets. */
-  sort?: string;
   stats: D1Stat[] | null;
   /** Armor quality evaluation. */
   quality: {
@@ -211,17 +212,16 @@ export interface D2Item extends DimItem {
   flavorObjective: DimFlavorObjective | null;
   /** If this item is a masterwork, this will include information about its masterwork properties. */
   masterworkInfo: DimMasterwork | null;
-  /** The DamageType (or DamageType corresponding to the item's elemental resistance). */
-  element: DestinyDamageTypeDefinition | DestinyEnergyTypeDefinition | null;
   /** for y3 armor, this is the type and capacity information */
   energy: DestinyItemInstanceEnergy | null;
+  /** If this exists, it's the limit of an item's PL. If NOT, display no information. Maybe it's unlimited PL. Maybe it's a weird item. */
+  powerCap: number | null;
   /** Information about how this item works with infusion. */
   infusionQuality: DestinyItemQualityBlockDefinition | null;
   /** More infusion information about what can be infused with the item. */
   infusionProcess: DestinyItemTierTypeInfusionBlock | null;
   /** The DestinyVendorDefinition hash of the vendor that can preview the contents of this item, if there is one. */
   previewVendor?: number;
-  ammoType: DestinyAmmunitionType;
   /** The Destiny season that a specific item belongs to. */
   season: number;
   /** The Destiny event that a specific item belongs to. */
@@ -245,26 +245,6 @@ export interface D2Item extends DimItem {
   };
 
   getStoresService(): D2StoreServiceType;
-}
-
-export interface D1PrimStat extends DestinyStat {
-  stat: DestinyStatDefinition & {
-    statName: string;
-    statIdentifier: string;
-  };
-}
-export interface D1DamageType {
-  damageTypeHash: number;
-  identifier: string;
-  damageTypeName: string;
-  description: string;
-  iconPath: string;
-  transparentIconPath: string;
-  showIcon: boolean;
-  enumValue: number;
-  hash: number;
-  index: number;
-  redacted: boolean;
 }
 
 export interface DimMasterwork {
@@ -328,26 +308,6 @@ export interface D1Stat extends DimStat {
     min: number;
     range: string;
   };
-}
-
-export interface DimObjective {
-  /** Localized display of the objective status. */
-  displayName: string;
-  /** Localized description of the objective. */
-  description?: string;
-  /** Current value. */
-  progress: number;
-  /** Value at which this objective would be considered "complete". */
-  completionValue: number;
-  /** Is this complete? */
-  complete: boolean;
-  /** Is this a checkbox? */
-  boolean: boolean;
-  /** The actual string to display for the objective value (e.g "5/10" or "50%") */
-  display?: string;
-  /** Override display styles for objectives, such as 'trials' or 'integer' */
-  // TODO: fold 'boolean' into this
-  displayStyle: string | null;
 }
 
 export interface DimFlavorObjective {

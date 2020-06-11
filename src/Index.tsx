@@ -16,19 +16,19 @@ import registerServiceWorker from './app/register-service-worker';
 import { safariTouchFix } from './app/safari-touch-fix';
 import Root from './app/Root';
 import setupRateLimiter from './app/bungie-api/rate-limit-config';
-import { SyncService } from './app/storage/sync.service';
-import { initSettings, watchLanguageChanges } from './app/settings/settings';
+import { watchLanguageChanges } from './app/settings/settings';
 import { saveReviewsToIndexedDB } from './app/item-review/reducer';
 import { saveWishListToIndexedDB } from './app/wishlists/reducer';
 import { saveAccountsToIndexedDB } from 'app/accounts/reducer';
 import updateCSSVariables from 'app/css-variables';
 import { saveVendorDropsToIndexedDB } from 'app/vendorEngramsXyzApi/reducer';
 import store from 'app/store/store';
-import { loadGlobalSettings } from 'app/dim-api/actions';
+import { loadDimApiData } from 'app/dim-api/actions';
+import { saveItemInfosOnStateChange } from 'app/inventory/reducer';
 
 polyfill({
   holdToDrag: 300,
-  dragImageCenterOnTouch: true
+  dragImageCenterOnTouch: true,
 });
 
 safariTouchFix();
@@ -49,15 +49,14 @@ if ($featureFlags.vendorEngrams) {
   saveVendorDropsToIndexedDB();
 }
 updateCSSVariables();
-store.dispatch(loadGlobalSettings());
 
-// Load some stuff at startup
-SyncService.init();
+store.dispatch(loadDimApiData());
+
+saveItemInfosOnStateChange();
 
 initi18n().then(() => {
   // Settings depends on i18n
   watchLanguageChanges();
-  initSettings();
 
   console.log(
     `DIM v${$DIM_VERSION} (${$DIM_FLAVOR}) - Please report any errors to https://www.github.com/DestinyItemManager/DIM/issues`

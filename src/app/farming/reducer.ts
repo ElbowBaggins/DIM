@@ -3,7 +3,7 @@ import * as actions from './actions';
 import { ActionType, getType } from 'typesafe-actions';
 import _ from 'lodash';
 import { createSelector } from 'reselect';
-import { storesSelector } from '../inventory/reducer';
+import { storesSelector } from '../inventory/selectors';
 import { RootState } from '../store/reducers';
 
 export const farmingStoreSelector = () =>
@@ -30,13 +30,13 @@ export const farming: Reducer<FarmingState, FarmingAction> = (
     case getType(actions.start):
       return {
         ...state,
-        storeId: action.payload
+        storeId: action.payload,
       };
 
     case getType(actions.stop):
       return {
         ...state,
-        storeId: undefined
+        storeId: undefined,
       };
 
     default:

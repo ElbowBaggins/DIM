@@ -4,9 +4,9 @@ import { D2Item, DimItem, DimPlug } from '../inventory/item-types';
 import _ from 'lodash';
 import { INTRINSIC_PLUG_CATEGORY } from 'app/inventory/store/sockets';
 
-export enum UiWishListRoll {
+export const enum UiWishListRoll {
   Good = 1,
-  Bad
+  Bad,
 }
 
 export function toUiWishListRoll(
@@ -174,8 +174,7 @@ function getInventoryWishListRoll(
   let matchingWishListRoll: WishListRoll | undefined;
   // It could be under the item hash, the wildcard, or any of the item's categories
   for (const hash of [item.hash, DimWishList.WildcardItemId, ...item.itemCategoryHashes]) {
-    matchingWishListRoll =
-      wishListRolls[hash] && wishListRolls[hash].find((cr) => allDesiredPerksExist(item, cr));
+    matchingWishListRoll = wishListRolls[hash]?.find((cr) => allDesiredPerksExist(item, cr));
     if (matchingWishListRoll) {
       break;
     }
@@ -185,7 +184,7 @@ function getInventoryWishListRoll(
     return {
       wishListPerks: getWishListPlugs(item, matchingWishListRoll),
       notes: matchingWishListRoll.notes,
-      isUndesirable: matchingWishListRoll.isUndesirable
+      isUndesirable: matchingWishListRoll.isUndesirable,
     };
   }
 

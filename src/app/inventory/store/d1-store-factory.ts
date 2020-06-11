@@ -1,15 +1,14 @@
 import _ from 'lodash';
 import { count } from '../../utils/util';
-import { getCharacterStatsData, getClass } from './character-utils';
-import { getDefinitions, D1ManifestDefinitions } from '../../destiny1/d1-definitions';
-import copy from 'fast-copy';
+import { getCharacterStatsData } from './character-utils';
+import { D1ManifestDefinitions } from '../../destiny1/d1-definitions';
 import { t } from 'app/i18next-t';
 import vaultBackground from 'images/vault-background.svg';
 import vaultIcon from 'images/vault.svg';
 import { D1Store, D1Vault, DimVault } from '../store-types';
 import { D1Item } from '../item-types';
 import { D1StoresService } from '../d1-stores';
-import { newLoadout } from '../../loadout/loadout-utils';
+import { DestinyClass } from 'bungie-api-ts/destiny2';
 
 // Label isn't used, but it helps us understand what each one is
 const progressionMeta = {
@@ -24,13 +23,13 @@ const progressionMeta = {
   807090922: { label: "Queen's Wrath", order: 8 },
   3641985238: { label: 'House of Judgment', order: 9 },
   2335631936: { label: 'Gunsmith', order: 10 },
-  2576753410: { label: 'SRL', order: 11 }
+  2576753410: { label: 'SRL', order: 11 },
 };
 
 const factionBadges = {
   969832704: 'Future War Cult',
   27411484: 'Dead Orbit',
-  2954371221: 'New Monarchy'
+  2954371221: 'New Monarchy',
 };
 
 /**
@@ -40,12 +39,12 @@ const factionBadges = {
 
 // Prototype for Store objects - add methods to this to add them to all
 // stores.
-const StoreProto = {
+export const StoreProto = {
   /**
    * Get the total amount of this item in the store, across all stacks,
    * excluding stuff in the postmaster.
    */
-  amountOfItem(this: D1Store, item: D1Item) {
+  amountOfItem(this: D1Store, item: { hash: number }) {
     return _.sumBy(
       this.items.filter((i) => i.hash === item.hash && !i.location.inPostmaster),
       (i) => i.amount
@@ -75,7 +74,7 @@ const StoreProto = {
     }
     const openStacks = Math.max(
       0,
-      this.capacityForItem(item) - this.buckets[item.location.id].length
+      this.capacityForItem(item) - this.buckets[item.location.hash].length
     );
     const maxStackSize = item.maxStackSize || 1;
     if (maxStackSize === 1) {
@@ -87,19 +86,6 @@ const StoreProto = {
     }
   },
 
-  updateCharacterInfoFromEquip(this: D1Store, characterInfo) {
-    getDefinitions().then((defs) => this.updateCharacterInfo(defs, characterInfo));
-  },
-
-  updateCharacterInfo(this: D1Store, defs: D1ManifestDefinitions, characterInfo) {
-    this.level = characterInfo.characterLevel;
-    this.percentToNextLevel = characterInfo.percentToNextLevel / 100;
-    this.powerLevel = characterInfo.characterBase.powerLevel;
-    this.background = `https://www.bungie.net/${characterInfo.backgroundPath}`;
-    this.icon = `https://www.bungie.net/${characterInfo.emblemPath}`;
-    this.stats = getCharacterStatsData(defs.Stat, characterInfo.characterBase);
-  },
-
   // Remove an item from this store. Returns whether it actually removed anything.
   removeItem(this: D1Store, item: D1Item) {
     // Completely remove the source item
@@ -108,10 +94,10 @@ const StoreProto = {
     if (sourceIndex >= 0) {
       this.items = [...this.items.slice(0, sourceIndex), ...this.items.slice(sourceIndex + 1)];
 
-      let bucketItems = this.buckets[item.location.id];
+      let bucketItems = this.buckets[item.location.hash];
       const bucketIndex = bucketItems.findIndex(match);
       bucketItems = [...bucketItems.slice(0, bucketIndex), ...bucketItems.slice(bucketIndex + 1)];
-      this.buckets[item.location.id] = bucketItems;
+      this.buckets[item.location.hash] = bucketItems;
 
       return true;
     }
@@ -120,22 +106,12 @@ const StoreProto = {
 
   addItem(this: D1Store, item: D1Item) {
     this.items = [...this.items, item];
-    this.buckets[item.location.id] = [...this.buckets[item.location.id], item];
+    this.buckets[item.location.hash] = [...this.buckets[item.location.hash], item];
     item.owner = this.id;
   },
 
-  // Create a loadout from this store's equipped items
-  loadoutFromCurrentlyEquipped(this: D1Store, name: string) {
-    // tslint:disable-next-line:no-unnecessary-callback-wrapper
-    const allItems = this.items.filter((item) => item.canBeInLoadout()).map((item) => copy(item));
-    return newLoadout(
-      name,
-      _.groupBy(allItems, (i) => i.type.toLowerCase())
-    );
-  },
-
   factionAlignment(this: D1Store) {
-    const badge = this.buckets.BUCKET_MISSION.find((i) => factionBadges[i.hash]);
+    const badge = this.buckets[375726501].find((i) => factionBadges[i.hash]);
     if (!badge) {
       return null;
     }
@@ -153,7 +129,7 @@ const StoreProto = {
 
   getStoresService() {
     return D1StoresService;
-  }
+  },
 };
 
 export function makeCharacter(
@@ -178,8 +154,8 @@ export function makeCharacter(
               name: itemDef.itemName,
               description: itemDef.itemDescription,
               icon: itemDef.icon,
-              hasIcon: Boolean(itemDef.icon)
-            }
+              hasIcon: Boolean(itemDef.icon),
+            },
           };
         })
       );
@@ -212,7 +188,7 @@ export function makeCharacter(
     id: raw.id,
     name: t('ItemService.StoreName', {
       genderRace,
-      className
+      className,
     }),
     icon: `https://www.bungie.net/${character.emblemPath}`,
     current: mostRecentLastPlayed.getTime() === lastPlayed.getTime(),
@@ -220,8 +196,7 @@ export function makeCharacter(
     background: `https://www.bungie.net/${character.backgroundPath}`,
     level: character.characterLevel,
     powerLevel: character.characterBase.powerLevel,
-    stats: getCharacterStatsData(defs.Stat, character.characterBase),
-    class: getClass(character.characterBase.classType),
+    stats: getCharacterStatsData(defs, character.characterBase),
     classType: character.characterBase.classType,
     className,
     gender,
@@ -230,7 +205,7 @@ export function makeCharacter(
     percentToNextLevel: character.percentToNextLevel / 100,
     progression: raw.character.progression,
     advisors: raw.character.advisors,
-    isVault: false
+    isVault: false,
   });
 
   if (store.progression) {
@@ -270,7 +245,7 @@ export function makeCharacter(
 
   return {
     store,
-    items
+    items,
   };
 }
 
@@ -285,7 +260,7 @@ export function makeVault(
     destinyVersion: 1,
     id: 'vault',
     name: t('Bucket.Vault'),
-    class: 'vault',
+    classType: DestinyClass.Unknown,
     current: false,
     genderName: '',
     className: t('Bucket.Vault'),
@@ -304,7 +279,7 @@ export function makeVault(
       return vaultBucket ? vaultBucket.capacity : 0;
     },
     spaceLeftForItem(this: D1Vault, item: D1Item) {
-      const sort = item.bucket?.sort || item.sort;
+      const sort = item.bucket?.sort;
       if (!sort) {
         throw new Error("item needs a 'sort' field");
       }
@@ -324,16 +299,16 @@ export function makeVault(
     removeItem(this: D1Vault, item: D1Item) {
       const result = StoreProto.removeItem.call(this, item);
       if (item.location.vaultBucket) {
-        this.vaultCounts[item.location.vaultBucket.id].count--;
+        this.vaultCounts[item.location.vaultBucket.hash].count--;
       }
       return result;
     },
     addItem(this: D1Vault, item: D1Item) {
       StoreProto.addItem.call(this, item);
       if (item.location.vaultBucket) {
-        this.vaultCounts[item.location.vaultBucket.id].count++;
+        this.vaultCounts[item.location.vaultBucket.hash].count++;
       }
-    }
+    },
   });
 
   let items: any[] = [];
@@ -348,6 +323,6 @@ export function makeVault(
 
   return {
     store,
-    items
+    items,
   };
 }

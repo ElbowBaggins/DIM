@@ -18,37 +18,29 @@ declare const $featureFlags: {
   debugSync: boolean;
   /** Enable color-blind a11y */
   colorA11y: boolean;
-  /** Whether to log page views for router events */
-  googleAnalyticsForRouter: boolean;
-  /** Debug ui-router */
-  debugRouter: boolean;
   /** Debug Service Worker */
   debugSW: boolean;
   /** Send exception reports to Sentry.io */
   sentry: boolean;
   /** D2 Vendors */
   vendors: boolean;
-  /** Use the new React inventory screen. */
-  reactInventory: boolean;
   /** Respect the "do not track" header. */
   respectDNT: boolean;
   /** Community-curated wish lists */
   wishLists: boolean;
-  /** Notifications for item moves */
-  moveNotifications: boolean;
-  /** Item organizer */
-  organizer: boolean;
   /** Enable vendorengrams.xyz integration */
   vendorEngrams: boolean;
+  /** Enable the Armor 2 Mod Picker */
+  armor2ModPicker: boolean;
+  /** Show a banner for supporting a charitable cause */
+  issueBanner: boolean;
 };
 
-/* tslint:disable */
 declare namespace React {
   interface ImgHTMLAttributes {
     loading?: 'lazy';
   }
 }
-/* tslint:enable */
 
 declare function ga(...params: string[]);
 
@@ -58,6 +50,13 @@ interface Window {
   };
   BroadcastChannel?: BroadcastChannel;
   OC?: any;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  gapi_onload(): void;
+
+  // Service worker stuff
+  __precacheManifest: string[];
+  __WB_MANIFEST: string[];
+  skipWaiting(): void;
 }
 
 interface Navigator {

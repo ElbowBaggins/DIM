@@ -17,7 +17,7 @@ export default function PlugTooltip({
   defs,
   wishListsEnabled,
   inventoryWishListRoll,
-  bestPerks
+  bestPerks,
 }: {
   item: D2Item;
   plug: DimPlug;
@@ -35,8 +35,7 @@ export default function PlugTooltip({
 
   // display perk's synergy with masterwork stat
   const synergyStat =
-    item.masterworkInfo &&
-    item.masterworkInfo.statHash &&
+    item.masterworkInfo?.statHash &&
     plug.plugItem.investmentStats &&
     plug.plugItem.investmentStats.some(
       (stat) =>
@@ -110,7 +109,7 @@ export default function PlugTooltip({
 export function StatValue({
   value,
   statHash,
-  defs
+  defs,
 }: {
   value: number;
   statHash: number;

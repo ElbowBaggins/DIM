@@ -4,7 +4,7 @@ import {
   D1ItemWithNormalStats,
   LockedPerkHash,
   ItemBucket,
-  ArmorSet
+  ArmorSet,
 } from './types';
 import intellectIcon from 'images/intellect.png';
 import disciplineIcon from 'images/discipline.png';
@@ -15,7 +15,7 @@ import {
   genSetHash,
   calcArmorStats,
   getBonusConfig,
-  getActiveHighestSets
+  getActiveHighestSets,
 } from './utils';
 
 import _ from 'lodash';
@@ -79,7 +79,7 @@ export function getSetBucketsStep(
     item: D1Item;
     bonusType: string;
   }[] = bestArmor.Artifact || [];
-  const setMap = {};
+  const setMap: { [setHash: number]: SetType } = {};
   const tiersSet = new Set<string>();
   const combos =
     helms.length *
@@ -96,7 +96,7 @@ export function getSetBucketsStep(
       activesets: '',
       highestsets: {},
       activeHighestSets: {},
-      collapsedConfigs: []
+      collapsedConfigs: [],
     });
   }
 
@@ -125,36 +125,41 @@ export function getSetBucketsStep(
                           Leg: legs[l],
                           ClassItem: classItems[ci],
                           Artifact: artifacts[ar],
-                          Ghost: ghosts[gh]
+                          Ghost: ghosts[gh],
                         },
                         stats: {
-                          STAT_INTELLECT: {
+                          144602215: {
+                            hash: 144602215,
                             value: 0,
-                            tier: 0,
                             name: 'Intellect',
-                            icon: intellectIcon
+                            description: '',
+                            icon: intellectIcon,
                           },
-                          STAT_DISCIPLINE: {
+                          1735777505: {
+                            hash: 1735777505,
                             value: 0,
-                            tier: 0,
                             name: 'Discipline',
-                            icon: disciplineIcon
+                            description: '',
+                            icon: disciplineIcon,
                           },
-                          STAT_STRENGTH: {
+                          4244567218: {
+                            hash: 4244567218,
                             value: 0,
-                            tier: 0,
                             name: 'Strength',
-                            icon: strengthIcon
-                          }
+                            description: '',
+                            icon: strengthIcon,
+                          },
                         },
                         setHash: '',
-                        includesVendorItems: false
+                        includesVendorItems: false,
                       };
 
                       const pieces = Object.values(set.armor);
                       set.setHash = genSetHash(pieces);
                       calcArmorStats(pieces, set.stats, scaleType);
-                      const tiersString = `${set.stats.STAT_INTELLECT.tier}/${set.stats.STAT_DISCIPLINE.tier}/${set.stats.STAT_STRENGTH.tier}`;
+                      const tiersString = `${tierValue(set.stats[144602215].value)}/${tierValue(
+                        set.stats[1735777505].value
+                      )}/${tierValue(set.stats[4244567218].value)}`;
 
                       tiersSet.add(tiersString);
 
@@ -168,14 +173,14 @@ export function getSetBucketsStep(
                         } else {
                           setMap[set.setHash].tiers[tiersString] = {
                             stats: set.stats,
-                            configs: [getBonusConfig(set.armor)]
+                            configs: [getBonusConfig(set.armor)],
                           };
                         }
                       } else {
                         setMap[set.setHash] = { set, tiers: {} };
                         setMap[set.setHash].tiers[tiersString] = {
                           stats: set.stats,
-                          configs: [getBonusConfig(set.armor)]
+                          configs: [getBonusConfig(set.armor)],
                         };
                       }
 
@@ -241,7 +246,7 @@ export function getSetBucketsStep(
         false,
         false,
         false,
-        false
+        false,
       ];
 
       if (cancelToken.cancelled) {
@@ -258,11 +263,15 @@ export function getSetBucketsStep(
         activesets,
         activeHighestSets,
         collapsedConfigs,
-        highestsets: setMap
+        highestsets: setMap,
       });
     }
     setTimeout(() => step(activeGuardian, 0, 0, 0, 0, 0, 0, 0, 0));
   });
 
   // reset: lockedchanged, excludedchanged, perkschanged, hassets
+}
+
+function tierValue(value: number) {
+  return Math.floor(Math.min(300, value) / 60);
 }

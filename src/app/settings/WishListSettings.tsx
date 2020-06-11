@@ -1,18 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { t } from 'app/i18next-t';
-import { connect, DispatchProp } from 'react-redux';
-import { RootState } from '../store/reducers';
+import { connect } from 'react-redux';
+import { RootState, ThunkDispatchProp } from '../store/reducers';
 import { clearWishLists } from '../wishlists/actions';
 import HelpLink from '../dim-ui/HelpLink';
 import { DropzoneOptions } from 'react-dropzone';
 import FileUpload from '../dim-ui/FileUpload';
-import { wishListsEnabledSelector, loadWishListAndInfoFromIndexedDB } from '../wishlists/reducer';
+import {
+  wishListsEnabledSelector,
+  wishListsSelector,
+  wishListsLastFetchedSelector,
+} from '../wishlists/reducer';
 import _ from 'lodash';
-import { setSetting } from './actions';
 import { transformAndStoreWishList, fetchWishList } from 'app/wishlists/wishlist-fetch';
 import { isUri } from 'valid-url';
 import { toWishList } from 'app/wishlists/wishlist-file';
 import { settingsSelector } from './reducer';
+import { showNotification } from 'app/notifications/notifications';
 
 interface StoreProps {
   wishListsEnabled: boolean;
@@ -20,133 +24,73 @@ interface StoreProps {
   title?: string;
   description?: string;
   wishListSource: string;
+  wishListLastUpdated?: Date;
 }
 
-type Props = StoreProps & DispatchProp;
+type Props = StoreProps & ThunkDispatchProp;
 
 function mapStateToProps(state: RootState): StoreProps {
+  const wishLists = wishListsSelector(state);
+  const wishList = wishLists.wishListAndInfo;
   return {
     wishListsEnabled: wishListsEnabledSelector(state),
-    numWishListRolls: state.wishLists.wishListAndInfo.wishListRolls.length,
-    title: state.wishLists.wishListAndInfo.title,
-    description: state.wishLists.wishListAndInfo.description,
-    wishListSource: settingsSelector(state).wishListSource
+    numWishListRolls: wishList.wishListRolls.length,
+    title: wishList.title,
+    description: wishList.description,
+    wishListSource: settingsSelector(state).wishListSource,
+    wishListLastUpdated: wishListsLastFetchedSelector(state),
   };
 }
 
-interface State {
-  wishListSource?: string;
-}
+function WishListSettings({
+  wishListsEnabled,
+  wishListSource,
+  numWishListRolls,
+  title,
+  description,
+  wishListLastUpdated,
+  dispatch,
+}: Props) {
+  const [liveWishListSource, setLiveWishListSource] = useState(wishListSource);
+  useEffect(() => {
+    dispatch(fetchWishList());
+  }, [dispatch]);
 
-class WishListSettings extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { wishListSource: props.wishListSource };
-  }
+  useEffect(() => {
+    setLiveWishListSource(wishListSource);
+  }, [wishListSource]);
 
-  componentDidMount() {
-    this.props.dispatch(loadWishListAndInfoFromIndexedDB() as any);
-  }
-
-  render() {
-    const { wishListsEnabled, numWishListRolls, title, description } = this.props;
-    const { wishListSource } = this.state;
-
-    return (
-      <section id="wishlist">
-        <h2>
-          {t('WishListRoll.Header')}
-          <HelpLink helpLink="https://github.com/DestinyItemManager/DIM/blob/master/docs/COMMUNITY_CURATIONS.md" />
-        </h2>
-        {$featureFlags.wishLists && (
-          <>
-            <div className="setting">
-              <FileUpload onDrop={this.loadWishList} title={t('WishListRoll.Import')} />
-            </div>
-            <div className="setting">
-              <div>{t('WishListRoll.ExternalSource')}</div>
-              <div>
-                <input
-                  type="text"
-                  className="wish-list-text"
-                  value={wishListSource}
-                  onChange={this.updateWishListSourceState}
-                  placeholder={t('WishListRoll.ExternalSource')}
-                />
-              </div>
-              <div>
-                <input
-                  type="button"
-                  className="dim-button"
-                  value={t('WishListRoll.UpdateExternalSource')}
-                  onClick={this.wishListUpdateEvent}
-                />
-              </div>
-            </div>
-
-            {wishListsEnabled && (
-              <>
-                <div className="setting">
-                  <div className="horizontal">
-                    <label>
-                      {t('WishListRoll.Num', {
-                        num: numWishListRolls
-                      })}
-                    </label>
-                    <button className="dim-button" onClick={this.clearWishListEvent}>
-                      {t('WishListRoll.Clear')}
-                    </button>
-                  </div>
-                  {(title || description) && (
-                    <div className="fineprint">
-                      {title && (
-                        <div className="overflow-dots">
-                          <b>{title}</b>
-                          <br />
-                        </div>
-                      )}
-                      <div className="overflow-dots">{description}</div>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </>
-        )}
-      </section>
-    );
-  }
-
-  private wishListUpdateEvent = () => {
-    const wishListSource = this.state.wishListSource?.trim();
+  const wishListUpdateEvent = async () => {
+    const newWishListSource = liveWishListSource?.trim();
     if (
-      !isUri(wishListSource) ||
-      !wishListSource?.startsWith('https://raw.githubusercontent.com/')
+      newWishListSource &&
+      (!isUri(newWishListSource) ||
+        !newWishListSource.startsWith('https://raw.githubusercontent.com/'))
     ) {
       alert(t('WishListRoll.InvalidExternalSource'));
       return;
     }
 
-    if (this.props.wishListSource === wishListSource) {
-      return;
+    try {
+      await dispatch(fetchWishList(newWishListSource));
+      ga('send', 'event', 'WishList', 'From URL');
+    } catch (e) {
+      showNotification({
+        type: 'error',
+        title: t('WishListRoll.Header'),
+        body: t('WishListRoll.ImportError', { error: e.message }),
+      });
     }
-
-    this.props.dispatch(setSetting('wishListSource', wishListSource));
-
-    this.props.dispatch(fetchWishList() as any);
-
-    ga('send', 'event', 'WishList', 'From URL');
   };
 
-  private loadWishList: DropzoneOptions['onDrop'] = (acceptedFiles) => {
-    this.props.dispatch(clearWishLists());
-    this.setState({ wishListSource: '' });
+  const loadWishList: DropzoneOptions['onDrop'] = (acceptedFiles) => {
+    dispatch(clearWishLists());
 
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       if (reader.result && typeof reader.result === 'string') {
         const wishListAndInfo = toWishList(reader.result);
-        this.props.dispatch(transformAndStoreWishList(wishListAndInfo) as any);
+        dispatch(transformAndStoreWishList(wishListAndInfo));
         ga('send', 'event', 'WishList', 'From File');
       }
     };
@@ -160,16 +104,83 @@ class WishListSettings extends React.Component<Props, State> {
     return false;
   };
 
-  private clearWishListEvent = () => {
+  const clearWishListEvent = () => {
     ga('send', 'event', 'WishList', 'Clear');
-    this.setState({ wishListSource: '' });
-    this.props.dispatch(clearWishLists());
+    dispatch(clearWishLists());
   };
 
-  private updateWishListSourceState = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const updateWishListSourceState = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newSource = e.target.value;
-    this.setState({ wishListSource: newSource });
+    setLiveWishListSource(newSource);
   };
+
+  return (
+    <section id="wishlist">
+      <h2>
+        {t('WishListRoll.Header')}
+        <HelpLink helpLink="https://github.com/DestinyItemManager/DIM/blob/master/docs/COMMUNITY_CURATIONS.md" />
+      </h2>
+      <div className="setting">
+        <FileUpload onDrop={loadWishList} title={t('WishListRoll.Import')} />
+      </div>
+      <div className="setting">
+        <div>{t('WishListRoll.ExternalSource')}</div>
+        <div>
+          <input
+            type="text"
+            className="wish-list-text"
+            value={liveWishListSource}
+            onChange={updateWishListSourceState}
+            placeholder={t('WishListRoll.ExternalSource')}
+          />
+        </div>
+        <div>
+          <input
+            type="button"
+            className="dim-button"
+            value={t('WishListRoll.UpdateExternalSource')}
+            onClick={wishListUpdateEvent}
+          />
+        </div>
+        {wishListLastUpdated && (
+          <div className="fineprint">
+            {t('WishListRoll.LastUpdated', {
+              lastUpdatedDate: wishListLastUpdated.toLocaleDateString(),
+              lastUpdatedTime: wishListLastUpdated.toLocaleTimeString(),
+            })}
+          </div>
+        )}
+      </div>
+
+      {wishListsEnabled && (
+        <>
+          <div className="setting">
+            <div className="horizontal">
+              <label>
+                {t('WishListRoll.Num', {
+                  num: numWishListRolls,
+                })}
+              </label>
+              <button className="dim-button" onClick={clearWishListEvent}>
+                {t('WishListRoll.Clear')}
+              </button>
+            </div>
+            {(title || description) && (
+              <div className="fineprint">
+                {title && (
+                  <div className="overflow-dots">
+                    <b>{title}</b>
+                    <br />
+                  </div>
+                )}
+                <div className="overflow-dots">{description}</div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
 }
 
 export default connect<StoreProps>(mapStateToProps)(WishListSettings);

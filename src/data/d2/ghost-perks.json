@@ -159,6 +159,22 @@
       "improved": false
     }
   },
+  "392619685": {
+    "location": "crucible",
+    "type": {
+      "xp": false,
+      "resource": false,
+      "cache": false,
+      "scanner": true,
+      "glimmer": false,
+      "telemetry": {
+        "arc": false,
+        "void": false,
+        "solar": false
+      },
+      "improved": true
+    }
+  },
   "478676376": {
     "location": "dreaming",
     "type": {
@@ -838,22 +854,6 @@
       "resource": true,
       "cache": false,
       "scanner": true,
-      "glimmer": false,
-      "telemetry": {
-        "arc": false,
-        "void": false,
-        "solar": false
-      },
-      "improved": false
-    }
-  },
-  "2328497849": {
-    "location": false,
-    "type": {
-      "xp": false,
-      "resource": false,
-      "cache": false,
-      "scanner": false,
       "glimmer": false,
       "telemetry": {
         "arc": false,

@@ -1,5 +1,6 @@
 import { RootState } from '../store/reducers';
-import { Settings, settingsSelector } from './reducer';
+import { settingsSelector } from './reducer';
+import { Settings } from './initial-settings';
 
 const itemSortPresets = {
   primaryStat: ['primStat', 'name'],
@@ -8,7 +9,7 @@ const itemSortPresets = {
   quality: ['rating', 'name'],
   name: ['name'],
   typeThenPrimary: ['typeName', 'classType', 'primStat', 'name'],
-  typeThenName: ['typeName', 'classType', 'name']
+  typeThenName: ['typeName', 'classType', 'name'],
 };
 
 export const itemSortOrder = (settings: Settings): string[] =>

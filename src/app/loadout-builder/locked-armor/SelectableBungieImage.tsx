@@ -2,7 +2,7 @@ import { DestinyInventoryItemDefinition } from 'bungie-api-ts/destiny2';
 import clsx from 'clsx';
 import { t } from 'app/i18next-t';
 import React from 'react';
-import { LockedItemType, BurnItem } from '../types';
+import { LockedItemType, BurnItem, LockedModBase, LockedArmor2Mod } from '../types';
 import BungieImageAndAmmo from '../../dim-ui/BungieImageAndAmmo';
 import styles from './SelectableBungieImage.m.scss';
 import { InventoryBucket } from 'app/inventory/inventory-buckets';
@@ -22,7 +22,7 @@ const badPerk = new Set([
   527286589, // unflinching kinetic aim
   952165152, // power dexterity
   377666359, // energy dexterity
-  2326218464 // kinetic dexterity
+  2326218464, // kinetic dexterity
 ]);
 
 /**
@@ -35,20 +35,26 @@ export function SelectableMod({
   bucket,
   selected,
   unselectable,
-  onLockedPerk
+  onLockedPerk,
+  onLockedModBase,
 }: {
   mod: DestinyInventoryItemDefinition;
   // plugSet this mod appears in
   plugSetHash: number;
   defs: D2ManifestDefinitions;
-  bucket: InventoryBucket;
+  bucket?: InventoryBucket;
   selected: boolean;
-  unselectable: boolean;
-  onLockedPerk(perk: LockedItemType): void;
+  unselectable?: boolean;
+  onLockedPerk?(perk: LockedItemType): void;
+  onLockedModBase?(mod: LockedModBase): void;
 }) {
   const handleClick = (e) => {
     e.preventDefault();
-    onLockedPerk({ type: 'mod', mod, plugSetHash, bucket });
+    if (bucket && onLockedPerk) {
+      onLockedPerk({ type: 'mod', mod, plugSetHash, bucket });
+    } else if (onLockedModBase) {
+      onLockedModBase({ mod, plugSetHash });
+    }
   };
 
   const perk = Boolean(mod.perks?.length) && defs.SandboxPerk.get(mod.perks[0].perkHash);
@@ -57,7 +63,7 @@ export function SelectableMod({
     <div
       className={clsx(styles.perk, {
         [styles.lockedPerk]: selected,
-        [styles.unselectable]: unselectable
+        [styles.unselectable]: unselectable,
       })}
       onClick={handleClick}
       role="button"
@@ -74,6 +80,42 @@ export function SelectableMod({
   );
 }
 
+export function SelectableArmor2Mod({
+  mod,
+  defs,
+  selected,
+  unselectable,
+  onLockedArmor2Mod,
+}: {
+  mod: LockedArmor2Mod;
+  defs: D2ManifestDefinitions;
+  selected: boolean;
+  unselectable: boolean;
+  onLockedArmor2Mod(mod: LockedArmor2Mod): void;
+}) {
+  const handleClick = () => {
+    !unselectable && onLockedArmor2Mod(mod);
+  };
+
+  return (
+    <div
+      className={clsx(styles.perk, {
+        [styles.lockedPerk]: selected,
+        [styles.unselectable]: unselectable,
+      })}
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+    >
+      <SocketDetailsMod itemDef={mod.mod} defs={defs} />
+      <div className={styles.perkInfo}>
+        <div className={styles.perkTitle}>{mod.mod.displayProperties.name}</div>
+        <div className={styles.perkDescription}>{mod.mod.displayProperties.description}</div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * A perk option in the PerkPicker.
  */
@@ -83,7 +125,7 @@ export function SelectablePerk({
   defs,
   selected,
   unselectable,
-  onLockedPerk
+  onLockedPerk,
 }: {
   perk: DestinyInventoryItemDefinition;
   bucket: InventoryBucket;
@@ -104,7 +146,7 @@ export function SelectablePerk({
     <div
       className={clsx(styles.perk, {
         [styles.lockedPerk]: selected,
-        [styles.unselectable]: unselectable
+        [styles.unselectable]: unselectable,
       })}
       onClick={handleClick}
       role="button"
@@ -113,7 +155,7 @@ export function SelectablePerk({
       <BungieImageAndAmmo
         className={clsx({
           [styles.goodPerk]: perk.hash === 1818103563,
-          [styles.badPerk]: isBadPerk
+          [styles.badPerk]: isBadPerk,
         })}
         hash={perk.hash}
         alt=""
@@ -141,7 +183,7 @@ export function SelectableBurn({
   bucket,
   selected,
   unselectable,
-  onLockedPerk
+  onLockedPerk,
 }: {
   burn: BurnItem;
   bucket: InventoryBucket;
@@ -158,7 +200,7 @@ export function SelectableBurn({
     <div
       className={clsx(styles.perk, {
         [styles.lockedPerk]: selected,
-        [styles.unselectable]: unselectable
+        [styles.unselectable]: unselectable,
       })}
       onClick={handleClick}
       role="button"

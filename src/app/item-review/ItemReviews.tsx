@@ -1,15 +1,15 @@
 import React from 'react';
 import { DimItem } from '../inventory/item-types';
-import { RootState } from '../store/reducers';
+import { RootState, ThunkDispatchProp } from '../store/reducers';
 import { t } from 'app/i18next-t';
 import './item-review.scss';
-import { connect, DispatchProp } from 'react-redux';
+import { connect } from 'react-redux';
 import {
   AppIcon,
   thumbsUpIcon,
   thumbsDownIcon,
   faThumbsUpRegular,
-  faThumbsDownRegular
+  faThumbsDownRegular,
 } from '../shell/icons';
 import { getRating, ratingsSelector, getReviews, getUserReview, shouldShowRating } from './reducer';
 import { D2ItemUserReview, WorkingD2Rating } from './d2-dtr-api-types';
@@ -47,11 +47,13 @@ function mapStateToProps(state: RootState, { item }: ProvidedProps): StoreProps 
     dtrRating: getRating(item, ratingsSelector(state)),
     reviews: reviewsResponse ? reviewsResponse.reviews : EMPTY,
     userReview: getUserReview(item, state),
-    reviewModeOptions: state.manifest.d2Manifest ? getReviewModes(state.manifest.d2Manifest) : EMPTY
+    reviewModeOptions: state.manifest.d2Manifest
+      ? getReviewModes(state.manifest.d2Manifest)
+      : EMPTY,
   };
 }
 
-type Props = ProvidedProps & StoreProps & DispatchProp<any>;
+type Props = ProvidedProps & StoreProps & ThunkDispatchProp;
 
 interface State {
   submitted: boolean;
@@ -196,12 +198,11 @@ class ItemReviews extends React.Component<Props, State> {
               <div className="community-review--mode">
                 <label htmlFor="reviewMode">{t('DtrReview.ForGameModeLabel')}</label>{' '}
                 <select name="reviewMode" onChange={this.changeMode}>
-                  {reviewModeOptions &&
-                    reviewModeOptions.map((reviewModeOption) => (
-                      <option key={reviewModeOption.mode} value={reviewModeOption.mode}>
-                        {reviewModeOption.description}
-                      </option>
-                    ))}
+                  {reviewModeOptions?.map((reviewModeOption) => (
+                    <option key={reviewModeOption.mode} value={reviewModeOption.mode}>
+                      {reviewModeOption.description}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
@@ -244,7 +245,7 @@ class ItemReviews extends React.Component<Props, State> {
 
   private cancelEdit = () => {
     this.setState((state) => ({
-      expandReview: !state.expandReview
+      expandReview: !state.expandReview,
     }));
   };
 
@@ -253,7 +254,7 @@ class ItemReviews extends React.Component<Props, State> {
     if (userReview && isD2UserReview(item, userReview)) {
       const newUserReview = {
         ...userReview,
-        mode: parseInt(e.currentTarget.value, 10)
+        mode: parseInt(e.currentTarget.value, 10),
       };
       dispatch(saveUserReview({ item, review: newUserReview }));
     }
@@ -264,7 +265,7 @@ class ItemReviews extends React.Component<Props, State> {
 
     const newUserReview = {
       ...userReview,
-      [isD2UserReview(item, userReview) ? 'text' : 'review']: e.currentTarget.value
+      [isD2UserReview(item, userReview) ? 'text' : 'review']: e.currentTarget.value,
     };
     dispatch(saveUserReview({ item, review: newUserReview }));
   };
@@ -277,7 +278,7 @@ class ItemReviews extends React.Component<Props, State> {
 
     // TODO: handle empty starting review
     this.setState({
-      expandReview: true
+      expandReview: true,
     });
   };
 
@@ -288,7 +289,7 @@ class ItemReviews extends React.Component<Props, State> {
 
   private submitReview = async () => {
     const { item, userReview, dispatch } = this.props;
-    await (dispatch(submitReview(item, userReview)) as any);
+    await dispatch(submitReview(item, userReview));
     this.setState({ submitted: true });
     this.cancelEdit();
   };
@@ -304,11 +305,11 @@ class ItemReviews extends React.Component<Props, State> {
     }
     const updatedUserReview = {
       ...userReview,
-      rating
+      rating,
     };
 
     this.setState({
-      expandReview: true
+      expandReview: true,
     });
 
     dispatch(saveUserReview({ item, review: updatedUserReview }));
@@ -342,11 +343,11 @@ class ItemReviews extends React.Component<Props, State> {
     const updatedUserReview = {
       ...userReview,
       voted: newVote,
-      treatAsSubmitted: !treatAsTouched
+      treatAsSubmitted: !treatAsTouched,
     };
 
     this.setState({
-      expandReview: treatAsTouched
+      expandReview: treatAsTouched,
     });
 
     dispatch(saveUserReview({ item, review: updatedUserReview }));

@@ -16,7 +16,7 @@ interface StoreProps {
 function mapStateToProps() {
   const storeSelector = farmingStoreSelector();
   return (state: RootState): StoreProps => ({
-    store: storeSelector(state)
+    store: storeSelector(state),
   });
 }
 
@@ -26,13 +26,13 @@ function D2Farming({ store }: Props) {
   return (
     <TransitionGroup component={null}>
       {store && (
-        <CSSTransition clsx="farming" timeout={{ enter: 500, exit: 500 }}>
+        <CSSTransition classNames="farming" timeout={{ enter: 500, exit: 500 }}>
           <div id="item-farming" className="d2-farming">
             <span>
               <p>
                 {t('FarmingMode.D2Desc', {
                   store: store.name,
-                  context: store.genderName
+                  context: store.genderName,
                 })}
                 {/*
                     t('FarmingMode.D2Desc_male')

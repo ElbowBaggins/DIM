@@ -10,6 +10,21 @@
     "**/data/d1/manifests": true
   },
   "jest.pathToConfig": "jest.config.js",
+  "[javascript]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": false
+    }
+  },
+  "[typescript]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": false
+    }
+  },
+  "[typescriptreact]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": false
+    }
+  },
   "cSpell.enabledLanguageIds": ["jsonc", "json", "markdown"],
   "cSpell.allowCompoundWords": true,
   "cSpell.ignorePaths": [
@@ -17,20 +32,19 @@
     "node_modules",
     "src/app",
     "**/de",
-    "**/es-ES",
-    "**/es-MX",
+    "**/es",
+    "**/es-mx",
     "**/fr",
     "**/it",
     "**/ja",
     "**/ko",
     "**/pl",
-    "**/pt-BR",
+    "**/pt-br",
     "**/ru",
-    "**/zh-CN",
-    "**/zh-TW",
+    "**/zh-chs",
+    "**/zh-cht",
     "package.json",
-    "tsconfig.json",
-    "tslint.json"
+    "tsconfig.json"
   ],
   "cSpell.words": [
     "Dont",

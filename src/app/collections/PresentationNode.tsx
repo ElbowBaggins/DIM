@@ -17,6 +17,8 @@ import Checkbox from '../settings/Checkbox';
 import { connect } from 'react-redux';
 import { t } from 'app/i18next-t';
 import { settingsSelector } from 'app/settings/reducer';
+import Metrics from './Metrics';
+import ErrorPanel from 'app/shell/ErrorPanel';
 
 /** root PresentationNodes to lock in expanded state */
 const rootNodes = [3790247699];
@@ -46,11 +48,11 @@ function mapStateToProps(state: RootState): StoreProps {
   const settings = settingsSelector(state);
   return {
     completedRecordsHidden: settings.completedRecordsHidden,
-    redactedRecordsRevealed: settings.redactedRecordsRevealed
+    redactedRecordsRevealed: settings.redactedRecordsRevealed,
   };
 }
 const mapDispatchToProps = {
-  setSetting
+  setSetting,
 };
 
 type DispatchProps = typeof mapDispatchToProps;
@@ -73,7 +75,7 @@ class PresentationNode extends React.Component<Props> {
       scrollToPosition({
         top: window.scrollY + clientRect.top - 50,
         left: 0,
-        behavior: 'smooth'
+        behavior: 'smooth',
       });
     }
     this.lastPath = this.props.path;
@@ -90,7 +92,7 @@ class PresentationNode extends React.Component<Props> {
       completedRecordsHidden,
       redactedRecordsRevealed,
       collectionCounts,
-      onNodePathSelected
+      onNodePathSelected,
     } = this.props;
     const presentationNodeDef = defs.PresentationNode.get(presentationNodeHash);
     if (presentationNodeDef.redacted) {
@@ -99,10 +101,10 @@ class PresentationNode extends React.Component<Props> {
 
     if (!presentationNodeDef) {
       return (
-        <div className="dim-error">
-          <h2>Bad presentation node</h2>
-          <div>This isn't real {presentationNodeHash}</div>
-        </div>
+        <ErrorPanel
+          title="Bad presentation node"
+          error={new Error(`This isn't real ${presentationNodeHash}`)}
+        />
       );
     }
 
@@ -146,26 +148,33 @@ class PresentationNode extends React.Component<Props> {
       1: 'Badge',
       2: 'Medals',
       3: 'Collectible',
-      4: 'Record'
+      4: 'Record',
     };
 
     const screenStyle = {
       0: 'Default',
       1: 'CategorySets',
-      2: 'Badge'
+      2: 'Badge',
     };
 
     const nodeStyle = {
       0: 'Default',
       1: 'Category',
       2: 'Collectibles',
-      3: 'Records'
+      3: 'Records',
     };
+
+    // TODO: need more info on what iconSequences are
 
     const title = (
       <span className="node-name">
         {presentationNodeDef.displayProperties.icon && (
-          <BungieImage src={presentationNodeDef.displayProperties.icon} />
+          <BungieImage
+            src={
+              presentationNodeDef.displayProperties.iconSequences?.[0]?.frames?.[1] ??
+              presentationNodeDef.displayProperties.icon
+            }
+          />
         )}{' '}
         {presentationNodeDef.displayProperties.name}
       </span>
@@ -181,7 +190,7 @@ class PresentationNode extends React.Component<Props> {
           `level-${thisAndParents.length}`,
           {
             'only-child': onlyChild,
-            'always-expanded': alwaysExpanded
+            'always-expanded': alwaysExpanded,
           }
         )}
       >
@@ -190,7 +199,7 @@ class PresentationNode extends React.Component<Props> {
             className={clsx('title', {
               collapsed: !childrenExpanded,
               'hide-complete': completedRecordsHidden,
-              completed
+              completed,
             })}
             onClick={this.expandChildren}
             ref={this.headerRef}
@@ -280,6 +289,13 @@ class PresentationNode extends React.Component<Props> {
                   />
                 ))}
               </div>
+            )}
+            {presentationNodeDef.children.metrics.length > 0 && (
+              <Metrics
+                metrics={presentationNodeDef.children.metrics}
+                defs={defs}
+                profileResponse={profileResponse}
+              />
             )}
           </>
         )}

@@ -43,7 +43,7 @@ export default function Refresh() {
 
   return (
     <a
-      className={clsx('link', { disabled })}
+      className={clsx('link menuItem', { disabled })}
       onClick={refresh}
       title={t('Header.Refresh')}
       role="button"
@@ -53,8 +53,8 @@ export default function Refresh() {
           {
             combo: 'r',
             description: t('Hotkey.RefreshInventory'),
-            callback: refresh
-          }
+            callback: refresh,
+          },
         ]}
       />
       <AppIcon icon={refreshIcon} spinning={active} />

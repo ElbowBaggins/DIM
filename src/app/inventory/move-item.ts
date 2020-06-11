@@ -9,6 +9,10 @@ import { loadingTracker } from '../shell/loading-tracker';
 import { showNotification } from '../notifications/notifications';
 import { hideItemPopup } from 'app/item-popup/item-popup';
 import { moveItemNotification } from './MoveNotifications';
+import { PlatformErrorCodes } from 'bungie-api-ts/common';
+import { getVault } from './stores-helpers';
+import { updateCharacters } from './d2-stores';
+import rxStore from '../store/store';
 
 /**
  * Move the item to the specified store. Equip it if equip is true.
@@ -20,29 +24,24 @@ export const moveItemTo = queuedAction(
       const reload = item.equipped || equip;
       try {
         const movePromise = dimItemService.moveTo(item, store, equip, amount);
-
-        if ($featureFlags.moveNotifications) {
-          showNotification(moveItemNotification(item, store, movePromise));
-        }
+        showNotification(moveItemNotification(item, store, movePromise));
 
         item = await movePromise;
 
         if (reload) {
+          // TODO: only reload the character that changed?
           // Refresh light levels and such
-          await item.getStoresService().updateCharacters();
+          await (rxStore.dispatch(updateCharacters()) as any);
         }
 
         item.updateManualMoveTimestamp();
       } catch (e) {
-        if (!$featureFlags.moveNotifications) {
-          showNotification({ type: 'error', title: item.name, body: e.message });
-        }
         console.error('error moving item', item.name, 'to', store.name, e);
         // Some errors aren't worth reporting
         if (
           e.code !== 'wrong-level' &&
           e.code !== 'no-space' &&
-          e.code !== 1671 /* PlatformErrorCodes.DestinyCannotPerformActionAtThisLocation */
+          e.code !== PlatformErrorCodes.DestinyCannotPerformActionAtThisLocation
         ) {
           reportException('moveItem', e);
         }
@@ -57,11 +56,12 @@ export const moveItemTo = queuedAction(
 export const consolidate = queuedAction(
   loadingTracker.trackPromise(async (actionableItem: DimItem, store: DimStore) => {
     const storesService = actionableItem.getStoresService();
-    const stores = storesService.getStores().filter((s) => !s.isVault);
-    const vault = storesService.getVault()!;
+    const stores = storesService.getStores();
+    const characters = stores.filter((s) => !s.isVault);
+    const vault = getVault(stores)!;
 
     try {
-      for (const s of stores) {
+      for (const s of characters) {
         // First move everything into the vault
         const item = s.items.find(
           (i) => store.id !== i.owner && i.hash === actionableItem.hash && !i.location.inPostmaster
@@ -74,7 +74,7 @@ export const consolidate = queuedAction(
 
       // Then move from the vault to the character
       if (!store.isVault) {
-        const vault = storesService.getVault()!;
+        const vault = getVault(storesService.getStores())!;
         const item = vault.items.find(
           (i) => i.hash === actionableItem.hash && !i.location.inPostmaster
         );
@@ -92,6 +92,12 @@ export const consolidate = queuedAction(
     }
   })
 );
+
+interface Move {
+  source: DimStore;
+  target: DimStore;
+  amount: number;
+}
 
 /**
  * Distribute a stackable item evently across characters.
@@ -122,16 +128,8 @@ export const distribute = queuedAction(
     });
     const deltas = _.zip(amounts, targets).map(([amount, target]) => target! - amount!);
 
-    const vaultMoves: {
-      source: DimStore;
-      target: DimStore;
-      amount: number;
-    }[] = [];
-    const targetMoves: {
-      source: DimStore;
-      target: DimStore;
-      amount: number;
-    }[] = [];
+    const vaultMoves: Move[] = [];
+    const targetMoves: Move[] = [];
     const vaultIndex = stores.length - 1;
     const vault = stores[vaultIndex];
 
@@ -140,21 +138,21 @@ export const distribute = queuedAction(
         vaultMoves.push({
           source: stores[index],
           target: vault,
-          amount: -delta
+          amount: -delta,
         });
       } else if (delta > 0) {
         targetMoves.push({
           source: vault,
           target: stores[index],
-          amount: delta
+          amount: delta,
         });
       }
     });
 
     // All moves to vault in parallel, then all moves to targets in parallel
-    async function applyMoves(moves) {
+    async function applyMoves(moves: Move[]) {
       for (const move of moves) {
-        const item = move.source.items.find((i) => i.hash === actionableItem.hash);
+        const item = move.source.items.find((i) => i.hash === actionableItem.hash)!;
         await dimItemService.moveTo(item, move.target, false, move.amount);
       }
     }
@@ -164,7 +162,7 @@ export const distribute = queuedAction(
       await applyMoves(targetMoves);
       showNotification({
         type: 'success',
-        title: t('ItemMove.Distributed', { name: actionableItem.name })
+        title: t('ItemMove.Distributed', { name: actionableItem.name }),
       });
     } catch (a) {
       showNotification({ type: 'error', title: actionableItem.name, body: a.message });

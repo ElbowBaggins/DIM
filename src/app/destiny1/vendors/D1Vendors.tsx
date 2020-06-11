@@ -1,7 +1,5 @@
 import React from 'react';
 import { DestinyAccount } from '../../accounts/destiny-account';
-import { UIViewInjectedProps } from '@uirouter/react';
-import { Loading } from '../../dim-ui/Loading';
 import { Subscriptions } from '../../utils/rx-utils';
 import { refresh$ } from '../../shell/refresh';
 import { dimVendorService, Vendor } from './vendor.service';
@@ -9,6 +7,8 @@ import { D1Store } from '../../inventory/store-types';
 import _ from 'lodash';
 import D1Vendor from './D1Vendor';
 import styles from './D1Vendors.m.scss';
+import ShowPageLoading from 'app/dim-ui/ShowPageLoading';
+import { t } from 'app/i18next-t';
 
 interface Props {
   account: DestinyAccount;
@@ -24,7 +24,7 @@ interface State {
 /**
  * The "All Vendors" page for D1 that shows all the rotating vendors.
  */
-export default class D1Vendors extends React.Component<Props & UIViewInjectedProps, State> {
+export default class D1Vendors extends React.Component<Props, State> {
   private subscriptions = new Subscriptions();
 
   constructor(props: Props) {
@@ -52,11 +52,7 @@ export default class D1Vendors extends React.Component<Props & UIViewInjectedPro
     const { stores, vendors } = this.state;
 
     if (!vendors || !stores) {
-      return (
-        <div className="vendor dim-page">
-          <Loading />
-        </div>
-      );
+      return <ShowPageLoading message={t('Loading.Profile')} />;
     }
 
     const totalCoins = dimVendorService.countCurrencies(stores, vendors);

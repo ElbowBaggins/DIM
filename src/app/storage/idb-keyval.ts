@@ -41,7 +41,6 @@ export class Store {
       (db) =>
         new Promise<void>((resolve, reject) => {
           const transaction = db.transaction(this.storeName, type);
-          // tslint:disable-next-line: no-unnecessary-callback-wrapper
           transaction.oncomplete = () => resolve();
           transaction.onabort = transaction.onerror = () => reject(transaction.error);
           callback(transaction.objectStore(this.storeName));
@@ -101,7 +100,7 @@ export function keys(store = getDefaultStore()): Promise<IDBValidKey[]> {
     ._withIDBStore('readonly', (store) => {
       // This would be store.getAllKeys(), but it isn't supported by Edge or Safari.
       // And openKeyCursor isn't supported by Safari.
-      (store.openKeyCursor || store.openCursor).call(store).onsuccess = function() {
+      (store.openKeyCursor || store.openCursor).call(store).onsuccess = function () {
         if (!this.result) {
           return;
         }

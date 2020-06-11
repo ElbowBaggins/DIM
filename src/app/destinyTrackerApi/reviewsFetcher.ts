@@ -6,7 +6,7 @@ import {
   D1ItemReviewResponse,
   D1ItemUserReview,
   ActualD1ItemReviewResponse,
-  ActualD1ItemUserReview
+  ActualD1ItemUserReview,
 } from '../item-review/d1-dtr-api-types';
 import { getRollAndPerks } from './itemTransformer';
 import { conditionallyIgnoreReviews } from './userFilter';
@@ -18,9 +18,7 @@ import { ThunkResult } from '../store/reducers';
 /**
  * Redux action that populates community (which may include the current user's) reviews for a given item.
  */
-export function getItemReviewsD1(
-  item: D1Item
-): ThunkResult<Promise<D1ItemReviewResponse | undefined>> {
+export function getItemReviewsD1(item: D1Item): ThunkResult<D1ItemReviewResponse | undefined> {
   return async (dispatch, getState) => {
     if (!item.reviewable) {
       return undefined;
@@ -43,7 +41,7 @@ export function getItemReviewsD1(
     dispatch(
       reviewsLoaded({
         key: getItemReviewsKey(item),
-        reviews: reviewData
+        reviews: reviewData,
       })
     );
 

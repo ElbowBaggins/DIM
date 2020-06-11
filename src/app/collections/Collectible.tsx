@@ -1,19 +1,15 @@
 import React from 'react';
 import { D2ManifestDefinitions } from '../destiny2/d2-definitions';
 import { InventoryBuckets } from '../inventory/inventory-buckets';
-import { makeItem } from '../inventory/store/d2-item-factory';
+import { makeFakeItem } from '../inventory/store/d2-item-factory';
 import {
   DestinyProfileResponse,
-  ItemBindStatus,
-  ItemLocation,
-  TransferStatuses,
-  ItemState,
   DestinyScope,
   DestinyCollectibleState,
-  DestinyCollectibleDefinition
+  DestinyCollectibleDefinition,
 } from 'bungie-api-ts/destiny2';
-import './Collectible.scss';
 import { VendorItemDisplay } from 'app/vendors/VendorItemComponent';
+import _ from 'lodash';
 
 interface Props {
   collectibleHash: number;
@@ -28,7 +24,7 @@ export default function Collectible({
   defs,
   buckets,
   profileResponse,
-  ownedItemHashes
+  ownedItemHashes,
 }: Props) {
   const collectibleDef = defs.Collectible.get(collectibleHash);
   if (!collectibleDef) {
@@ -42,30 +38,7 @@ export default function Collectible({
   const owned = ownedItemHashes?.has(collectibleDef.itemHash);
   const acquired = !(state & DestinyCollectibleState.NotAcquired);
 
-  const item = makeItem(
-    defs,
-    buckets,
-    new Set(),
-    new Set(),
-    undefined,
-    profileResponse.itemComponents,
-    {
-      itemHash: collectibleDef.itemHash,
-      itemInstanceId: collectibleDef.itemHash.toString(),
-      quantity: 1,
-      bindStatus: ItemBindStatus.NotBound,
-      location: ItemLocation.Vendor,
-      bucketHash: 0,
-      transferStatus: TransferStatuses.NotTransferrable,
-      lockable: false,
-      state: ItemState.None,
-      isWrapper: false,
-      tooltipNotificationIndexes: []
-    },
-    undefined,
-    undefined // reviewData
-  );
-
+  const item = makeFakeItem(defs, buckets, profileResponse.itemComponents, collectibleDef.itemHash);
   if (!item) {
     return null;
   }
@@ -88,9 +61,13 @@ export function getCollectibleState(
 ) {
   return collectibleDef.scope === DestinyScope.Character
     ? profileResponse.characterCollectibles.data
-      ? Object.values(profileResponse.characterCollectibles.data)[0].collectibles[
-          collectibleDef.hash
-        ].state
+      ? _.minBy(
+          // Find the version of the collectible that's unlocked, if any
+          Object.values(profileResponse.characterCollectibles.data)
+            .map((c) => c.collectibles[collectibleDef.hash].state)
+            .filter((s) => s !== undefined),
+          (state) => state & DestinyCollectibleState.NotAcquired
+        )
       : undefined
     : profileResponse.profileCollectibles.data
     ? profileResponse.profileCollectibles.data.collectibles[collectibleDef.hash].state

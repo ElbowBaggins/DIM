@@ -23,7 +23,7 @@ export default function FilterBuilds({
   onMinimumPowerChanged,
   onStatOrderChanged,
   onStatFiltersChanged,
-  onMasterworkAssumptionChange
+  onMasterworkAssumptionChange,
 }: {
   sets: readonly ArmorSet[];
   minimumPower: number;
@@ -82,7 +82,7 @@ export default function FilterBuilds({
           </label>
           <RangeSelector
             min={750}
-            max={selectedStore.stats.maxTotalPower!.tierMax!}
+            max={parseInt(selectedStore.stats.maxGearPower!.value.toString(), 10)}
             initialValue={minimumPower}
             onChange={onMinimumPowerChanged}
           />
@@ -96,7 +96,7 @@ function RangeSelector({
   min,
   max,
   initialValue,
-  onChange
+  onChange,
 }: {
   min: number;
   max: number;
@@ -104,6 +104,7 @@ function RangeSelector({
   onChange(value: number): void;
 }) {
   const [value, setValue] = useState(initialValue);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedOnChange = useCallback(_.debounce(onChange, 500), [onChange]);
   const clampedValue = Math.max(min, Math.min(value, max));
   const onChangeLive: React.ChangeEventHandler<HTMLInputElement> = useCallback(

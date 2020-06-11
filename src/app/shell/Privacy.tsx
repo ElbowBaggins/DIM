@@ -1,7 +1,7 @@
 import React from 'react';
-import { UISref } from '@uirouter/react';
 import ExternalLink from 'app/dim-ui/ExternalLink';
 import styles from './Privacy.m.scss';
+import { Link } from 'react-router-dom';
 
 export default function Privacy() {
   return (
@@ -97,6 +97,22 @@ export default function Privacy() {
             </li>
 
             <li>
+              <strong>DIM Sync: Settings (preferences), loadouts, tags and notes.</strong>
+              <ol>
+                <li>
+                  DIM allows you to connect to DIM Sync, a cloud service operated by the DIM team,
+                  in order to store your data and sync it between instances of DIM or other Destiny
+                  apps. This information is only accessible to you and the DIM team. Information
+                  stored in DIM Sync includes your DIM preferences and settings, loadouts, any
+                  per-item item tags and notes, and a history of actions performed in DIM Sync (e.g.
+                  when you change a tag or save a loadout). Your Bungie.net authentication
+                  information is sent to DIM Sync only in order to verify your account - it is not
+                  saved.
+                </li>
+              </ol>
+            </li>
+
+            <li>
               <strong>Google Drive: Settings (preferences), loadouts, tags and notes.</strong>
               <ol>
                 <li>
@@ -120,29 +136,51 @@ export default function Privacy() {
               </ol>
             </li>
 
-            <li>
-              <strong>Destiny Tracker: Item Reviews and Ratings</strong>
-              <ol>
-                <li>
-                  DIM loads community reviews for items from Destiny Tracker, a service provided by
-                  Tracker Network LLC. Loading ratings and reviews shares no personal information
-                  with Destiny Tracker. If you choose to submit an item review, you must agree to
-                  share your Bungie account ID with Destiny Tracker as part of submitting your
-                  review.
-                </li>
-                <li>
-                  Use of Destiny Tracker for reviews is governed by the Tracker Network{' '}
-                  <ExternalLink href="https://thetrackernetwork.com/home/tos">
-                    Terms of Service
-                  </ExternalLink>{' '}
-                  and{' '}
-                  <ExternalLink href="https://thetrackernetwork.com/home/privacypolicy">
-                    Privacy Policy
-                  </ExternalLink>
-                  .
-                </li>
-              </ol>
-            </li>
+            {$featureFlags.reviewsEnabled && (
+              <li>
+                <strong>Destiny Tracker: Item Reviews and Ratings</strong>
+                <ol>
+                  <li>
+                    DIM loads community reviews for items from Destiny Tracker, a service provided
+                    by Tracker Network LLC. Loading ratings and reviews shares no personal
+                    information with Destiny Tracker. If you choose to submit an item review, you
+                    must agree to share your Bungie account ID with Destiny Tracker as part of
+                    submitting your review.
+                  </li>
+                  <li>
+                    Use of Destiny Tracker for reviews is governed by the Tracker Network{' '}
+                    <ExternalLink href="https://thetrackernetwork.com/home/tos">
+                      Terms of Service
+                    </ExternalLink>{' '}
+                    and{' '}
+                    <ExternalLink href="https://thetrackernetwork.com/home/privacypolicy">
+                      Privacy Policy
+                    </ExternalLink>
+                    .
+                  </li>
+                </ol>
+              </li>
+            )}
+
+            {$DIM_FLAVOR !== 'release' && (
+              <li>
+                <strong>Sentry: Error reporting</strong>
+                <ol>
+                  <li>
+                    In the Beta version of DIM, any errors encountered while using DIM may be sent
+                    to Sentry, a service provided by Functional Software, Inc. These error reports
+                    contain information about your browser, recent actions in DIM as well as the
+                    details of any errors. No personal information is shared with Sentry.
+                  </li>
+                  <li>
+                    Use of Sentry for error reporting is governed by the Sentry{' '}
+                    <ExternalLink href="https://sentry.io/terms/">Terms of Service</ExternalLink>{' '}
+                    and{' '}
+                    <ExternalLink href="https://sentry.io/privacy/">Privacy Policy</ExternalLink>.
+                  </li>
+                </ol>
+              </li>
+            )}
           </ol>
         </li>
 
@@ -151,10 +189,7 @@ export default function Privacy() {
           <ol>
             <li>
               For additional inquiries about the privacy of your information, you can contact us via
-              any of the means listed on our{' '}
-              <UISref to="about">
-                <a href="#">About page</a>
-              </UISref>
+              any of the means listed on our <Link to="/about">About page</Link>
             </li>
           </ol>
         </li>

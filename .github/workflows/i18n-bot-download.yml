@@ -1,0 +1,68 @@
+# This workflow runs every Saturday @ 1900 UTC (NOON PST)
+name: i18n download bot
+on:
+  schedule:
+    - cron: "0 19 * * 6"
+    - cron: "30 23 * * 6"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout DIM
+        uses: actions/checkout@v2
+
+      - name: Inject slug/short variables
+        uses: rlespinasse/github-slug-action@v2.x
+
+      - name: Download updated i18n files
+        uses: crowdin/github-action@1.0.4
+        with:
+          upload_sources: false
+          upload_translations: false
+          download_translations: true
+          create_pull_request: false
+          push_translations: false
+          source: src/locale/dim.json
+          translation: src/locale/%android_code%/dim.json
+          project_id: ${{ secrets.CROWDIN_PROJECT_ID }}
+          token: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: sort dim.json
+        run: dimJSON="$(jq -S . src/locale/dim.json)" && echo "${dimJSON}" > src/locale/dim.json
+
+      - name: sort locale dim.json
+        run: |
+          allLocales=("de" "es" "es-mx" "fr" "it" "ja" "ko" "pl" "pt-br" "ru" "zh-chs" "zh-cht")
+          for lang in ${allLocales[@]}; do
+            dimJSON="$(jq -S . src/locale/$lang/dim.json)" && echo "${dimJSON}" > src/locale/$lang/dim.json
+          done
+
+      - name: Check for new files (DIM)
+        id: porcelain
+        run: echo ::set-output name=porcelain::"$(git status --porcelain)"
+
+#      - name: Push changes (DIM)
+#        if: steps.porcelain.outputs.porcelain
+#        uses: delphiactual/github-push-action@master
+#        with:
+#          github_token: ${{ secrets.I18N_PAT }}
+#          commit_message: "i18n - ${{ env.GITHUB_SHA_SHORT }}"
+#          user_email: "destinyitemmanager@gmail.com"
+#          user_name: "DIM i18n Bot"
+#          branch: master
+
+      - name: Create Pull Request (DIM)
+        if: steps.porcelain.outputs.porcelain
+        uses: peter-evans/create-pull-request@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: i18n - ${{ env.GITHUB_SHA_SHORT }}
+          committer: DIM i18n Bot <destinyitemmanager@gmail.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          title: '[i18n] Updates'
+          body: i18n updates
+          labels: i18n, automated pr
+          reviewers: delphiactual
+          branch: i18n

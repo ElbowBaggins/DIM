@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { Dispatch } from 'react';
 import { DimStore } from '../../inventory/store-types';
-import { ArmorSet, LockedItemType, StatTypes, LockedMap } from '../types';
+import { ArmorSet, StatTypes, LockedMap, LockedArmor2ModMap } from '../types';
 import GeneratedSetButtons from './GeneratedSetButtons';
 import GeneratedSetItem from './GeneratedSetItem';
 import { powerIndicatorIcon, AppIcon } from '../../shell/icons';
@@ -14,6 +14,9 @@ import { t } from 'app/i18next-t';
 import styles from './GeneratedSet.m.scss';
 import { editLoadout } from 'app/loadout/LoadoutDrawer';
 import { Loadout } from 'app/loadout/loadout-types';
+import { assignModsToArmorSet } from './mod-utils';
+import { Armor2ModPlugCategories } from 'app/utils/item-utils';
+import { LoadoutBuilderAction } from '../LoadoutBuilder';
 
 interface Props {
   set: ArmorSet;
@@ -24,8 +27,8 @@ interface Props {
   defs: D2ManifestDefinitions;
   forwardedRef?: React.Ref<HTMLDivElement>;
   enabledStats: Set<StatTypes>;
-  addLockedItem(lockedItem: LockedItemType): void;
-  removeLockedItem(lockedItem: LockedItemType): void;
+  lockedArmor2Mods: LockedArmor2ModMap;
+  lbDispatch: Dispatch<LoadoutBuilderAction>;
 }
 
 /**
@@ -41,8 +44,8 @@ function GeneratedSet({
   defs,
   enabledStats,
   forwardedRef,
-  addLockedItem,
-  removeLockedItem
+  lockedArmor2Mods,
+  lbDispatch,
 }: Props) {
   // Set the loadout property to show/hide the loadout menu
   const setCreateLoadout = (loadout: Loadout) => {
@@ -54,12 +57,38 @@ function GeneratedSet({
     console.error('No valid sets!');
     return null;
   }
-  const firstValidSet = set.firstValidSet;
 
   const stats = _.mapValues(statHashes, (statHash) => defs.Stat.get(statHash));
 
   const totalTier = calculateTotalTier(set.stats);
   const enabledTier = sumEnabledStats(set.stats, enabledStats);
+
+  const displayStats = { ...set.stats };
+
+  // Add general mod vaues for display purposes
+  if ($featureFlags.armor2ModPicker) {
+    for (const lockedMod of lockedArmor2Mods[Armor2ModPlugCategories.general]) {
+      for (const stat of lockedMod.mod.investmentStats) {
+        if (stat.statTypeHash === statHashes.Mobility) {
+          displayStats.Mobility += stat.value;
+        } else if (stat.statTypeHash === statHashes.Recovery) {
+          displayStats.Recovery += stat.value;
+        } else if (stat.statTypeHash === statHashes.Resilience) {
+          displayStats.Resilience += stat.value;
+        } else if (stat.statTypeHash === statHashes.Intellect) {
+          displayStats.Intellect += stat.value;
+        } else if (stat.statTypeHash === statHashes.Discipline) {
+          displayStats.Discipline += stat.value;
+        } else if (stat.statTypeHash === statHashes.Strength) {
+          displayStats.Strength += stat.value;
+        }
+      }
+    }
+  }
+
+  const assignedMods = $featureFlags.armor2ModPicker
+    ? assignModsToArmorSet(set.firstValidSet, lockedArmor2Mods)
+    : {};
 
   return (
     <div className={styles.build} style={style} ref={forwardedRef}>
@@ -70,7 +99,7 @@ function GeneratedSet({
               <span>
                 <b>
                   {t('LoadoutBuilder.TierNumber', {
-                    tier: enabledTier
+                    tier: enabledTier,
                   })}
                 </b>
               </span>
@@ -78,7 +107,7 @@ function GeneratedSet({
                 <span className={styles.nonActiveStat}>
                   <b>
                     {` (${t('LoadoutBuilder.TierNumber', {
-                      tier: totalTier
+                      tier: totalTier,
                     })})`}
                   </b>
                 </span>
@@ -89,7 +118,7 @@ function GeneratedSet({
                 key={stat}
                 isActive={enabledStats.has(stat)}
                 stat={stats[stat]}
-                value={set.stats[stat]}
+                value={displayStats[stat]}
               />
             ))}
           </span>
@@ -106,15 +135,16 @@ function GeneratedSet({
         />
       </div>
       <div className={styles.items}>
-        {firstValidSet.map((item, index) => (
+        {set.firstValidSet.map((item, index) => (
           <GeneratedSetItem
             key={item.index}
             item={item}
+            defs={defs}
             itemOptions={set.sets.flatMap((subSet) => subSet.armor[index])}
             locked={lockedMap[item.bucket.hash]}
-            addLockedItem={addLockedItem}
-            removeLockedItem={removeLockedItem}
+            lbDispatch={lbDispatch}
             statValues={set.firstValidSetStatChoices[index]}
+            lockedMods={assignedMods[item.hash]}
           />
         ))}
       </div>
@@ -125,7 +155,7 @@ function GeneratedSet({
 function Stat({
   stat,
   isActive,
-  value
+  value,
 }: {
   stat: DestinyStatDefinition;
   isActive: boolean;
@@ -137,7 +167,7 @@ function Stat({
     >
       <b>
         {t('LoadoutBuilder.TierNumber', {
-          tier: statTier(value)
+          tier: statTier(value),
         })}
       </b>{' '}
       <BungieImage src={stat.displayProperties.icon} /> {stat.displayProperties.name}

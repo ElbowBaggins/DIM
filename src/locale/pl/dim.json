@@ -5,10 +5,17 @@
   },
   "Accounts": {
     "Blizzard": "PC",
+    "ErrorLoadInventory": "Nie można załadować Twoich postaci Destiny oraz ekwipunku",
+    "ErrorLoadManifest": "Nie można załadować bazy danych Destiny z Bungie",
+    "ErrorLoading": "Nie można załadować kont Destiny z Bungie.net",
+    "MissingDescription": "Konto, które próbujesz zobaczyć, nie jest kontem połączonym z Twoim profilem Bungie.net.",
+    "MissingTitle": "Nie znaleziono konta",
     "NoCharacters": "Nie posiadasz żadnych postaci z Destiny powiązanych z tym kontem Bungie.net. Spróbuj zalogować się na inne konto.",
     "PlayStation": "PS4",
     "Stadia": "Stadia",
     "Steam": "Steam",
+    "UnlinkTwitch": "Łączenie konta Twitch z Bungie.net spowoduje, że Twoje konta D1 przestaną działać.",
+    "UnlinkTwitchButton": "Odłącz Twitch",
     "Xbox": "XB1"
   },
   "Activities": {
@@ -17,6 +24,24 @@
     "Nightfall": "Nocny Szturm",
     "Normal": "Normalne",
     "WeeklyHeroic": "Cotygodniowy Heroiczny Szturm"
+  },
+  "AuditLog": {
+    "Account": "Konto",
+    "Action": "Czynność",
+    "Application": "Aplikacja",
+    "Date": "Data",
+    "DeleteAll": "Usunięto zachowane dane",
+    "DeleteLoadout": "Usunięto uzbrojenie {{name}}",
+    "Description": "Ten dziennik śledzi wszystkie zmiany zapisane w DIM Sync - w tym zmiany ustawień, tagów i uzbrojenia. Po pewnym czasie ten log zostanie wyczyszczony.",
+    "Details": "Szczegóły",
+    "Import": "Zaimportowano {{loadouts}} uzbrojenia i {{tags}} oznaczonych przedmiotów",
+    "Loadout": "Zmieniono uzbrojenie {{name}}",
+    "RemoveNotes": "Usunięto notatki z ID przedmiotu {{id}}",
+    "RemoveTag": "Usunięto tag z ID przedmiotu {{id}}",
+    "SetNotes": "Ustawiono notatki na \"{{notes}}\" dla ID przedmiotu {{id}}",
+    "SetTag": "Ustawiono tag na {{tag}} dla ID przedmiotu {{id}}",
+    "Setting": "Ustawiono {{key}} na {{value}}",
+    "TagCleanup": "Wyczyszczono tagi dla zdemontowanych przedmiotów"
   },
   "Bucket": {
     "Armor": "Pancerz",
@@ -118,9 +143,8 @@
   "ErrorBoundary": {
     "Title": "Coś poszło nie tak"
   },
-  "Faction": {
-    "EngramsAvailable": "1 dostępny engram",
-    "EngramsAvailable_plural": "{{count}} dostępnych engramów"
+  "ErrorPanel": {
+    "Description": "Jest to prawdopodobnie problem dotyczący wszystkich aplikacji innych firm. Sprawdź, czy Bungie.net się wczytuje lub, czy aplikacja towarzysząca Destiny 2 działa."
   },
   "FarmingMode": {
     "D2Desc": "DIM zapobiega przedmiotom dostawanie się do Kuriera poprzez upewnianie się, że na {{store}} zawsze jest jedno miejsce wolne na dany typ przedmiotu. Przenosi on przedmioty do schowka aby zrobić miejsce.",
@@ -137,7 +161,6 @@
       "MakeRoom": "Zrób miejsce do podnoszenia przedmiotów przenosząc wyposażenie",
       "Tooltip": "Jeśli zaznaczone, DIM przeniesie broń i wyposażenie tak by zrobić miejsce w schowku na engramy."
     },
-    "MoveTokens": "Wyślij przedmioty reputacji do schowka",
     "OutOfRoom": "Brakuje Ci miejsca na przeniesienie przedmiotów z {{character}}. Czas odszyfrować niektóre engramy i usunąć śmieci!",
     "OutOfRoomTitle": "Brak wolnego miejsca",
     "Stop": "Zatrzymaj"
@@ -193,8 +216,9 @@
       "Item": "Przedmioty wymienialne z Rahoolem za 200 migotu."
     },
     "HasNotes": "Pokaż przedmioty z notatkami.",
-    "HasOrnament": "Shows items that have an ornament applied.",
+    "HasOrnament": "Pokazuje przedmioty, które mają zastosowaną ozdobę.",
     "HasShader": "Pokaż przedmioty z nałożoną barwą.",
+    "HoldsMod": "Pokazuje zbroję kompatybilną z określonym typem Modyfikacji Sezonowej.",
     "InLoadout": "Pokaż przedmioty zawarte w dowolnym uzbrojeniu.",
     "Infusable": "Pokaż przedmioty, które można nasycić.",
     "Leveling": {
@@ -211,7 +235,7 @@
     "LockAllSuccess": "Zablokowano {{num}} przedmiotów",
     "Locked": "Pokazuje przedmioty na podstawie ich zablokowania.",
     "MaxPower": "Pokazuje przedmioty, które maksymalizują Poziom Mocy dla każdej klasy postaci.",
-    "ModSlot": "Pokazuje pancerz kompatybilny z określonym typem Modyfikacji Sezonowych.",
+    "ModSlot": "Pokazuje zbroję z określonym gniazdem sezonowym.",
     "Mods": {
       "Y2": "Pokazuje elementy z dołączoną modyfikacją w 2. roku.",
       "Y3": "Pokazuje elementy z wybranymi modyfikacjami pancerza 2.0."
@@ -309,13 +333,16 @@
       "Shipwright": "Szkutnik",
       "Speaker": "Mówca"
     },
-    "VideoExample": "Odwiedź {{link}} aby dowiedzieć się więcej o filtrach.",
+    "VideoExample": "Odwiedź nasz przewodnik użytkownika, aby uzyskać szczegółowe informacje na temat korzystania z filtrów wyszukiwania.",
     "WeaponClass": "Pokazuje przedmioty na podstawie klasy broni.",
     "WeaponType": "Pokazuje bronie na podstawie rodzaju broni.",
     "Wishlist": "Pokazuje przedmioty pasujące do twojej listy życzeń.",
     "WishlistDupe": "Pokazuje zduplikowane przedmioty, gdzie co najmniej jeden duplikat jest na twojej liście życzeń.",
     "WishlistNotes": "Pokazuje przedmioty listy życzeń, których notatki pasują do wyszukiwania.",
     "Year": "Pokazuje przedmioty na podstawie którego roku z Destiny 2 pochodzą."
+  },
+  "General": {
+    "UserGuideLink": "Przewodnik użytkownika"
   },
   "Ghost": {
     "crucible": "tygiel",
@@ -383,10 +410,6 @@
     "SwitchDirection": "Przełącz",
     "TransferItems": "Przenieś"
   },
-  "ItemInfoService": {
-    "SaveInfoErrorDescription": "Wystąpił błąd przy zapisywaniu informacji specyficznych dla DIM dla przedmiotu. Jest problem, który ogranicza ilość przechowywanych danych - dlatego tagi i notatki nie są dostępne poza wersją Beta. Błąd: {{error}}.",
-    "SaveInfoErrorTitle": "Błąd zapisu informacji przedmiotu"
-  },
   "ItemMove": {
     "Consolidate": "Skonsolidowany {{name}}",
     "Distributed": "Rozprowadzanie {{name}}\n {{name}} został równo rozprowadzony pomiędzy postaciami.",
@@ -423,6 +446,10 @@
   },
   "LB": {
     "AdvancedOptions": "Ustawienia Zaawansowane",
+    "Chest": "Skrzynia",
+    "ChooseAMod": "Wybierz swoje modyfikacje",
+    "ChooseAPerk": "Wybierz perk",
+    "ClassItem": "Przedmiot klasy",
     "ClearLocked": "Wyczyść Zablokowane",
     "ContainsVendorItems": "Te uzbrojenie zawiera przedmioty sprzedawcy",
     "Current": "Aktualny",
@@ -430,6 +457,9 @@
     "Exclude": "Wykluczone przedmioty",
     "ExcludeHelp": "Shift + kliknij na przedmiot (lub przeciągnij i upuść do tego wiaderka) aby tworzyć zestawy bez konkretnego sprzętu.",
     "FilterSets": "Zbiory filtrów",
+    "Gauntlets": "Rękawice",
+    "General": "Ogólne",
+    "Helmet": "Hełm",
     "Help": {
       "And": "Pancerz z każdym z tych perków będzie użyty (\"and\")",
       "ChangeNodes": "Zmień węzły Intelektu, Dyscypliny lub Siły w grze na to, co jest pokazane aby utworzyć każde uzbrojenie.",
@@ -451,6 +481,7 @@
     "HideAllConfigs": "Ukryj wszystkie konfiguracje",
     "HideConfigs": "Ukryj konfiguracje",
     "LB": "Optymalizator Uzbrojenia",
+    "Legs": "Nogi",
     "LightMode": {
       "HelpCurrent": "Kalkuluje uzbrojenia na obecnych poziomach obrony.",
       "HelpScaled": "Kalkuluje uzbrojenia jak gdyby wszystkie przedmioty miały 350 obrony.",
@@ -462,6 +493,7 @@
     "Locked": "Zablokowane Przedmioty",
     "LockedHelp": "Przeciągnij i upuść dowolny przedmiot do jego wiaderka aby tworzyć zestaw z tym konkretnym sprzętem. Shift + kliknij aby wykluczyć przedmioty.",
     "Missing2": "Brakuje rzadkich, legendarnych lub egzotycznych części aby stworzyć pełny zestaw!",
+    "ModLockButton": "Wybierz modyfikacje",
     "ProcessingMode": {
       "Fast": "Szybki",
       "Full": "Pełny",
@@ -470,10 +502,22 @@
       "ProcessingMode": "Tryb przetwarzania"
     },
     "Scaled": "Skalowany",
+    "SearchAMod": "Szukaj modyfikacji lub opisu",
+    "Season": "Sezon",
+    "Seasonal": "Sezonowe",
+    "SelectMods": "Wybierz modyfikacje",
     "ShowAllConfigs": "Pokaż wszystkie konfiguracje",
     "ShowConfigs": "Pokaż konfiguracje",
     "ShowGear": "Pancerz {{class}}",
     "Vendor": "Uwzględnij przedmioty Sprzedawcy"
+  },
+  "Loading": {
+    "Accounts": "Wczytywanie kont Destiny...",
+    "AuditLog": "Wczytywanie historii synchronizacji DIM...",
+    "Code": "Wczytywanie kodu DIM...",
+    "FilterHelp": "Wczytywanie pomocy wyszukiwania...",
+    "Profile": "Wczytywanie profilu Destiny...",
+    "Vendors": "Wczytywanie sprzedawców Destiny..."
   },
   "LoadoutBuilder": {
     "AltPerkKey": "Wybierz ten perk aby wyświetlić statystyki",
@@ -497,7 +541,7 @@
     "LimitedCombos": "Masz {{combosWithoutCaps, number}} możliwe kombinacje statystyk, ale przyjrzeliśmy się tylko {{combos, number}} z nich, aby powstrzymać DIM przed awarią. W rezultacie niektóre możliwości nie są wyświetlane. Zablokuj niektóre przedmioty lub perki lub zdemontuj stary pancerz, aby dostać się poniżej limitu.",
     "LockEquipped": "Założone",
     "LockItem": "Zablokuj przedmiot",
-    "LockPerk": "Wybierz modyfikację lub perk",
+    "LockPerk": "Wybierz energię lub perk",
     "NewEmptyLoadout": "Utwórz Puste Uzbrojenie",
     "NoBuildsFound": "Nie znaleziono zestawu. Spróbuj rozszerzyć kryteria filtrowania.",
     "NumStatMixes": "{{count, number}} miksy statystyk",
@@ -517,8 +561,7 @@
     "StatTierIncludeOption": "Dołącz",
     "TierNumber": "T{{tier}}",
     "Traction": "Perk Trakcja daje +1 Mobilność.",
-    "UnlockItem": "Odblokuj Przedmiot",
-    "YouTubeLink": "Obejrzyj samouczek na temat optymalizatora uzbrojenia na YouTube."
+    "UnlockItem": "Odblokuj Przedmiot"
   },
   "Loadouts": {
     "Abandon": "Czy na pewno chcesz porzucić te uzbrojenie?",
@@ -526,37 +569,24 @@
     "AlreadyExistsClass": "Uzbrojenie z tą nazwą już istnieje dla twojego {{className}}.",
     "AlreadyExistsGlobal": "Globalne uzbrojenie o tej nazwie już istnieje.",
     "Any": "Dowolna klasa",
-    "Applied": "Twoje uzbrojenie z jednym przedmiotem zostało przeniesione do twojego {{store}}.",
-    "AppliedAuto": "Automatyczny Konstruktor Uzbrojeń",
     "AppliedError": "Nie można było przenieść żadnego przedmiotu z twojego uzbrojenia.",
     "AppliedWarn": "Twoje uzbrojenie zostało częściowo przeniesione, ale {{failed}} z {{total}} przedmiotów miało błędy.",
-    "Applied_female": "Twoje uzbrojenie z jednym przedmiotem zostało przeniesione do twojej {{store}}.",
-    "Applied_female_plural": "Twoje uzbrojenie z {{count}} przedmiotami zostało przeniesione do twojego {{store}}.",
-    "Applied_male": "Twoje uzbrojenie z jednym przedmiotem zostało przeniesione do twojego {{store}}.",
-    "Applied_male_plural": "Twoje uzbrojenie z {{count}} przedmiotami zostało przeniesione do twojego {{store}}.",
-    "Applied_plural": "Twoje uzbrojenie z {{count}} przedmiotami zostało przeniesione do twojego {{store}}.",
     "ApplySearch": "Przenieś wyszukanie \"{{query}}\"",
     "Before": "Przed '{{name}}'",
-    "ChangeName": "Zmień nazwę",
     "ChooseItem": "Dodaj {{name}}",
-    "ClashingDescription": "The loadout {{loadoutName}} clashes with a previous one and could not be saved. Click this to open the loadout drawer.",
-    "ClashingTitle": "Clashing loadout",
     "Classified": "Niektóre z twoich przedmiotów są sklasyfikowane i nie mogą być uwzględnione przy kalkulacji maksymalnej mocy.",
     "ClearSpace": "Odsuń inne przedmioty",
     "ConfirmDelete": "Czy na pewno chcesz usunąć '{{name}}'?",
     "CouldNotEquip": "Nie można założyć {{itemname}}",
     "Create": "Utwórz Uzbrojenie",
     "Delete": "Usuń Uzbrojenie",
-    "DeleteErrorDescription": "Nie można usunąć uzbrojenia {{loadoutName}}: {{error}}.",
-    "DeleteErrorTitle": "Błąd usuwania uzbrojenia",
     "Edit": "Edytuj Uzbrojenie",
-    "EditLoadoutName": "Edytuj Uzbrojenie {{loadoutName}}",
     "FilteredItems": "Filtrowane Przedmioty",
     "FindAnother": "Znajdź następny {{name}}",
     "FromEquipped": "Założone",
     "GatherEngrams": "Zbieraj Engramy",
     "GatherEngramsExceptExotics": "Egzotyczne",
-    "Generated": "T{{tier}} {{Mobility}}/{{Resilience}}/{{Recovery}}",
+    "Generated": "Uzbrojenie T{{tier}}",
     "ItemLeveling": "Levelowanie Przedmiotów",
     "LoadoutName": "Nazwa uzbrojenia",
     "Loadouts": "Uzbrojenia",
@@ -582,13 +612,8 @@
     "NotificationMessage_plural": "Wyposażanie uzbrojenia z {{count}} przedmiotami na {{store}}",
     "NotificationTitle": "Uzbrojenie: {{name}}",
     "OnlyItems": "Tylko przedmioty, które można założyć, materiały i przedmioty konsumpcyjne można dodać do uzbrojenia.",
+    "OpenInOptimizer": "Otwórz w optymalizatorze uzbrojenia",
     "PullFromPostmaster": "Odbierz Kuriera",
-    "PullFromPostmasterDone": "Ukończono zbieranie 1 przedmiotu od Kuriera do {{store}}.",
-    "PullFromPostmasterDone_female": "Ukończono zbieranie 1 przedmiotu od Kuriera do {{store}}.",
-    "PullFromPostmasterDone_female_plural": "Ukończono zbieranie {{count}} przedmiotów od Kuriera do {{store}}.",
-    "PullFromPostmasterDone_male": "Ukończono zbieranie 1 przedmiotu od Kuriera do {{store}}.",
-    "PullFromPostmasterDone_male_plural": "Ukończono zbieranie {{count}} przedmiotów od Kuriera do {{store}}.",
-    "PullFromPostmasterDone_plural": "Ukończono zbieranie {{count}} przedmiotów od Kuriera do {{store}}.",
     "PullFromPostmasterError": "Nie można odebrać Kuriera: {{error}}.",
     "PullFromPostmasterNotification": "Zbieranie 1 przedmiotu od Kuriera do {{store}}.",
     "PullFromPostmasterNotification_female": "Zbieranie 1 przedmiotu od Kuriera do {{store}}.",
@@ -601,22 +626,21 @@
     "Random": "Losowy",
     "Randomize": "Losuj",
     "RandomizePrompt": "Losować twoją założoną klasę, broń, pancerz i ducha?",
+    "RandomizeSearch": "Losowo z Wyszukiwania",
+    "RandomizeSearchPrompt": "Wylosuj wyposażone przedmioty z wyszukania \"{{query}}\"?",
     "RandomizeWeapons": "Losować twoją założoną klasę i broń?",
     "RestoreAllItems": "Wszystkie Przedmioty",
     "Save": "Zapisz",
     "SaveAsNew": "Zapisz Nowy",
-    "SaveErrorDescription": "Nie można zapisać uzbrojenia {{loadoutName}}: {{error}}.",
-    "SaveErrorTitle": "Błąd zapisywania uzbrojenia",
     "TooManyRequested": "Masz {{total}} {{itemname}}, ale Twoje wyposażenie wymaga {{requested}}. Przenieśliśmy wszystko, co miałeś.",
     "VendorsCannotEquip": "Nie masz tych przedmiotów. Naciśnij, aby wybrać zamiennik lub kliknij X, aby usunąć:",
     "WeaponsOnly": "Broń"
   },
   "Manifest": {
-    "Build": "Budowanie bazy danych Destiny",
-    "Download": "Pobieranie najnowszych informacji o Destiny od Bungie",
-    "Error": "Błąd wczytywania informacji o Destiny:\n{{error}}\nOdśwież żeby spróbować ponownie.",
-    "Load": "Wczytywanie zapisanych informacji Destiny",
-    "Outdated": "Nieaktualne informacje Destiny",
+    "Download": "Pobieranie najnowszej bazy informacji o Destiny od Bungie...",
+    "Error": "Błąd wczytywania bazy informacji o Destiny:\n{{error}}\nOdśwież żeby spróbować ponownie.",
+    "Load": "Wczytywanie bazy informacji o Destiny...",
+    "Outdated": "Nieaktualna baza informacji o Destiny",
     "OutdatedExplanation": "Bungie zaktualizowało swoją bazę danych informacji Destiny. Załaduj ponownie DIM, aby odebrać nowe informacje. Pamiętaj, że niektóre rzeczy w DIM mogą nie działać przez kilka godzin po aktualizacji Destiny przez Bungie, podczas gdy nowe dane rozprzestrzeniają się w ich systemach."
   },
   "Milestone": {
@@ -683,13 +707,64 @@
     "BulkMove": "Przenieś do",
     "BulkMoveLoadoutName": "Wybrane w organizatorze",
     "BulkTag": "Tag",
+    "Columns": {
+      "Archetype": "Archetyp",
+      "BaseStats": "Podstawowe statystyki",
+      "CustomTotal": "Niestandardowa suma",
+      "Damage": "Obrażenia",
+      "Element": "Element",
+      "Energy": "Energia",
+      "Event": "Zdarzenie",
+      "Ghost": "Tag Ducha",
+      "Icon": "Ikona",
+      "KillTracker": "Śledzenie zabójstw",
+      "Loadouts": "Uzbrojenia",
+      "MasterworkStat": "Statystyka Mistrzostwa",
+      "MasterworkTier": "Poziom Mistrzostwa",
+      "ModSlot": "Slot modyfikacji",
+      "Name": "Nazwa",
+      "New": "Nowy",
+      "Notes": "Notatki",
+      "PercentComplete": "% Ukończone",
+      "Perks": "Perki",
+      "PerksMods": "Perki, Modyfikacje i Barwy",
+      "Quality": "Jakość %",
+      "Rating": "Ocena",
+      "Reacquireable": "Odkupialne",
+      "Season": "Sezon",
+      "Source": "Źródło",
+      "StatQuality": "Jakość statystyki",
+      "StatQualityStat": "{{stat}}%",
+      "Stats": "Statystyki",
+      "Tag": "Tag",
+      "Tier": "Poziom",
+      "Traits": "Cechy Broni",
+      "WishList": "Lista Życzeń",
+      "WishListNotes": "Notatki listy życzeń",
+      "Year": "Rok"
+    },
     "EnabledColumns": "Włączone kolumny",
-    "Organizer": "Organizator"
+    "Lock": "Zablokuj",
+    "NoItems": "Nie wybrano przedmiotów",
+    "NoMobile": "Ten widok nie jest świetny na urządzeniu mobilnym.",
+    "Note": "Ustaw notatkę",
+    "NotePrompt": "Notka:",
+    "Organizer": "Organizator",
+    "SelectAll": "Zaznacz wszystko",
+    "SelectItem": "Wybierz lub odznacz {{name}}",
+    "ShiftTip": "Wskazówka: Przytrzymaj klawisz Shift i kliknij komórkę, aby filtrować elementy",
+    "Stats": {
+      "Aim": "Cel",
+      "Inventory": "Ekwipunek",
+      "RPM": "RPM",
+      "Recoil": "Odrzut",
+      "Reload": "Przeładowanie"
+    },
+    "Unlock": "Odblokuj"
   },
   "Progress": {
     "Bounties": "Zlecenia",
     "CrucibleRank": "Rangi",
-    "Factions": "Frakcje",
     "Items": "Przedmioty zadań",
     "Milestones": "Kamienie milowe i wyzwania",
     "PercentPrestige": "{{pct}}% do resetu",
@@ -771,51 +846,56 @@
     "Total": "Łącznie"
   },
   "Storage": {
+    "ApiPermissionPrompt": {
+      "Description": "DIM może teraz przechowywać tagi, uzbrojenie, i ustawienia na naszych własnych serwerach i synchronizować te dane pomiędzy różnymi wersjami DIM, bez oddzielnego logowania. Możesz zaimportować Twoje istniejące dane ze strony ustawień, jeśli wcześniej nie włączyłeś synchronizacji DIM. Było to możliwe dzięki wsparciu naszych zwolenników OpenCollective!",
+      "No": "Nie teraz",
+      "Title": "Włączyć synchronizację DIM?",
+      "Yes": "Włącz synchronizację"
+    },
+    "AuditLog": "Historia zmian synchronizacji DIM",
+    "AuditLogLabel": "Zobacz poprzednie zmiany danych",
+    "AutoBackup": "We've backed up your data to a file in your downloads folder called dim-data.json, just in case.",
+    "BackUpFirst": "MUSISZ wykonać kopię zapasową swoich danych, zanim je usuniesz. Na wszelki wypadek.",
     "BrowserMayClearData": "Przeglądarka może usunąć te informacje, jeśli zabraknie Ci miejsca lub nie będziesz często odwiedzać DIM.",
-    "ClearIgnoredUsers": "Wyczyść Ignorowanych Recenzentów",
+    "DeleteAllData": "Usuń WSZYSTKIE dane z serwerów synchronizacji DIM",
+    "DeleteAllDataConfirm": "Czy na pewno chcesz usunąć WSZYSTKIE dane, z wszystkich kont, ze synchronizacji DIM? Nie możesz tego cofnąć.",
+    "DeleteAllDataLabel": "Wyczyść dane synchronizacji DIM",
     "Details": {
-      "GoogleDriveStorage": "DIM może zapisywać dane w pamięci aplikacji Dysku Google. Jeśli zalogujesz się na Dysku Google w wielu przeglądarkach, Twoje dane będą udostępniane wszędzie. Te dane są przechowywane na koncie Bungie. Jeśli masz problemy z zalogowaniem się, może być konieczne zezwolenie na używanie plików cookie stron trzecich w przeglądarce.",
       "IndexedDBStorage": "Lokalna pamięć zapisze twoje informacje tylko w tej przeglądarce. Wyczyszczenie danych przeglądania spowoduje usunięcie tych informacji."
     },
-    "Disabled": "Wyłączone",
+    "DimApiFinePrint": "DIM zapisze tagi, uzbrojenie i ustawienia na serwerach DIM i zsynchronizuje je między różnymi wersjami DIM.",
+    "DimSyncEnabled": "Synchronizacja DIM włączona",
     "DriveLogout": "Wyloguj się z Dysku Google",
     "DriveSync": "Zaloguj się do Dysku Google",
-    "Enabled": "Włączone",
-    "Explain": "DIM przechowuje własne dane oddzielnie od danych Destiny (które są obsługiwane przez Bungie.net).",
+    "EnableDimApi": "Włącz synchronizację DIM",
     "Export": "Pobierz kopię zapasową danych",
-    "ForceSync": "Wymuś synchronizację danych z Dysku Google",
-    "ForceSyncWarning": "Spowoduje to zastąpienie danych lokalnych danymi z Dysku Google. Czy na pewno chcesz to zrobić?",
-    "GDriveLogout": "Twoje dane są nadal na Dysku Google - jeśli zalogujesz się ponownie, DIM wróci do korzystania z nich.",
-    "GDriveRevisions": "Przywróć poprzednie wersje",
+    "GDriveImport": "Importuj ze starszego Dysku Google lub lokalnej pamięci danych",
+    "GDriveImportButton": "Importuj starsze dane",
+    "GDriveImportExplain": "Możesz przywrócić dotychczasowe dane przechowywane w przeglądarce lub na Dysku Google. Użyj tego, jeśli właśnie aktualizujesz DIM do wersji 6 i posiadasz wcześniej zapisane dane.",
     "GDriveSignInError": "Błąd logowania do Dysku Google:",
-    "GDriveSignInWarning": "Jeśli już zapisałeś dane DIM na Dysku Google, zastąpi to wszystko, co zapisałeś lokalnie. Przed zalogowaniem możesz wykonać kopię zapasową danych.\n\nKontynuować logowanie do Dysku Google?",
+    "GDriveSignedIn": "Zalogowano do Dysku Google jako {{email}}",
     "GoogleApiBlocked": "Dysk Google nie jest dostępny, ponieważ program blokujący treści zablokował JavaScript Dysku Google. Wyklucz moduł DIM z programów blokujących treść i spróbuj ponownie.",
-    "GoogleDriveStorage": "Dysk Google",
-    "GoogleDriveUsage": "Na Twoim Dysku Google wykorzystano {{usage, humanBytes}} łącznie z {{limit, humanBytes}}. DIM używa {{dimQuotaUsed, humanBytes}} z tego. Jeśli Dysk Google zapełni się, moduł DIM nie będzie mógł zapisać danych.",
-    "GoogleDriveUsageNoFile": "Na Twoim Dysku Google wykorzystano {{usage, humanBytes}} łącznie z {{limit, humanBytes}}. Nie mogliśmy znaleźć informacji o pliku DIM, co może wskazywać na problem. Jeśli Dysk Google zapełni się, moduł DIM nie będzie mógł zapisać danych.",
-    "GoogleDriveUsageUnlimited": "Twoje miejsce na Dysku Google jest nieograniczone.",
-    "IgnoredUsers": "Ignorowani Recenzenci",
     "Import": "Importuj kopię zapasową danych",
-    "ImportConfirm": "Czy na pewno chcesz zastąpić bieżące ustawienia tą wersją? Ma {{stats}}.",
-    "ImportExport": "Kopie zapasowe",
+    "ImportConfirmDimApi": "Czy na pewno chcesz nadpisać swoje obecne tagi, uzbrojenie i ustawienia tą wersją? To całkowicie zastąpi to, co posiadasz.",
+    "ImportExport": "Kopia zapasowa i import",
     "ImportFailed": "Importowanie nieudanie! {{error}}",
     "ImportNoFile": "Nie wybrano pliku!",
-    "ImportSuccess": "Zaimportowano dane DIM!",
+    "ImportNotification": {
+      "FailedBody": "Unable to import data. {{error}}",
+      "FailedTitle": "Import Failed",
+      "NoData": "No loadouts or tags found in the backup",
+      "SuccessBodyForced": "Zaimportowano ustawienia, {{loadouts}} uzbrojenia i {{tags}} oznaczonych elementów z kopii zapasowej do synchronizacji DIM, zastępując to, co już tam było.",
+      "SuccessBodyLocal": "Imported settings, {{loadouts}} loadouts, and {{tags}} tagged items from your backup into local storage, replacing what was already there. We cannot guarantee that local storage won't be lost - consider enabling DIM Sync.",
+      "SuccessTitle": "Import zakończony sukcesem"
+    },
     "ImportTooManyFiles": "Wybierz tylko jeden plik do importu.",
     "ImportWrongFileType": "Plik nie jest plikiem JSON. To może nie być kopia zapasowa DIM.",
     "IndexedDBStorage": "Lokalna pamięć przeglądarki",
-    "LoadRevision": "Wczytaj Zawartość",
-    "LoadoutsD1": "{{value}} Wyposażenie Destiny 1",
-    "LoadoutsD2": "{{value}} Wyposażenie Destiny 2",
-    "MenuTitle": "Dane i kopie zapasowe",
-    "NoData": "Brak danych",
-    "RestoreRevision": "Przywróć",
-    "RevisionsDescription": "Dysk Google zapisuje ostatnie 100 wersji Twoich ustawień. Ta strona służy do ładowania starych wersji i przywracania ich.",
-    "Settings": "Twoje ustawienia i preferencje DIM",
-    "StatLabel": "Obecna zawartość:",
-    "TagNotesD1": "{{value}} Przedmioty z Destiny 1 z tagami lub notatkami",
-    "TagNotesD2": "{{value}} Przedmioty z Destiny 2 z tagami lub notatkami",
-    "Title": "Przechowywanie danych",
+    "MenuTitle": "Synchronizacja i kopie zapasowe",
+    "ProfileErrorBody": "Wystąpił problem podczas ładowania danych synchronizacji DIM",
+    "ProfileErrorTitle": "Błąd synchronizacji DIM",
+    "UpdateErrorBody": "Wystąpił problem podczas zapisywania Twoich danych do synchronizacji DIM",
+    "UpdateErrorTitle": "Błąd synchronizacji DIM",
     "Usage": "DIM używa {{usage, humanBytes}} z {{quota, humanBytes}} dostępnych dla niego na tym urządzeniu. Obejmuje to pobrane bazy danych przedmiotów Destiny z Bungie.net."
   },
   "StoreBucket": {
@@ -838,11 +918,6 @@
     "TagItems": "Otaguj przedmioty",
     "UnlockAll": "Odblokuj Przedmioty"
   },
-  "TrialsCard": {
-    "FiveWins": "Nagroda za 5 wygranych (Zbroja)",
-    "Flawless": "Bez skazy",
-    "SevenWins": "Nagroda za 7 wygranych (Zbroja)"
-  },
   "Triumphs": {
     "HideCompleted": "Ukryj zakończone",
     "RevealRedacted": "Odsłoń ukryte"
@@ -859,8 +934,7 @@
     "DestinySets": "Przeglądaj więcej zestawów przedmiotów na Destiny Sets",
     "Engram": "Nagroda - Engram",
     "FilterToUnacquired": "Pokazuje tylko niezdobyte przedmioty",
-    "Vendors": "Sprzedawcy",
-    "Year2Mods": "Modyfikacje z 2 Roku"
+    "Vendors": "Sprzedawcy"
   },
   "Views": {
     "About": {
@@ -894,6 +968,8 @@
       "Twitter": "Twitter",
       "TwitterHelp": "Śledź nas, aby być na bieżąco z aktualizacjami i informacjami o stanie aplikacji real-time.",
       "Version": "Wersja {{version}} ({{flavor}}), zbudowana {{date}}",
+      "Wiki": "Przewodnik użytkownika DIM Wiki",
+      "WikiHelp": "Dowiedz się, jak korzystać z DIM oraz rozwijać naszą społecznosć.",
       "YouTube": "YouTube",
       "YouTubeHelp": "Naucz się korzystać z DIM na naszym kanale Youtube."
     },
@@ -921,11 +997,13 @@
     "ExternalSource": "Opcjonalnie, podaj adres URL listy życzeń",
     "Header": "Lista Życzeń",
     "Import": "Wczytaj Rolle z Listy Życzeń",
+    "ImportError": "Błąd ładowania listy życzeń: {{error}}",
     "ImportFailed": "Nie odnaleziono informacji z listy życzeń.",
     "ImportNoFile": "Nie wybrano pliku.",
     "ImportSuccess": "Wczytano listę życzeń z informacją o jednym rollu.{{titleAndDescription}}",
     "ImportSuccess_plural": "Wczytano listę życzeń z informacją o {{count, number}} rollach.{{titleAndDescription}}",
     "InvalidExternalSource": "Wprowadź prawidłowy adres URL dla zewnętrznego źródła listy życzeń. Adres URL musi zaczynać się od https://raw.githubusercontent.com",
+    "LastUpdated": "Ostatnia aktualizacja: {{lastUpdatedDate}} o {{lastUpdatedTime}}",
     "Num": "{{num, number}} rolli w twojej liście życzeń",
     "UpdateExternalSource": "Aktualizuj źródło listy życzeń",
     "WishListNotes": "Notatki z listy życzeń: {{notes}}"

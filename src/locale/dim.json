@@ -5,10 +5,17 @@
   },
   "Accounts": {
     "Blizzard": "PC",
+    "ErrorLoadInventory": "Unable to load your Destiny characters and inventory",
+    "ErrorLoadManifest": "Unable to load Destiny info database from Bungie",
+    "ErrorLoading": "Unable to load Destiny accounts from Bungie.net",
+    "MissingDescription": "The account you're trying to view is not an account linked to your Bungie.net profile.",
+    "MissingTitle": "Account Not Found",
     "NoCharacters": "You have no Destiny characters associated with this Bungie.net account. Try logging into a different account.",
     "PlayStation": "PS4",
     "Stadia": "Stadia",
     "Steam": "Steam",
+    "UnlinkTwitch": "Linking your Twitch account to Bungie.net will cause your D1 accounts to stop working.",
+    "UnlinkTwitchButton": "Unlink Twitch",
     "Xbox": "XB1"
   },
   "Activities": {
@@ -17,6 +24,24 @@
     "Nightfall": "Nightfall Strike",
     "Normal": "Normal",
     "WeeklyHeroic": "Weekly Heroic Strike"
+  },
+  "AuditLog": {
+    "Account": "Account",
+    "Action": "Action",
+    "Application": "Application",
+    "Date": "Date",
+    "DeleteAll": "Deleted all saved data",
+    "DeleteLoadout": "Deleted loadout {{name}}",
+    "Description": "This log tracks all the changes you have stored in DIM Sync - including changes to settings, tags, and loadouts. After a while this log gets cleaned up.",
+    "Details": "Details",
+    "Import": "Imported {{loadouts}} loadouts and {{tags}} tagged items",
+    "Loadout": "Changed loadout {{name}}",
+    "RemoveNotes": "Removed notes from item ID {{id}}",
+    "RemoveTag": "Removed tag from item ID {{id}}",
+    "SetNotes": "Set notes to \"{{notes}}\" for item ID {{id}}",
+    "SetTag": "Set tag to {{tag}} for item ID {{id}}",
+    "Setting": "Set {{key}} to {{value}}",
+    "TagCleanup": "Cleaned up tags for dismantled items"
   },
   "Bucket": {
     "Armor": "Armor",
@@ -118,9 +143,8 @@
   "ErrorBoundary": {
     "Title": "Something went wrong"
   },
-  "Faction": {
-    "EngramsAvailable": "1 engram available",
-    "EngramsAvailable_plural": "{{count}} engrams available"
+  "ErrorPanel": {
+    "Description": "This is likely an issue that affects all third-party apps. Check to see if Bungie.net loads, or the Destiny 2 Companion App works."
   },
   "FarmingMode": {
     "D2Desc": "DIM is preventing items from going to the Postmaster by making sure there's always one empty space per item type on {{store}}. It is moving items to the vault to make room.",
@@ -137,7 +161,6 @@
       "MakeRoom": "Make room to pick up items by moving equipment",
       "Tooltip": "If checked, DIM will move weapons and armor around to make space in the vault for engrams."
     },
-    "MoveTokens": "Send reputation items to the vault",
     "OutOfRoom": "You're out of space to move items off of {{character}}. Time to decrypt some engrams and clear out the trash!",
     "OutOfRoomTitle": "Out of Room",
     "Stop": "Stop"
@@ -195,6 +218,7 @@
     "HasNotes": "Show items that have notes applied.",
     "HasOrnament": "Shows items that have an ornament applied.",
     "HasShader": "Shows items that have a shader applied.",
+    "HoldsMod": "Shows armor compatible with a specific type of Seasonal Mod.",
     "InLoadout": "Shows items that are included in any loadout.",
     "Infusable": "Shows items that can be infused.",
     "Leveling": {
@@ -211,7 +235,7 @@
     "LockAllSuccess": "Locked {{num}} items",
     "Locked": "Shows items based on their locked status.",
     "MaxPower": "Shows the items which would maximize Power Level for each character class.",
-    "ModSlot": "Shows armor compatible with a specific type of Seasonal Mod.",
+    "ModSlot": "Shows armor with a specific Seasonal Mod slot.",
     "Mods": {
       "Y2": "Shows items with a Year 2 mod attached.",
       "Y3": "Shows items with any Armor 2.0 mods selected."
@@ -224,6 +248,7 @@
     "PartialMatch": "Shows items where their name/perk has a partial match to the filter text. Search for entire phrases using quotes. the 'perk:' filter will only search perks.",
     "Postmaster": "Items that are currently in the Postmaster.",
     "PowerLevel": "Shows items based on their power level (Attack for Weapons; Defense for Armor).",
+    "PowerLimit": "Shows items based on the maximum power level they can be infused to.",
     "Quality": "Shows items based on their total stat quality percentage. '{{percentage}}' is an alias for '{{quality}}'.",
     "RandomRoll": "Shows items that drop with random rolls.",
     "RarityTier": "Shows items based on their rarity tier.",
@@ -283,6 +308,7 @@
     "StatsBase": "Filters armor based on its base stat value, not including attached mods.",
     "StatsLoadout": "Finds a set of items to equip for the maximum total value of a specific stat.",
     "StatsMax": "Finds armor with the highest number for a specific stat. Includes all items with the highest stat.",
+    "SunsetAfter": "Shows items based on the last season they can reach the Seasonal Power Cap.",
     "Tags": {
       "Archive": "Dims items you rarely need.",
       "Dismantle": "Shows items you wish to eventually dismantle.",
@@ -309,13 +335,16 @@
       "Shipwright": "Shipwright",
       "Speaker": "Speaker"
     },
-    "VideoExample": "Visit {{link}} for an in-depth search filter guide.",
+    "VideoExample": "Visit our User Guide for in-depth info on using search filters.",
     "WeaponClass": "Shows items based on their weapon classes.",
     "WeaponType": "Shows weapons based on their weapon type.",
     "Wishlist": "Shows items that match your wish list.",
     "WishlistDupe": "Shows duplicate items where at least one of the duplicates is on your wish list.",
     "WishlistNotes": "Shows wish listed items whose notes match the search.",
     "Year": "Shows items from which year of Destiny they appeared in."
+  },
+  "General": {
+    "UserGuideLink": "User guide"
   },
   "Ghost": {
     "crucible": "crucible",
@@ -383,10 +412,6 @@
     "SwitchDirection": "Switch",
     "TransferItems": "Transfer"
   },
-  "ItemInfoService": {
-    "SaveInfoErrorDescription": "There's been a problem saving DIM-specific info for an item. One problem is that there is a limit on how much data can be stored - this is why tags and notes have not yet been allowed out of the Beta version. The error was: {{error}}.",
-    "SaveInfoErrorTitle": "Error saving item info"
-  },
   "ItemMove": {
     "Consolidate": "Consolidated {{name}}",
     "Distributed": "Distributed {{name}}\n {{name}} is now equally divided between characters.",
@@ -423,6 +448,10 @@
   },
   "LB": {
     "AdvancedOptions": "Advanced Options",
+    "Chest": "Chest",
+    "ChooseAMod": "Choose your mods",
+    "ChooseAPerk": "Choose a perk",
+    "ClassItem": "Class Item",
     "ClearLocked": "Clear Locked",
     "ContainsVendorItems": "This loadout contains vendor items",
     "Current": "Current",
@@ -430,6 +459,9 @@
     "Exclude": "Excluded Items",
     "ExcludeHelp": "Shift + click an item (or drag and drop into this bucket) to build sets without specific gear.",
     "FilterSets": "Filter sets",
+    "Gauntlets": "Gauntlets",
+    "General": "General",
+    "Helmet": "Helmet",
     "Help": {
       "And": "Armor with all of these perks will be used (\"and\")",
       "ChangeNodes": "Change the Intellect, Discipline, or Strength nodes in game to what is displayed to create each loadout.",
@@ -451,6 +483,7 @@
     "HideAllConfigs": "Hide all configurations",
     "HideConfigs": "Hide configurations",
     "LB": "Loadout Optimizer",
+    "Legs": "Legs",
     "LightMode": {
       "HelpCurrent": "Calculates loadouts at current defense levels.",
       "HelpScaled": "Calculates loadouts as if all items were 350 defense.",
@@ -462,6 +495,7 @@
     "Locked": "Locked Items",
     "LockedHelp": "Drag and drop any item into its bucket to build set with that specific gear. Shift + click to exclude items.",
     "Missing2": "Missing rare, legendary, or exotic pieces to build a full set!",
+    "ModLockButton": "Select mods",
     "ProcessingMode": {
       "Fast": "Fast",
       "Full": "Full",
@@ -470,10 +504,22 @@
       "ProcessingMode": "Processing mode"
     },
     "Scaled": "Scaled",
+    "SearchAMod": "Search a mod or description",
+    "Season": "Season",
+    "Seasonal": "Seasonal",
+    "SelectMods": "Select Mods",
     "ShowAllConfigs": "Show all configurations",
     "ShowConfigs": "Show configurations",
     "ShowGear": "{{class}} Armor",
     "Vendor": "Include Vendor items"
+  },
+  "Loading": {
+    "Accounts": "Loading Destiny accounts...",
+    "AuditLog": "Loading DIM Sync history...",
+    "Code": "Loading DIM code...",
+    "FilterHelp": "Loading search help...",
+    "Profile": "Loading Destiny profile...",
+    "Vendors": "Loading Destiny vendors..."
   },
   "LoadoutBuilder": {
     "AltPerkKey": "Choose this perk to get the stats displayed",
@@ -497,7 +543,7 @@
     "LimitedCombos": "You have {{combosWithoutCaps, number}} possible stat combinations, but we only looked at {{combos, number}} of them to keep DIM from crashing. As a result, some possibilities are not shown. Lock some items or perks or dismantle some old armor to get under the limit.",
     "LockEquipped": "Equipped",
     "LockItem": "Lock item",
-    "LockPerk": "Select mod or perk",
+    "LockPerk": "Select energy or perk",
     "NewEmptyLoadout": "Create Empty Loadout",
     "NoBuildsFound": "No builds found. Try expanding your filtering criteria.",
     "NumStatMixes": "{{count, number}} stat mix",
@@ -517,8 +563,7 @@
     "StatTierIncludeOption": "Include",
     "TierNumber": "T{{tier}}",
     "Traction": "The Traction perk provides +1 Mobility.",
-    "UnlockItem": "Unlock Item",
-    "YouTubeLink": "Watch a tutorial about Loadout Optimizer on YouTube."
+    "UnlockItem": "Unlock Item"
   },
   "Loadouts": {
     "Abandon": "Are you sure you want to abandon this loadout?",
@@ -526,37 +571,24 @@
     "AlreadyExistsClass": "A loadout with this name already exists for your {{className}}.",
     "AlreadyExistsGlobal": "A global loadout with this name already exists.",
     "Any": "Any class",
-    "Applied": "Your single item loadout has been transferred to your {{store}}.",
-    "AppliedAuto": "Automatic Loadout Builder",
     "AppliedError": "None of the items in your loadout could be transferred.",
     "AppliedWarn": "Your loadout has been partially transferred, but {{failed}} of {{total}} items had errors.",
-    "Applied_female": "Your single item loadout has been transferred to your {{store}}.",
-    "Applied_female_plural": "Your loadout of {{count}} items has been transferred to your {{store}}.",
-    "Applied_male": "Your single item loadout has been transferred to your {{store}}.",
-    "Applied_male_plural": "Your loadout of {{count}} items has been transferred to your {{store}}.",
-    "Applied_plural": "Your loadout of {{count}} items has been transferred to your {{store}}.",
     "ApplySearch": "Transfer search \"{{query}}\"",
     "Before": "Before '{{name}}'",
-    "ChangeName": "Change name",
     "ChooseItem": "Add {{name}}",
-    "ClashingDescription": "The loadout {{loadoutName}} clashes with a previous one and could not be saved. Click this to open the loadout drawer.",
-    "ClashingTitle": "Clashing loadout",
     "Classified": "Some of your items are classified, and cannot be included in the max power calculation.",
     "ClearSpace": "Move other items away",
     "ConfirmDelete": "Are you sure you want to delete '{{name}}'?",
     "CouldNotEquip": "Could not equip {{itemname}}",
     "Create": "Create Loadout",
     "Delete": "Delete Loadout",
-    "DeleteErrorDescription": "Unable to delete loadout {{loadoutName}}: {{error}}.",
-    "DeleteErrorTitle": "Error deleting loadout",
     "Edit": "Edit Loadout",
-    "EditLoadoutName": "Edit Loadout {{loadoutName}}",
     "FilteredItems": "Filtered Items",
     "FindAnother": "Find another {{name}}",
     "FromEquipped": "Equipped",
     "GatherEngrams": "Gather Engrams",
     "GatherEngramsExceptExotics": "Exotics",
-    "Generated": "T{{tier}} {{Mobility}}/{{Resilience}}/{{Recovery}}",
+    "Generated": "T{{tier}} Loadout",
     "ItemLeveling": "Item Leveling",
     "LoadoutName": "Loadout name",
     "Loadouts": "Loadouts",
@@ -582,13 +614,8 @@
     "NotificationMessage_plural": "Equipping loadout with {{count}} items to {{store}}",
     "NotificationTitle": "Loadout: {{name}}",
     "OnlyItems": "Only equippable items, materials, and consumables can be added to a loadout.",
+    "OpenInOptimizer": "Open in Loadout Optimizer",
     "PullFromPostmaster": "Collect Postmaster",
-    "PullFromPostmasterDone": "Finished pulling 1 Postmaster item to {{store}}.",
-    "PullFromPostmasterDone_female": "Finished pulling 1 Postmaster item to {{store}}.",
-    "PullFromPostmasterDone_female_plural": "Finished pulling {{count}} Postmaster items to {{store}}.",
-    "PullFromPostmasterDone_male": "Finished pulling 1 Postmaster item to {{store}}.",
-    "PullFromPostmasterDone_male_plural": "Finished pulling {{count}} Postmaster items to {{store}}.",
-    "PullFromPostmasterDone_plural": "Finished pulling {{count}} Postmaster items to {{store}}.",
     "PullFromPostmasterError": "Unable to pull from Postmaster: {{error}}.",
     "PullFromPostmasterNotification": "Pulling 1 Postmaster item to {{store}}.",
     "PullFromPostmasterNotification_female": "Pulling 1 Postmaster item to {{store}}.",
@@ -601,22 +628,21 @@
     "Random": "Random",
     "Randomize": "Randomize",
     "RandomizePrompt": "Randomize your equipped class, weapons, armor and ghost?",
+    "RandomizeSearch": "Randomize from Search",
+    "RandomizeSearchPrompt": "Randomize your equipped items from search \"{{query}}\"?",
     "RandomizeWeapons": "Randomize your equipped class and weapons?",
     "RestoreAllItems": "All Items",
     "Save": "Save",
     "SaveAsNew": "Save New",
-    "SaveErrorDescription": "Unable to save loadout {{loadoutName}}: {{error}}.",
-    "SaveErrorTitle": "Error saving loadout",
     "TooManyRequested": "You have {{total}} {{itemname}} but your loadout asks for {{requested}}. We transferred all you had.",
     "VendorsCannotEquip": "You don't have these items. Tap to pick a replacement or click the X to remove:",
     "WeaponsOnly": "Weapons"
   },
   "Manifest": {
-    "Build": "Building Destiny info database",
-    "Download": "Downloading latest Destiny info from Bungie",
-    "Error": "Error loading Destiny info:\n{{error}}\nReload to retry.",
-    "Load": "Loading saved Destiny info",
-    "Outdated": "Outdated Destiny Info",
+    "Download": "Downloading latest Destiny info database from Bungie...",
+    "Error": "Error loading Destiny info database:\n{{error}}\nReload to retry.",
+    "Load": "Loading Destiny info database...",
+    "Outdated": "Outdated Destiny info database",
     "OutdatedExplanation": "Bungie has updated their Destiny info database. Reload DIM to pick up the new info. Note that some things in DIM may not work for a few hours after Bungie updates Destiny, as the new data propagates through their systems."
   },
   "Milestone": {
@@ -654,6 +680,7 @@
     "OverviewTab": "Overview",
     "Owned": "This item is in your inventory.",
     "OwnedMod": "This mod is in your modifications inventory.",
+    "PowerCap": "",
     "PullItem": "Pull from {{bucket}} to {{store}}",
     "ReadLore": "Read lore on Ishtar Collective",
     "ReviewsTab": "Reviews",
@@ -683,13 +710,64 @@
     "BulkMove": "Move To",
     "BulkMoveLoadoutName": "Selected in Organizer",
     "BulkTag": "Tag",
+    "Columns": {
+      "Archetype": "Archetype",
+      "BaseStats": "Base Stats",
+      "CustomTotal": "Custom Total",
+      "Damage": "Damage",
+      "Element": "Element",
+      "Energy": "Energy",
+      "Event": "Event",
+      "Ghost": "Ghost Tag",
+      "Icon": "Icon",
+      "KillTracker": "Kill Tracker",
+      "Loadouts": "Loadouts",
+      "MasterworkStat": "Masterwork Stat",
+      "MasterworkTier": "Masterwork Tier",
+      "ModSlot": "Mod Slot",
+      "Name": "Name",
+      "New": "New",
+      "Notes": "Notes",
+      "PercentComplete": "% Complete",
+      "Perks": "Perks",
+      "PerksMods": "Perks, Mods & Shaders",
+      "Quality": "Quality %",
+      "Rating": "Rating",
+      "Reacquireable": "Reacquireable",
+      "Season": "Season",
+      "Source": "Source",
+      "StatQuality": "Stat Quality",
+      "StatQualityStat": "{{stat}}%",
+      "Stats": "Stats",
+      "Tag": "Tag",
+      "Tier": "Tier",
+      "Traits": "Weapon Traits",
+      "WishList": "Wish List",
+      "WishListNotes": "Wish List Notes",
+      "Year": "Year"
+    },
     "EnabledColumns": "Enabled Columns",
-    "Organizer": "Organizer"
+    "Lock": "Lock",
+    "NoItems": "No items selected",
+    "NoMobile": "This view isn't great on mobile.",
+    "Note": "Set Note",
+    "NotePrompt": "Note:",
+    "Organizer": "Organizer",
+    "SelectAll": "Select All",
+    "SelectItem": "Select or unselect {{name}}",
+    "ShiftTip": "Tip: Hold the Shift key and click on a cell to filter items",
+    "Stats": {
+      "Aim": "Aim",
+      "Inventory": "Inventory",
+      "RPM": "RPM",
+      "Recoil": "Recoil",
+      "Reload": "Reload"
+    },
+    "Unlock": "Unlock"
   },
   "Progress": {
     "Bounties": "Bounties",
     "CrucibleRank": "Ranks",
-    "Factions": "Factions",
     "Items": "Quest Items",
     "Milestones": "Milestones & Challenges",
     "PercentPrestige": "{{pct}}% to reset",
@@ -762,6 +840,8 @@
     "NotApplicable": "N/A",
     "OfMaxRoll": "{{range}} of max roll",
     "PercentHelp": "Click for more information about what Stats Quality is.",
+    "PowerCap": "Power Limit",
+    "PowerCapWithSeason": "{{powerCap}} (Season {{finalSeason}} max)",
     "PowerModifier": "Power granted by seasonal experience progression",
     "Prestige": "Prestige Level: {{level}}\n{{exp}}xp until 5 motes of light.",
     "Quality": "Stats quality",
@@ -771,51 +851,56 @@
     "Total": "Total"
   },
   "Storage": {
+    "ApiPermissionPrompt": {
+      "Description": "DIM can now store your tags, loadouts, and settings on our own servers and sync that data between different versions of DIM, with no separate login. You can import your existing data from the Settings page if you haven't enabled DIM Sync before. This was made possible by the support of our OpenCollective backers!",
+      "No": "Not right now",
+      "Title": "Enable DIM Sync?",
+      "Yes": "Enable Sync"
+    },
+    "AuditLog": "DIM Sync Change History",
+    "AuditLogLabel": "View past data changes",
+    "AutoBackup": "We've backed up your data to a file in your downloads folder called dim-data.json, just in case.",
+    "BackUpFirst": "You MUST back up your data first, before you delete it all. Just in case.",
     "BrowserMayClearData": "The browser may delete this information if you run out of space or don't visit DIM frequently.",
-    "ClearIgnoredUsers": "Clear Ignored Reviewers",
+    "DeleteAllData": "Delete ALL Data from DIM Sync Servers",
+    "DeleteAllDataConfirm": "Are you sure you want to delete ALL your data, for all accounts, from DIM Sync? You can't undo this.",
+    "DeleteAllDataLabel": "Wipe DIM Sync Data",
     "Details": {
-      "GoogleDriveStorage": "DIM can save data to Google Drive's app storage. If you sign in to Google Drive on multiple browsers, your data will be shared everywhere. This data is stored per Bungie account. If you are having trouble logging in, you may need to allow third party cookies in your browser.",
       "IndexedDBStorage": "Local storage will save your information only on this browser. Clearing your browsing data will delete this information."
     },
-    "Disabled": "Disabled",
+    "DimApiFinePrint": "DIM will save your tags, loadouts, and settings to the DIM servers and sync them between different versions of DIM.",
+    "DimSyncEnabled": "DIM Sync Enabled",
     "DriveLogout": "Log out of Google Drive",
     "DriveSync": "Log in to Google Drive",
-    "Enabled": "Enabled",
-    "Explain": "DIM stores its own data separate from your Destiny data (which is maintained by Bungie.net).",
+    "EnableDimApi": "Enable DIM Sync",
     "Export": "Download Data Backup",
-    "ForceSync": "Force sync data from Google Drive",
-    "ForceSyncWarning": "This will overwrite any local data with the data from Google Drive. Are you sure you want to do that?",
-    "GDriveLogout": "Your data is still in Google Drive - if you log in again, DIM will go back to using it.",
-    "GDriveRevisions": "Restore Old Versions",
+    "GDriveImport": "Import from legacy Google Drive or Local Storage data",
+    "GDriveImportButton": "Import legacy data",
+    "GDriveImportExplain": "You can restore legacy data stored in your browser or in Google Drive. Use this if you are just now upgrading DIM to v6 and had data stored before that.",
     "GDriveSignInError": "Error signing in to Google Drive:",
-    "GDriveSignInWarning": "If you already have saved DIM data in Google Drive, it will overwrite anything you have saved locally. You may want to back up your data before signing in.\n\nContinue to sign in to Google Drive?",
+    "GDriveSignedIn": "Logged in to Google Drive as {{email}}",
     "GoogleApiBlocked": "Google Drive is not available because a content blocker has blocked the Google Drive JavaScript. Please exclude DIM from content blockers and try again.",
-    "GoogleDriveStorage": "Google Drive",
-    "GoogleDriveUsage": "Your Google Drive has {{usage, humanBytes}} total used out of {{limit, humanBytes}}. DIM is using {{dimQuotaUsed, humanBytes}} of that. If Google Drive fills up DIM will not be able to save data.",
-    "GoogleDriveUsageNoFile": "Your Google Drive has {{usage, humanBytes}} total used out of {{limit, humanBytes}}. We couldn't find info about the DIM file, which may indicate a problem. If Google Drive fills up DIM will not be able to save data.",
-    "GoogleDriveUsageUnlimited": "Your Google Drive storage is unlimited.",
-    "IgnoredUsers": "Ignored reviewers",
     "Import": "Import Data Backup",
-    "ImportConfirm": "Are you sure you want to overwrite your current settings with this version? It has {{stats}}.",
-    "ImportExport": "Backups",
+    "ImportConfirmDimApi": "Are you sure you want to overwrite your current tags, loadouts, and settings with this version? It will completely replace what you had.",
+    "ImportExport": "Backup & Import",
     "ImportFailed": "Import Failed! {{error}}",
     "ImportNoFile": "No file selected!",
-    "ImportSuccess": "Imported DIM data!",
+    "ImportNotification": {
+      "FailedBody": "Unable to import data. {{error}}",
+      "FailedTitle": "Import Failed",
+      "NoData": "No loadouts or tags found in the backup",
+      "SuccessBodyForced": "Imported settings, {{loadouts}} loadouts, and {{tags}} tagged items from your backup into DIM Sync, replacing what was already there.",
+      "SuccessBodyLocal": "Imported settings, {{loadouts}} loadouts, and {{tags}} tagged items from your backup into local storage, replacing what was already there. We cannot guarantee that local storage won't be lost - consider enabling DIM Sync.",
+      "SuccessTitle": "Import Successful"
+    },
     "ImportTooManyFiles": "Please only select one file to import.",
     "ImportWrongFileType": "File is not a JSON file. It may not be a DIM backup.",
     "IndexedDBStorage": "Local Browser Storage",
-    "LoadRevision": "Load Content",
-    "LoadoutsD1": "{{value}} Destiny 1 loadouts",
-    "LoadoutsD2": "{{value}} Destiny 2 loadouts",
-    "MenuTitle": "Data & Backups",
-    "NoData": "No data",
-    "RestoreRevision": "Restore",
-    "RevisionsDescription": "Google Drive saves the last 100 revisions of your settings. Use this page to load old versions and restore them.",
-    "Settings": "Your DIM settings and preferences",
-    "StatLabel": "This currently contains:",
-    "TagNotesD1": "{{value}} Destiny 1 items with tags or notes",
-    "TagNotesD2": "{{value}} Destiny 2 items with tags or notes",
-    "Title": "Data Storage",
+    "MenuTitle": "Sync & Backups",
+    "ProfileErrorBody": "We had a problem loading your DIM Sync data",
+    "ProfileErrorTitle": "DIM Sync Error",
+    "UpdateErrorBody": "We had a problem saving your data to DIM Sync",
+    "UpdateErrorTitle": "DIM Sync Error",
     "Usage": "DIM is using {{usage, humanBytes}} out of {{quota, humanBytes}} available to it on this device. This includes the downloaded Destiny item databases from Bungie.net."
   },
   "StoreBucket": {
@@ -838,11 +923,6 @@
     "TagItems": "Tag Items",
     "UnlockAll": "Unlock Items"
   },
-  "TrialsCard": {
-    "FiveWins": "5 Win Reward (Armor)",
-    "Flawless": "Flawless",
-    "SevenWins": "7 Win Reward (Weapon)"
-  },
   "Triumphs": {
     "HideCompleted": "Hide Completed",
     "RevealRedacted": "Reveal Redacted"
@@ -859,8 +939,7 @@
     "DestinySets": "Browse more item sets at Destiny Sets",
     "Engram": "Reward Engram",
     "FilterToUnacquired": "Only show uncollected items",
-    "Vendors": "Vendors",
-    "Year2Mods": "Year 2 Mods"
+    "Vendors": "Vendors"
   },
   "Views": {
     "About": {
@@ -894,6 +973,8 @@
       "Twitter": "Twitter",
       "TwitterHelp": "Be sure to follow us to stay on top of updates and real time application state information.",
       "Version": "Version {{version}} ({{flavor}}), built on {{date}}",
+      "Wiki": "DIM User Guide Wiki",
+      "WikiHelp": "Learn how to use DIM and contribute to our community-driven user guide.",
       "YouTube": "YouTube",
       "YouTubeHelp": "Learn how to use DIM on our YouTube channel."
     },
@@ -921,11 +1002,13 @@
     "ExternalSource": "Optionally, supply the URL for a wish list",
     "Header": "Wish List",
     "Import": "Load Wish List Rolls",
+    "ImportError": "Error loading wish list: {{error}}",
     "ImportFailed": "No wish list information found.",
     "ImportNoFile": "No file selected.",
     "ImportSuccess": "Wish list loaded with information about one roll.{{titleAndDescription}}",
     "ImportSuccess_plural": "Wish list loaded with information about {{count, number}} rolls.{{titleAndDescription}}",
     "InvalidExternalSource": "Please enter a valid URL for your external wish list source. The URL must start with https://raw.githubusercontent.com",
+    "LastUpdated": "Last updated: {{lastUpdatedDate}} at {{lastUpdatedTime}}",
     "Num": "{{num, number}} rolls in your wish list",
     "UpdateExternalSource": "Update Wish List Source",
     "WishListNotes": "Wish List Notes: {{notes}}"

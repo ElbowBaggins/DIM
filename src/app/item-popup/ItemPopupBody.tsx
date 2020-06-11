@@ -1,17 +1,18 @@
 import React from 'react';
 import { DimItem } from '../inventory/item-types';
 import { t } from 'app/i18next-t';
-import ItemOverview from './ItemDetails';
+import ItemDetails from './ItemDetails';
 import { ItemPopupExtraInfo } from './item-popup';
 import clsx from 'clsx';
 import ItemReviews from '../item-review/ItemReviews';
 import { percent } from '../shell/filters';
 import { AppIcon, openDropdownIcon } from '../shell/icons';
 import { Frame, Track, View, ViewPager } from 'react-view-pager';
+import './ItemPopupBody.scss';
 
 export const enum ItemPopupTab {
   Overview,
-  Reviews
+  Reviews,
 }
 
 const spring = { stiffness: 200, damping: 22 };
@@ -24,7 +25,7 @@ export default function ItemPopupBody({
   tab,
   expanded,
   onTabChanged,
-  onToggleExpanded
+  onToggleExpanded,
 }: {
   item: DimItem;
   failureStrings?: string[];
@@ -46,14 +47,14 @@ export default function ItemPopupBody({
     {
       tab: ItemPopupTab.Overview,
       title: t('MovePopup.OverviewTab'),
-      component: <ItemOverview item={item} extraInfo={extraInfo} />
-    }
+      component: <ItemDetails item={item} extraInfo={extraInfo} />,
+    },
   ];
   if ($featureFlags.reviewsEnabled && item.reviewable) {
     tabs.push({
       tab: ItemPopupTab.Reviews,
       title: t('MovePopup.ReviewsTab'),
-      component: <ItemReviews item={item} />
+      component: <ItemReviews item={item} />,
     });
   }
 
@@ -86,7 +87,7 @@ export default function ItemPopupBody({
                   <span
                     key={ta.tab}
                     className={clsx('move-popup-tab', {
-                      selected: tab === ta.tab
+                      selected: tab === ta.tab,
                     })}
                     onClick={() => onTabChanged(ta.tab)}
                   >

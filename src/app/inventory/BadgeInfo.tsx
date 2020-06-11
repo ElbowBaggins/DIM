@@ -22,8 +22,7 @@ interface Props {
 }
 
 const getGhostInfos = weakMemoize((item: DimItem) =>
-  item.isDestiny2 &&
-  item.isDestiny2() &&
+  item.isDestiny2?.() &&
   item.sockets &&
   item.itemCategoryHashes &&
   item.itemCategoryHashes.includes(39)
@@ -53,9 +52,7 @@ export default function BadgeInfo({ item, isCapped, rating, uiWishListRoll }: Pr
   const isBounty = Boolean(!item.primStat && item.objectives);
   const isStackable = Boolean(item.maxStackSize > 1);
   // treat D1 ghosts as generic items
-  const isGhost = Boolean(
-    item.isDestiny2 && item.isDestiny2() && item.itemCategoryHashes?.includes(39)
-  );
+  const isGhost = Boolean(item.isDestiny2?.() && item.itemCategoryHashes?.includes(39));
   const isGeneric = !isBounty && !isStackable && !isGhost;
 
   const ghostInfos = getGhostInfos(item);
@@ -74,7 +71,7 @@ export default function BadgeInfo({ item, isCapped, rating, uiWishListRoll }: Pr
   const badgeclsx = {
     [styles.fullstack]: isStackable && item.amount === item.maxStackSize,
     [styles.capped]: isCapped,
-    [styles.masterwork]: item.masterwork
+    [styles.masterwork]: item.masterwork,
   };
 
   const badgeContent =
@@ -86,7 +83,7 @@ export default function BadgeInfo({ item, isCapped, rating, uiWishListRoll }: Pr
 
   const reviewclsx = {
     [styles.review]: true,
-    [styles.wishlistRoll]: uiWishListRoll
+    [styles.wishlistRoll]: uiWishListRoll,
   };
 
   return (
@@ -117,7 +114,7 @@ export default function BadgeInfo({ item, isCapped, rating, uiWishListRoll }: Pr
   );
 }
 
-function ghostBadgeContent(item: DimItem) {
+export function ghostBadgeContent(item: DimItem) {
   const infos = getGhostInfos(item);
 
   const planet = _.uniq(infos.map((i) => i.location).filter((l) => l !== true && l !== false))

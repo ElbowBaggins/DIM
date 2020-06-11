@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import BungieImage, { bungieBackgroundStyle } from '../../dim-ui/BungieImage';
 import { DimStore, D1Store } from '../../inventory/store-types';
 import { RootState } from '../../store/reducers';
-import { sortedStoresSelector } from '../../inventory/reducer';
+import { sortedStoresSelector } from '../../inventory/selectors';
 import SimpleCharacterTile from '../../inventory/SimpleCharacterTile';
 import CollapsibleTitle from '../../dim-ui/CollapsibleTitle';
 import { AppIcon, starIcon } from '../../shell/icons';
@@ -12,9 +12,9 @@ import _ from 'lodash';
 import { D1ManifestDefinitions } from '../d1-definitions';
 import { D1StoresService } from '../../inventory/d1-stores';
 import { DestinyAccount } from '../../accounts/destiny-account';
-import { Loading } from '../../dim-ui/Loading';
 import { connect } from 'react-redux';
 import './activities.scss';
+import ShowPageLoading from 'app/dim-ui/ShowPageLoading';
 
 interface Skull {
   displayName: string;
@@ -61,7 +61,7 @@ type Props = ProvidedProps & StoreProps;
 function mapStateToProps(state: RootState): StoreProps {
   return {
     stores: sortedStoresSelector(state),
-    defs: state.manifest.d1Manifest
+    defs: state.manifest.d1Manifest,
   };
 }
 
@@ -74,11 +74,7 @@ class Activities extends React.Component<Props> {
     const { stores, defs } = this.props;
 
     if (!defs || !stores.length) {
-      return (
-        <div className="activities dim-page">
-          <Loading />
-        </div>
-      );
+      return <ShowPageLoading message={t('Loading.Profile')} />;
     }
 
     const characters = stores.filter((s) => !s.isVault);
@@ -100,7 +96,7 @@ class Activities extends React.Component<Props> {
             <CollapsibleTitle
               style={bungieBackgroundStyle(activity.image)}
               className={clsx('title activity-header', {
-                'activity-featured': activity.featured
+                'activity-featured': activity.featured,
               })}
               sectionId={`activities-${activity.hash}`}
               title={
@@ -133,14 +129,13 @@ class Activities extends React.Component<Props> {
                   </div>
                 ))}
 
-                {activity.skulls &&
-                  activity.skulls.map((skull) => (
-                    <div key={skull.displayName} className="activity-skulls">
-                      <BungieImage src={skull.icon} className="small-icon" />
-                      {skull.displayName}
-                      <span className="weak"> - {skull.description}</span>
-                    </div>
-                  ))}
+                {activity.skulls?.map((skull) => (
+                  <div key={skull.displayName} className="activity-skulls">
+                    <BungieImage src={skull.icon} className="small-icon" />
+                    {skull.displayName}
+                    <span className="weak"> - {skull.description}</span>
+                  </div>
+                ))}
               </div>
             </CollapsibleTitle>
           </div>
@@ -163,7 +158,7 @@ class Activities extends React.Component<Props> {
       'wrathofthemachine',
       // 'elderchallenge',
       'nightfall',
-      'heroicstrike'
+      'heroicstrike',
     ];
 
     const rawActivities = Object.values(stores[0].advisors.activities).filter(
@@ -204,7 +199,7 @@ class Activities extends React.Component<Props> {
           ? t('Activities.WeeklyHeroic')
           : defs.ActivityType.get(def.activityTypeHash).activityTypeName,
       skulls: null as Skull[] | null,
-      tiers: [] as ActivityTier[]
+      tiers: [] as ActivityTier[],
     };
 
     if (rawActivity.extended) {
@@ -265,7 +260,7 @@ class Activities extends React.Component<Props> {
               lastPlayed: store.lastPlayed,
               id: store.id,
               icon: store.icon,
-              steps
+              steps,
             };
           });
 
@@ -274,7 +269,7 @@ class Activities extends React.Component<Props> {
       icon: tierDef.icon,
       name,
       complete: tier.activityData.isCompleted,
-      characters
+      characters,
     };
   };
 }
@@ -299,13 +294,13 @@ const skullHashesByName: { [name: string]: number | undefined } = {
   Exposure: 16,
   Airborne: 17,
   Catapult: 18,
-  Epic: 20
+  Epic: 20,
 };
 
 function i18nActivitySkulls(skulls: Skull[], defs: D1ManifestDefinitions): Skull[] {
   const activity = {
     heroic: defs.Activity.get(870614351),
-    epic: defs.Activity.get(2234107290)
+    epic: defs.Activity.get(2234107290),
   };
 
   skulls.forEach((skull) => {

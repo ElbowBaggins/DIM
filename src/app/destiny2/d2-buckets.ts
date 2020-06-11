@@ -3,26 +3,20 @@ import _ from 'lodash';
 import { getDefinitions } from './d2-definitions';
 import { InventoryBuckets, InventoryBucket } from '../inventory/inventory-buckets';
 
-// TODO: These have to change
 // TODO: We can generate this based on making a tree from DestinyItemCategoryDefinitions
 export const D2Categories = {
   Postmaster: ['Engrams', 'LostItems', 'Messages', 'SpecialOrders'],
   Weapons: ['Class', 'Kinetic', 'Energy', 'Power', 'SeasonalArtifacts'],
   Armor: ['Helmet', 'Gauntlets', 'Chest', 'Leg', 'ClassItem'],
   General: ['Ghost', 'ClanBanners', 'Vehicle', 'Ships', 'Emblems', 'Finishers'],
-  Inventory: ['Consumables', 'Modifications', 'Shaders']
+  Inventory: ['Consumables', 'Modifications', 'Shaders'],
 };
 
-// A mapping from the bucket names to DIM item types
-// Some buckets like vault and currencies have been ommitted
-// TODO: These have to change
-// TODO: retire "DIM types" in favor of DestinyItemCategoryDefinitions
-// TODO: there are no more bucket IDs... gotta update all this
-// bucket hash to DIM type
+// A mapping from the bucket hash to DIM item types
 const bucketToType: { [hash: number]: string | undefined } = {
   2465295065: 'Energy',
-  2689798304: 'Upgrade Point',
-  2689798305: 'Strange Coin',
+  2689798304: 'UpgradePoint',
+  2689798305: 'StrangeCoin',
   2689798308: 'Glimmer',
   2689798309: 'Legendary Shards',
   2689798310: 'Silver',
@@ -53,7 +47,7 @@ const bucketToType: { [hash: number]: string | undefined } = {
   1107761855: 'Emotes',
   1345459588: 'Pursuits',
   1506418338: 'SeasonalArtifacts',
-  3683254069: 'Finishers'
+  3683254069: 'Finishers',
 };
 
 const typeToSort: { [type: string]: string } = {};
@@ -70,34 +64,30 @@ async function getBucketsUncached() {
   const buckets: InventoryBuckets = {
     byHash: {},
     byType: {},
-    byId: {},
     byCategory: {},
     unknown: {
       description: 'Unknown items. DIM needs a manifest update.',
       name: 'Unknown',
-      id: '-1',
       hash: -1,
       hasTransferDestination: false,
       capacity: Number.MAX_SAFE_INTEGER,
       sort: 'Unknown',
       type: 'Unknown',
       accountWide: false,
-      category: BucketCategory.Item
+      category: BucketCategory.Item,
     },
     setHasUnknown() {
       this.byCategory[this.unknown.sort] = [this.unknown];
       this.byType[this.unknown.type] = this.unknown;
-    }
+    },
   };
   _.forIn(defs.InventoryBucket, (def: DestinyInventoryBucketDefinition) => {
-    const id = def.hash.toString();
     const type = bucketToType[def.hash];
     let sort: string | undefined;
     if (type) {
       sort = typeToSort[type];
     }
     const bucket: InventoryBucket = {
-      id,
       description: def.displayProperties.description,
       name: def.displayProperties.name,
       hash: def.hash,
@@ -106,7 +96,7 @@ async function getBucketsUncached() {
       accountWide: def.scope === 1,
       category: def.category,
       type,
-      sort
+      sort,
     };
     if (bucket.type) {
       buckets.byType[bucket.type] = bucket;
@@ -116,7 +106,6 @@ async function getBucketsUncached() {
       bucket[`in${bucket.sort}`] = true;
     }
     buckets.byHash[bucket.hash] = bucket;
-    buckets.byId[bucket.id] = bucket;
   });
   const vaultMappings = {};
   defs.Vendor.get(1037843411).acceptedItems.forEach((items) => {

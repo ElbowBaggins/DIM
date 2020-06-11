@@ -5,10 +5,17 @@
   },
   "Accounts": {
     "Blizzard": "PC",
+    "ErrorLoadInventory": "데스티니 캐릭터와 소지품 불러오기 실패",
+    "ErrorLoadManifest": "Bungie에서 데스티니 정보 데이터베이스 불러오기 실패",
+    "ErrorLoading": "Bungie.net에서 데스티니 계정 불러오기 실패",
+    "MissingDescription": "지금 보려고 하는 계정은 Bungie.net 프로필과 연결된 계정이 아닙니다.",
+    "MissingTitle": "계정을 찾을 수 없습니다",
     "NoCharacters": "이 Bungie.net 계정에 연동된 데스티니 캐릭터가 없습니다. 다른 계정으로 접속해보세요.",
     "PlayStation": "PS4",
     "Stadia": "Stadia",
     "Steam": "Steam",
+    "UnlinkTwitch": "Bungie.net에 Twitch 계정을 연결하면 데스티니 1 계정을 사용할 수 없습니다.",
+    "UnlinkTwitchButton": "Twitch 연결 해제",
     "Xbox": "XB1"
   },
   "Activities": {
@@ -17,6 +24,24 @@
     "Nightfall": "황혼전",
     "Normal": "보통",
     "WeeklyHeroic": "주간 영웅 공격전"
+  },
+  "AuditLog": {
+    "Account": "계정",
+    "Action": "동작",
+    "Application": "애플리케이션",
+    "Date": "날짜",
+    "DeleteAll": "모든 저장된 데이터 삭제됨",
+    "DeleteLoadout": "{{name}} 로드아웃이 삭제됨",
+    "Description": "이 기록은 설정, 태그, 로드아웃 변경 등 DIM 동기화에 저장된 모든 변경사항을 표시합니다. 잠시 후 이 기록은 삭제됩니다.",
+    "Details": "세부사항",
+    "Import": "{{loadouts}}개의 로드아웃과 {{tags}}개의 태그된 아이템을 불러옴",
+    "Loadout": "{{name}} 로드아웃 변경됨",
+    "RemoveNotes": "아이템 ID {{id}}에서 메모를 삭제함",
+    "RemoveTag": "아이템 ID {{id}}에서 태그를 삭제함",
+    "SetNotes": "아이템 ID {{id}}의 메모가 {{notes}}로 설정됨",
+    "SetTag": "아이템 ID {{id}}의 태그가 {{tag}}로 설정됨",
+    "Setting": "{{key}}의 값이 {{value}}(으)로 설정됨",
+    "TagCleanup": "분해한 아이템의 태그를 정리함"
   },
   "Bucket": {
     "Armor": "방어구",
@@ -62,7 +87,7 @@
       "Archetype": "이 아이템은 {{type}}이(가) 아니므로 비교할 수 없습니다.",
       "Class": "이 아이템은 {{class}}을(를) 위한 장비가 아니므로 비교할 수 없습니다."
     },
-    "Rating": "평가"
+    "Rating": "평점"
   },
   "Cooldown": {
     "Grenade": "수류탄 재사용 대기시간: {{cooldown}}",
@@ -76,7 +101,7 @@
   },
   "Csv": {
     "EmptyFile": "파일에 행이 없습니다.",
-    "ImportConfirm": "정말로 CSV에서 태그와 메모를 가져오시겠습니까? 스프레드시트에 포함된 모든 아이템의 태그와 메모를 덮어씌울 것입니다.",
+    "ImportConfirm": "정말로 CSV에서 태그와 메모를 가져오시겠습니까? 스프레드시트에 포함된 모든 아이템의 태그와 메모를 덮어씁니다.",
     "ImportFailed": "CSV에서 태그와 메모 가져오기 실패: {{error}}",
     "ImportSuccess": "1개의 아이템에 대한 태그와 메모를 불러왔습니다.",
     "ImportSuccess_plural": "{{count}}개의 아이템에 대한 태그와 메모를 불러왔습니다.",
@@ -118,9 +143,8 @@
   "ErrorBoundary": {
     "Title": "문제가 발생했습니다"
   },
-  "Faction": {
-    "EngramsAvailable": "엔그램 1개 보유 중",
-    "EngramsAvailable_plural": "엔그램 {{count}}개 보유 중"
+  "ErrorPanel": {
+    "Description": "모든 서드파티 앱에 영향을 주는 문제일 수 있습니다. Bungie.net이나 데스티니 가디언즈 컴패니언 앱이 동작하는지 확인하세요."
   },
   "FarmingMode": {
     "D2Desc": "DIM은 {{store}}의 아이템 종류 당 하나의 빈 공간을 만듦으로써 아이템이 우편 담당자에게 보내지는 것을 막고 있습니다. 공간 확보를 위해 아이템을 금고로 옮기고 있습니다.",
@@ -137,7 +161,6 @@
       "MakeRoom": "장비를 이동시켜 아이템을 얻을 공간을 확보",
       "Tooltip": "체크하면 DIM이 금고 내 엔그램의 공간 확보를 위해서 무기와 방어구를 옮길 것입니다."
     },
-    "MoveTokens": "평판 아이템을 금고로 이동",
     "OutOfRoom": "{{character}}에게서 아이템을 이동할 공간이 없습니다. 엔그램을 해독하고 쓰레기를 청소할 때가 됐습니다!",
     "OutOfRoomTitle": "공간 부족",
     "Stop": "중지"
@@ -195,6 +218,7 @@
     "HasNotes": "메모가 추가된 아이템 표시",
     "HasOrnament": "장식이 적용된 아이템 표시",
     "HasShader": "안료가 적용된 아이템 표시",
+    "HoldsMod": "특정 시즌의 개조 부품과 호환되는 방어구 표시",
     "InLoadout": "로드아웃에 포함된 아이템 표시",
     "Infusable": "주입할 수 있는 장비 표시",
     "Leveling": {
@@ -211,7 +235,7 @@
     "LockAllSuccess": "아이템 {{num}}개 잠김",
     "Locked": "잠금 여부에 따른 아이템 표시",
     "MaxPower": "각 캐릭터 직업의 전투력을 최대화할 수 있는 아이템 표시",
-    "ModSlot": "특정 시즌의 개조 부품과 호환되는 방어구 표시",
+    "ModSlot": "특정 시즌의 개조 부품 슬롯이 있는 방어구 표시",
     "Mods": {
       "Y2": "2년 차 개조 부품이 장착된 아이템 표시",
       "Y3": "방어구 2.0 개조 부품이 선택된 아이템 표시"
@@ -309,13 +333,16 @@
       "Shipwright": "조선공",
       "Speaker": "대변자"
     },
-    "VideoExample": "자세한 검색 필터 설명서를 보시려면 {{link}}에 방문하세요.",
+    "VideoExample": "검색 필터 사용에 대한 자세한 내용은 사용 설명서를 참조하세요.",
     "WeaponClass": "무기 클래스에 따른 아이템 표시",
     "WeaponType": "무기 유형에 따른 아이템 표시",
     "Wishlist": "희망 아이템 목록과 일치하는 아이템 표시",
     "WishlistDupe": "희망 아이템 목록에 있는 아이템 중 적어도 하나 이상의 중복이 있는 아이템 표시",
     "WishlistNotes": "메모가 일치하는 희망 아이템만 표시",
     "Year": "데스티니의 특정 연도에서 나온 아이템 표시"
+  },
+  "General": {
+    "UserGuideLink": "사용 설명서"
   },
   "Ghost": {
     "crucible": "시련의 장",
@@ -329,7 +356,7 @@
     "moon": "달",
     "nessus": "네소스",
     "strikes": "공격전",
-    "tangled": "뒤엉킨 해안",
+    "tangled": "해안",
     "titan": "타이탄"
   },
   "Header": {
@@ -383,10 +410,6 @@
     "SwitchDirection": "전환",
     "TransferItems": "이동"
   },
-  "ItemInfoService": {
-    "SaveInfoErrorDescription": "아이템에 대한 DIM의 정보를 저장하는 중 문제가 발생하였습니다. 한 가지 문제는 데이터가 저장될 수 있는 한도가 있는 것입니다. 이것이 태그와 메모 기능을 베타 버전에서만 사용할 수 있는 이유입니다. 오류는 다음과 같습니다: {{error}}",
-    "SaveInfoErrorTitle": "아이템 정보 저장 중 문제 발생"
-  },
   "ItemMove": {
     "Consolidate": "{{name}} 합쳐짐",
     "Distributed": "{{name}}을(를) 분배함\n{{name}}을(를) 모든 캐릭터에게 공평하게 나누었습니다.",
@@ -423,6 +446,10 @@
   },
   "LB": {
     "AdvancedOptions": "고급 옵션",
+    "Chest": "가슴",
+    "ChooseAMod": "개조 부품 선택",
+    "ChooseAPerk": "특성 선택",
+    "ClassItem": "직업 아이템",
     "ClearLocked": "잠금 해제",
     "ContainsVendorItems": "이 로드아웃은 상인의 아이템을 포함합니다",
     "Current": "현재",
@@ -430,6 +457,9 @@
     "Exclude": "제외된 아이템",
     "ExcludeHelp": "아이템을 쉬프트 + 클릭(또는 이 바구니에 끌어서 놓기)하여 특정 장비를 제외한 세트를 만듭니다.",
     "FilterSets": "필터 조합",
+    "Gauntlets": "건틀릿",
+    "General": "일반",
+    "Helmet": "헬멧",
     "Help": {
       "And": "이 특성을 가진 모든 방어구들은 (\"그리고\") 를 사용 할 것입니다",
       "ChangeNodes": "로드아웃을 생성하려면 표기된 값으로 게임 내에서 지능, 힘, 규율 스탯을 변경하세요.",
@@ -451,6 +481,7 @@
     "HideAllConfigs": "모든 설정 숨기기",
     "HideConfigs": "설정 숨기기",
     "LB": "로드아웃 최적화",
+    "Legs": "다리",
     "LightMode": {
       "HelpCurrent": "현재 방어 레벨에 따른 로드아웃 계산하기",
       "HelpScaled": "모든 장비가 350 방어라는 가정 하에 로드아웃 계산",
@@ -462,6 +493,7 @@
     "Locked": "잠긴 아이템",
     "LockedHelp": "바구니에 아이템을 끌어다 놓아 해당 장비가 포함된 조합을 만드세요. 아이템을 제외하려면 쉬프트 + 클릭하세요.",
     "Missing2": "완전한 세트를 만들기 위해 필요한 희귀, 전설, 경이 등급의 장비가 부족합니다!",
+    "ModLockButton": "개조 부품 선택",
     "ProcessingMode": {
       "Fast": "빠름",
       "Full": "최대",
@@ -470,10 +502,22 @@
       "ProcessingMode": "처리 모드"
     },
     "Scaled": "확대 됨",
+    "SearchAMod": "개조 부품이나 설명 검색",
+    "Season": "시즌",
+    "Seasonal": "시즌",
+    "SelectMods": "개조 부품 선택",
     "ShowAllConfigs": "모든 설정 표시",
     "ShowConfigs": "설정 표시",
     "ShowGear": "{{class}} 방어구",
     "Vendor": "상인 아이템 포함"
+  },
+  "Loading": {
+    "Accounts": "데스티니 계정 불러오는 중...",
+    "AuditLog": "DIM 동기화 기록 불러오는 중...",
+    "Code": "DIM 코드 불러오는 중...",
+    "FilterHelp": "검색 도움말 불러오는 중...",
+    "Profile": "데스티니 프로필 불러오는 중...",
+    "Vendors": "데스티니 상인 불러오는 중..."
   },
   "LoadoutBuilder": {
     "AltPerkKey": "특성을 선택하여 스탯 표시",
@@ -497,7 +541,7 @@
     "LimitedCombos": "총 {{combosWithoutCaps, number}}개의 능력치 조합이 있으나, DIM이 충돌하는 것을 방지하기 위해 {{combos, number}}개의 조합만 살펴보았습니다. 이로 인해 일부 조합은 표시되지 않습니다. 제한을 푸시려면 특정 아이템이나 특성을 잠그거나, 오래된 방어구를 분해하세요.",
     "LockEquipped": "현재 장비",
     "LockItem": "아이템 잠금",
-    "LockPerk": "개조 부품이나 특성 선택",
+    "LockPerk": "에너지나 특성 선택",
     "NewEmptyLoadout": "빈 로드아웃 생성",
     "NoBuildsFound": "빌드가 없습니다. 필터링 조건을 확장해보세요.",
     "NumStatMixes": "스탯 조합 {{count, number}}개",
@@ -517,8 +561,7 @@
     "StatTierIncludeOption": "포함",
     "TierNumber": "T{{tier}}",
     "Traction": "견인 특성은 기동성 +1을 제공합니다.",
-    "UnlockItem": "아이템 잠금 해제",
-    "YouTubeLink": "YouTube에서 로드아웃 최적화 튜토리얼을 시청하세요."
+    "UnlockItem": "아이템 잠금 해제"
   },
   "Loadouts": {
     "Abandon": "이 로드아웃을 삭제하시겠습니까?",
@@ -526,40 +569,27 @@
     "AlreadyExistsClass": "동일한 이름을 가진 로드아웃이 {{className}} 직업에 존재합니다.",
     "AlreadyExistsGlobal": "동일한 이름을 가진 공용 로드아웃이 존재합니다.",
     "Any": "모든 직업",
-    "Applied": "아이템 로드아웃 1개를 {{store}}에게 이동하였습니다.",
-    "AppliedAuto": "자동 로드아웃 생성기",
     "AppliedError": "로드아웃에 이동할 수 있는 장비가 없습니다.",
     "AppliedWarn": "로드아웃이 부분적으로 옮겨졌으며 {{total}}개의 아이템 중 {{failed}}개에서 오류가 발생하였습니다.",
-    "Applied_female": "아이템 로드아웃 1개를 {{store}}에게 이동하였습니다.",
-    "Applied_female_plural": "로드아웃의 {{count}}개의 아이템을 {{store}}에게 이동하였습니다.",
-    "Applied_male": "아이템 로드아웃 1개를 {{store}}에게 이동하였습니다.",
-    "Applied_male_plural": "로드아웃의 {{count}}개의 아이템을 {{store}}에게 이동하였습니다.",
-    "Applied_plural": "로드아웃의 {{count}}개의 아이템을 {{store}}(으)로 이동하였습니다.",
     "ApplySearch": "\"{{query}}\"로 검색된 아이템 이동",
     "Before": "'{{name}}' 이전",
-    "ChangeName": "이름 변경",
     "ChooseItem": "{{name}} 추가",
-    "ClashingDescription": "{{loadoutName}} 로드아웃이 이전 로드아웃과 충돌하여 저장할 수 없습니다. 로드아웃 서랍을 여시려면 여기를 클릭하세요.",
-    "ClashingTitle": "로드아웃 충돌",
     "Classified": "당신의 아이템중 몇몇은 기밀 상태라서 최대 파워 계산에는 포함 될 수가 없습니다.",
     "ClearSpace": "다른 아이템 이동",
     "ConfirmDelete": "'{{name}}'을(를) 삭제하시겠습니까?",
     "CouldNotEquip": "{{itemname}}을(를) 장착할 수 없습니다.",
     "Create": "로드아웃 생성",
     "Delete": "로드아읏 지우기",
-    "DeleteErrorDescription": "{{loadoutName}} 로드아웃을 삭제할 수 없습니다: {{error}}.",
-    "DeleteErrorTitle": "로드아웃 삭제중 오류",
     "Edit": "로드아웃 편집",
-    "EditLoadoutName": "{{loadoutName}} 로드아웃 수정",
     "FilteredItems": "필터링된 아이템",
     "FindAnother": "다른 {{name}} 검색",
     "FromEquipped": "현재 장비",
     "GatherEngrams": "엔그램 모으기",
     "GatherEngramsExceptExotics": "경이",
-    "Generated": "T{{tier}} {{Mobility}}/{{Resilience}}/{{Recovery}}",
+    "Generated": "T{{tier}} 로드아웃",
     "ItemLeveling": "아이템 레벨 올리기",
     "LoadoutName": "로드아웃 이름",
-    "Loadouts": "로드아웃들",
+    "Loadouts": "로드아웃",
     "MakeRoom": "우편 담당자를 위한 공간 생성",
     "MakeRoomDone": "{{store}}에서 1개의 아이템을 옮김으로써 우편 담당자 아이템 1개를 위한 공간을 만들었습니다.",
     "MakeRoomDone_female": "{{store}}에서 1개의 아이템을 옮김으로써 우편 담당자 아이템 1개를 위한 공간을 만들었습니다.",
@@ -582,13 +612,8 @@
     "NotificationMessage_plural": "{{count}}개의 아이템이 포함된 로드아웃을 {{store}}에게 장착하였습니다.",
     "NotificationTitle": "로드아웃: {{name}}",
     "OnlyItems": "오직 장착이 가능한 아이템, 재료, 소모품들만이 로드아웃에 추가될 수 있습니다.",
+    "OpenInOptimizer": "로드아웃 최적화에서 열기",
     "PullFromPostmaster": "우편 담당자에게서 수령",
-    "PullFromPostmasterDone": "1개의 아이템을 우편 담당자에게서 {{store}}에게 이동하였습니다.",
-    "PullFromPostmasterDone_female": "1개의 아이템을 우편 담당자에게서 {{store}}에게 이동하였습니다.",
-    "PullFromPostmasterDone_female_plural": "{{count}}개의 아이템을 우편 담당자에게서 {{store}}에게 이동하였습니다.",
-    "PullFromPostmasterDone_male": "1개의 아이템을 우편 담당자에게서 {{store}}에게 이동하였습니다.",
-    "PullFromPostmasterDone_male_plural": "{{count}}개의 아이템을 우편 담당자에게서 {{store}}에게 이동하였습니다.",
-    "PullFromPostmasterDone_plural": "{{count}}개의 아이템을 우편 담당자에게서 {{store}}에게 이동하였습니다.",
     "PullFromPostmasterError": "우편 담당자로부터 가져올 수 없습니다: {{error}}",
     "PullFromPostmasterNotification": "1개의 아이템을 우편 담당자에게서 {{store}}에게 이동하였습니다.",
     "PullFromPostmasterNotification_female": "1개의 아이템을 우편 담당자에게서 {{store}}에게 이동하였습니다.",
@@ -601,22 +626,21 @@
     "Random": "무작위",
     "Randomize": "무작위",
     "RandomizePrompt": "장착된 직업, 무기, 방어구, 고스트를 무작위로 설정하시겠습니까?",
+    "RandomizeSearch": "검색 결과에서 무작위화",
+    "RandomizeSearchPrompt": "\"{{query}}\"로 검색된 결과에서 무작위로 장착하시겠습니까?",
     "RandomizeWeapons": "장착된 직업과 무기를 무작위로 설정하시겠습니까?",
     "RestoreAllItems": "모든 아이템",
     "Save": "저장",
     "SaveAsNew": "새로 저장",
-    "SaveErrorDescription": "{{loadoutName}} 로드아웃을 저장할 수 없습니다: {{error}}.",
-    "SaveErrorTitle": "로드아웃 저장 실패",
     "TooManyRequested": "{{total}}개의 {{itemname}}을(를) 가지고 있으나 로드아웃이 {{requested}}개를 필요로 합니다. 가지고 있는 모든 것을 옮겼습니다.",
     "VendorsCannotEquip": "이 아이템을 소유하고 있지 않습니다. 클릭하여 대체품을 선택하거나 X를 눌러 삭제합니다:",
     "WeaponsOnly": "무기"
   },
   "Manifest": {
-    "Build": "데스티니 정보 데이터베이스 구축 중",
-    "Download": "Bungie에서 최신 데스티니 정보 받아오는 중",
-    "Error": "데스티니 정보를 가져오는데 실패했습니다:\n{{error}}\n새로고침 하여 다시 시도하세요.",
-    "Load": "저장된 데스티니 정보를 불러오는 중",
-    "Outdated": "오래된 데스티니 정보",
+    "Download": "Bungie에서 최신 데스티니 정보 데이터베이스 다운로드하는 중...",
+    "Error": "데스티니 정보 데이터베이스 불러오기 실패:\n{{error}}\n재시도하시려면 새로고침하십시오.",
+    "Load": "데스티니 정보 데이터베이스 불러오는 중...",
+    "Outdated": "오래된 데스티니 정보 데이터베이스",
     "OutdatedExplanation": "Bungie가 데스티니 정보 데이터베이스를 업데이트하였습니다. 새로운 정보를 얻으시려면 DIM을 새로고침하세요. Bungie가 데스티니를 업데이트한 후 몇 시간 동안 새 데이터가 시스템에 전파되기 때문에 DIM의 특정 기능이 작동하지 않을 수 있습니다."
   },
   "Milestone": {
@@ -683,13 +707,64 @@
     "BulkMove": "이동",
     "BulkMoveLoadoutName": "정리 도구에서 선택됨",
     "BulkTag": "태그",
+    "Columns": {
+      "Archetype": "아키타입",
+      "BaseStats": "기본 스탯",
+      "CustomTotal": "사용자 정의 총합",
+      "Damage": "피해 유형",
+      "Element": "원소",
+      "Energy": "에너지",
+      "Event": "이벤트",
+      "Ghost": "고스트 태그",
+      "Icon": "아이콘",
+      "KillTracker": "처치 추적기",
+      "Loadouts": "로드아웃",
+      "MasterworkStat": "걸작 스탯",
+      "MasterworkTier": "걸작 단계",
+      "ModSlot": "개조 부품 소켓",
+      "Name": "이름",
+      "New": "신규",
+      "Notes": "메모",
+      "PercentComplete": "% 완료",
+      "Perks": "특성",
+      "PerksMods": "특성, 개조 부품 & 안료",
+      "Quality": "품질 %",
+      "Rating": "평점",
+      "Reacquireable": "재습득 가능",
+      "Season": "시즌",
+      "Source": "출처",
+      "StatQuality": "스탯 품질",
+      "StatQualityStat": "{{stat}}%",
+      "Stats": "스탯",
+      "Tag": "태그",
+      "Tier": "등급",
+      "Traits": "무기 특성",
+      "WishList": "희망 아이템 목록",
+      "WishListNotes": "희망 아이템 목록 메모",
+      "Year": "연도"
+    },
     "EnabledColumns": "활성화된 열",
-    "Organizer": "정리 도구"
+    "Lock": "잠금",
+    "NoItems": "선택된 아이템 없음",
+    "NoMobile": "모바일에서는 보기 힘듭니다.",
+    "Note": "메모 설정",
+    "NotePrompt": "메모:",
+    "Organizer": "정리 도구",
+    "SelectAll": "모두 선택",
+    "SelectItem": "{{name}} 선택 혹은 선택 해제",
+    "ShiftTip": "팁: 아이템을 필터링하시려면 쉬프트 키를 누르고 셀을 클릭하세요",
+    "Stats": {
+      "Aim": "조준",
+      "Inventory": "소지품",
+      "RPM": "RPM",
+      "Recoil": "반동",
+      "Reload": "재장전"
+    },
+    "Unlock": "잠금 해제"
   },
   "Progress": {
     "Bounties": "현상금",
     "CrucibleRank": "등급",
-    "Factions": "진영",
     "Items": "퀘스트 아이템",
     "Milestones": "이정표 & 도전",
     "PercentPrestige": "초기화까지 {{pct}}%",
@@ -712,7 +787,7 @@
     "CharacterOrder": "캐릭터 정렬 방법",
     "CharacterOrderFixed": "캐릭터 나이 (PC에서 오류가 있음)",
     "CharacterOrderRecent": "최근 캐릭터",
-    "CharacterOrderReversed": "최근의 캐릭터 (역순)",
+    "CharacterOrderReversed": "최근 캐릭터 (역순)",
     "ColorA11y": "색맹 설정",
     "ColumnSize": "아이템 {{num}}개",
     "ColumnSizeAuto": "자동",
@@ -733,7 +808,7 @@
     "Language": "언어",
     "LogOut": "로그아웃",
     "Ratings": "평가",
-    "ReloadDIM": "언어를 바꾸기 위하여 DIM을 새로고침 해주시기 바랍니다",
+    "ReloadDIM": "언어 변경을 완료하기 위해 DIM 새로고침",
     "ResetToDefault": "초기화",
     "ReviewsModeSelection": "선택한 게임 모드의 평가만 표시",
     "ReviewsPlatformSelection": "선택한 플랫폼의 평가만 표시",
@@ -771,56 +846,61 @@
     "Total": "총"
   },
   "Storage": {
+    "ApiPermissionPrompt": {
+      "Description": "DIM은 별도의 로그인 없이 태그, 로드아웃, 설정을 서버에 저장하고 다른 버전의 DIM과 데이터를 동기화할 수 있습니다. 이전에 DIM 동기화를 활성화하지 않았으면 설정에서 기존 데이터를 가져올 수 있습니다. OpenCollective 후원자의 지원으로 가능했습니다!",
+      "No": "나중에",
+      "Title": "DIM 동기화를 활성화합니까?",
+      "Yes": "동기화 사용"
+    },
+    "AuditLog": "DIM 동기화 변경 기록",
+    "AuditLogLabel": "과거 데이터 변경 내역 보기",
+    "AutoBackup": "만일을 대비해서 데이터를 다운로드 폴더의 dim-data.json 파일에 백업했습니다.",
+    "BackUpFirst": "만일을 대비해서 모든 데이터를 삭제하기 전에 백업하세요.",
     "BrowserMayClearData": "저장 공간이 부족하거나 DIM을 꾸준히 방문하시지 않으면 브라우저에서 이 정보를 지울 수도 있습니다",
-    "ClearIgnoredUsers": "무시한 리뷰어 지우기",
+    "DeleteAllData": "DIM 동기화 서버의 모든 데이터 삭제",
+    "DeleteAllDataConfirm": "정말로 DIM 동기화에서 모든 계정의 모든 데이터를 삭제하시겠습니까? 되돌릴 수 없습니다.",
+    "DeleteAllDataLabel": "DIM 동기화 데이터 삭제",
     "Details": {
-      "GoogleDriveStorage": "DIM은 구글 드라이브의 앱 저장소에 데이터를 저장할 수 있습니다. 여러 브라우저에서 구글 드라이브에 로그인할 경우 모든 브라우저에서 데이터가 공유됩니다. 이 데이터는 Bungie 계정마다 저장됩니다. 로그인하시는데 문제가 있으시다면 브라우저에서 서드파티 쿠키를 허용해주세요.",
       "IndexedDBStorage": "로컬 저장소는 정보를 이 브라우저에만 저장할 것입니다. 브라우저 데이터를 삭제하면 이 정보도 같이 삭제됩니다."
     },
-    "Disabled": "꺼짐",
+    "DimApiFinePrint": "DIM이 태그, 로드아웃, 설정을 DIM 서버에 저장하고 다른 버전의 DIM과 동기화합니다.",
+    "DimSyncEnabled": "DIM 동기화 활성화됨",
     "DriveLogout": "구글 드라이브 로그아웃",
     "DriveSync": "구글 드라이브 로그인",
-    "Enabled": "활성화됨",
-    "Explain": "DIM은 데스티니 데이터(Bungie.net에서 관리되는)와는 별개로 고유한 데이터를 저장합니다.",
+    "EnableDimApi": "DIM 동기화 사용",
     "Export": "데이터 백업 다운로드",
-    "ForceSync": "구글 드라이브에서 강제 데이터 동기화",
-    "ForceSyncWarning": "로컬 데이터를 구글 드라이브의 데이터로 덮어씌웁니다. 정말로 진행하시겠습니까?",
-    "GDriveLogout": "당신의 데이터는 여전히 구글 드라이브에 있습니다 - 다시 로그인 하신다면 DIM은 다시 데이터를 사용할 것입니다",
-    "GDriveRevisions": "구버전 복원",
+    "GDriveImport": "기존 구글 드라이브나 로컬 저장소 데이터에서 가져오기",
+    "GDriveImportButton": "이전 데이터 가져오기",
+    "GDriveImportExplain": "브라우저나 구글 드라이브에서 이전 데이터를 복원할 수 있습니다. 방금 DIM을 v6으로 업그레이드하고 이전에 저장한 데이터가 있으면 사용하세요.",
     "GDriveSignInError": "구글 드라이브 로그인 중 문제 발생:",
-    "GDriveSignInWarning": "구글 드라이브에 이미 DIM 데이터를 저장하셨다면, 로컬에 저장된 모든 데이터를 덮어쓸 것입니다. 로그인하기 전에 데이터를 백업하세요.\n\n구글 드라이브에 로그인하시겠습니까?",
+    "GDriveSignedIn": "구글 드라이브에 {{email}}로 로그인됨",
     "GoogleApiBlocked": "콘텐츠 블락커가 구글 드라이브의 자바 스크립트를 막아서 구글 드라이브 사용이 불가합니다. 콘텐츠 블락커에서 DIM을 제외하고 다시 시도해 주세요.",
-    "GoogleDriveStorage": "구글 드라이브",
-    "GoogleDriveUsage": "구글 드라이브의 {{limit, humanBytes}} 중 {{usage, humanBytes}}를 사용하고 있습니다. DIM은 그중 {{dimQuotaUsed, humanBytes}}를 사용하고 있습니다. 구글 드라이브의 용량이 가득 차면 DIM의 정보를 저장할 수 없습니다.",
-    "GoogleDriveUsageNoFile": "구글 드라이브의 {{limit, humanBytes}} 중 {{usage, humanBytes}}를 사용하고 있습니다. DIM 파일에 대한 정보를 찾을 수 없었으며, 문제가 있을 수 있습니다. 구글 드라이브의 용량이 가득 차면 DIM의 정보를 저장할 수 없습니다.",
-    "GoogleDriveUsageUnlimited": "구글 드라이브 용량이 무제한입니다.",
-    "IgnoredUsers": "무시한 리뷰어",
     "Import": "데이터 백업 불러오기",
-    "ImportConfirm": "현재 설정을 이 버전으로 덮어씌우시겠습니까? 이 버전은 {{stats}}을 포함하고 있습니다.",
-    "ImportExport": "백업",
+    "ImportConfirmDimApi": "정말로 현재 태그, 로드아웃, 설정을 이 버전으로 덮어쓰시겠습니까? 기존 데이터를 완전히 대체할 것입니다.",
+    "ImportExport": "백업 & 복원",
     "ImportFailed": "불러오기 실패! {{error}}",
     "ImportNoFile": "선택된 파일이 없습니다!",
-    "ImportSuccess": "DIM 데이터 복원 완료!",
+    "ImportNotification": {
+      "FailedBody": "데이터를 가져올 수 없습니다. {{error}}",
+      "FailedTitle": "가져오기 실패",
+      "NoData": "백업에서 로드아웃이나 태그를 찾을 수 없음",
+      "SuccessBodyForced": "백업에서 DIM 동기화로 설정, {{loadouts}}개의 로드아웃, {{tags}}개의 태그된 아이템을 가져와서 기존 데이터를 대체했습니다.",
+      "SuccessBodyLocal": "설정, {{loadouts}}개의 로드아웃, {{tags}}개의 태그된 아이템을 백업에서 가져왔으며, 로컬 저장소에 있던 데이터를 대체했습니다. 로컬 저장소가 손실되지 않을 것을 보장할 수 없습니다 - DIM 동기화 사용을 고려하십시오.",
+      "SuccessTitle": "가져오기 성공"
+    },
     "ImportTooManyFiles": "불러올 파일을 하나만 선택하세요.",
     "ImportWrongFileType": "이 파일은 JSON 파일이 아닙니다. DIM 백업 파일이 아닐 수 있습니다.",
     "IndexedDBStorage": "로컬 브라우저 저장소",
-    "LoadRevision": "콘텐츠 불러오기",
-    "LoadoutsD1": "데스티니 1 로드아웃 {{value}}개",
-    "LoadoutsD2": "데스티니 2 로드아웃 {{value}}개",
-    "MenuTitle": "데이터 & 백업",
-    "NoData": "데이터 없음",
-    "RestoreRevision": "복원",
-    "RevisionsDescription": "구글 드라이브에 마지막 100개의 설정 수정사항이 저장되어 있습니다. 이 페이지를 사용하여 오래된 버전을 불러오고 복구하세요.",
-    "Settings": "DIM 환경 설정",
-    "StatLabel": "다음 항목을 포함하고 있습니다:",
-    "TagNotesD1": "태그나 메모가 있는 데스티니 1 아이템 {{value}}개",
-    "TagNotesD2": "태그나 메모가 있는 데스티니 2 아이템 {{value}}개",
-    "Title": "데이터 저장소",
+    "MenuTitle": "동기화 & 백업",
+    "ProfileErrorBody": "DIM 동기화 데이터를 불러오는 중 문제가 발생함",
+    "ProfileErrorTitle": "DIM 동기화 오류",
+    "UpdateErrorBody": "DIM 동기화에 데이터를 저장하는 중 문제가 발생함",
+    "UpdateErrorTitle": "DIM 동기화 오류",
     "Usage": "DIM은 이 기기에서 {{quota, humanBytes}} 중 {{usage, humanBytes}}를 사용하고 있습니다. 이는 Bungie.net에서 다운로드한 데스티니 아이템 데이터베이스를 포함하고 있습니다."
   },
   "StoreBucket": {
     "FillStack": "중첩 ({{amount}})개 채우기",
-    "HowMuch": "몇 개의 {{itemname}}을(를) 이동할까요?",
+    "HowMuch": "몇 개의 {{itemname}}을(를) 이동하시겠습니까?",
     "Move": "이동"
   },
   "SyncService": {
@@ -838,11 +918,6 @@
     "TagItems": "태그 추가",
     "UnlockAll": "아이템 잠금 해제"
   },
-  "TrialsCard": {
-    "FiveWins": "5승 보상(방어구)",
-    "Flawless": "무결점",
-    "SevenWins": "7승 보상(무기)"
-  },
   "Triumphs": {
     "HideCompleted": "완료 항목 숨기기",
     "RevealRedacted": "숨긴 항목 표시"
@@ -859,8 +934,7 @@
     "DestinySets": "Destiny Sets에서 더욱 많은 아이템 세트를 확인하세요.",
     "Engram": "보상 인그램",
     "FilterToUnacquired": "얻지 못한 아이템만 표시",
-    "Vendors": "상인",
-    "Year2Mods": "2년 차 개조 부품"
+    "Vendors": "상인"
   },
   "Views": {
     "About": {
@@ -894,6 +968,8 @@
       "Twitter": "Twitter",
       "TwitterHelp": "프로그램의 업데이트와 실시간 상태 정보를 얻고 싶으시다면 저희를 팔로우 해주세요.",
       "Version": "버전 {{version}} {{flavor}}, {{date}}에 빌드됨",
+      "Wiki": "DIM 사용 설명서 위키",
+      "WikiHelp": "DIM 사용법을 배우고 커뮤니티 기반의 사용 설명서에 기여하세요.",
       "YouTube": "YouTube",
       "YouTubeHelp": "YouTube 채널에서 DIM 사용법을 알아보세요."
     },
@@ -921,11 +997,13 @@
     "ExternalSource": "선택적으로 희망 아이템 목록 URL을 입력하세요.",
     "Header": "희망 아이템 목록",
     "Import": "희망 아이템 목록 불러오기",
+    "ImportError": "희망 아이템 목록 불러오기 실패: {{error}}",
     "ImportFailed": "희망 아이템 정보를 찾지 못했습니다.",
     "ImportNoFile": "선택된 파일이 없습니다.",
     "ImportSuccess": "1개의 아이템 정보를 포함한 희망 아이템 목록을 불러왔습니다.{{titleAndDescription}}",
     "ImportSuccess_plural": "{{count, number}}개의 아이템 정보를 포함한 희망 아이템 목록을 불러왔습니다.{{titleAndDescription}}",
     "InvalidExternalSource": "유효한 외부 희망 아이템 목록 URL을 입력하세요. URL은 https://raw.githubusercontent.com로 시작해야 합니다.",
+    "LastUpdated": "마지막 업데이트: {{lastUpdatedDate}} {{lastUpdatedTime}}",
     "Num": "{{num, number}}개의 희망 아이템 목록",
     "UpdateExternalSource": "희망 아이템 목록 업데이트",
     "WishListNotes": "희망 아이템 메모: {{notes}}"

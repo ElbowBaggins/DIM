@@ -16,7 +16,7 @@ export default function SocketDetailsSelectedPlug({
   plug,
   defs,
   item,
-  currentPlug
+  currentPlug,
 }: {
   plug: DestinyInventoryItemDefinition;
   defs: D2ManifestDefinitions;
@@ -42,7 +42,6 @@ export default function SocketDetailsSelectedPlug({
       if (!itemStat) {
         return null;
       }
-      // const statDef = defs.Stat.get(stat.statTypeHash);
       const statGroupDef = defs.StatGroup.get(
         defs.InventoryItem.get(item.hash).stats.statGroupHash!
       );
@@ -64,8 +63,8 @@ export default function SocketDetailsSelectedPlug({
         modValue,
         dimStat: {
           ...itemStat,
-          value: itemStatValue
-        } as DimStat
+          value: itemStatValue,
+        } as DimStat,
       };
     })
   );
@@ -74,23 +73,22 @@ export default function SocketDetailsSelectedPlug({
     <div className={styles.selectedPlug}>
       <div className={styles.modIcon}>
         <SocketDetailsMod itemDef={plug} defs={defs} />
-        {materialRequirementSet &&
-          materialRequirementSet.materials.map((material) => {
-            const materialDef = defs.InventoryItem.get(material.itemHash);
-            return (
-              materialDef &&
-              material.count > 0 &&
-              !material.omitFromRequirements && (
-                <div className={styles.material} key={material.itemHash}>
-                  {material.count.toLocaleString()}
-                  <BungieImage
-                    src={materialDef.displayProperties.icon}
-                    title={materialDef.displayProperties.name}
-                  />
-                </div>
-              )
-            );
-          })}
+        {materialRequirementSet?.materials.map((material) => {
+          const materialDef = defs.InventoryItem.get(material.itemHash);
+          return (
+            materialDef &&
+            material.count > 0 &&
+            !material.omitFromRequirements && (
+              <div className={styles.material} key={material.itemHash}>
+                {material.count.toLocaleString()}
+                <BungieImage
+                  src={materialDef.displayProperties.icon}
+                  title={materialDef.displayProperties.name}
+                />
+              </div>
+            )
+          );
+        })}
       </div>
       <div className={styles.modDescription}>
         <h3>{plug.displayProperties.name}</h3>

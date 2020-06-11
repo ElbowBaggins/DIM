@@ -12,7 +12,7 @@ const resistanceMods = {
   1546607977: DamageType.Kinetic,
   1546607980: DamageType.Void,
   1546607978: DamageType.Arc,
-  1546607979: DamageType.Thermal
+  1546607979: DamageType.Thermal,
 };
 
 /**
@@ -68,12 +68,7 @@ function buildForsakenKillTracker(
     Boolean(socket.plug?.plugObjectives?.length)
   );
 
-  if (
-    killTrackerSocket &&
-    killTrackerSocket.plug &&
-    killTrackerSocket.plug.plugObjectives &&
-    killTrackerSocket.plug.plugObjectives.length
-  ) {
+  if (killTrackerSocket?.plug?.plugObjectives?.length) {
     const plugObjective = killTrackerSocket.plug.plugObjectives[0];
 
     const objectiveDef = defs.Objective.get(plugObjective.objectiveHash);
@@ -84,7 +79,7 @@ function buildForsakenKillTracker(
       typeDesc: objectiveDef.progressDescription,
       typeName: [3244015567, 2285636663, 38912240].includes(killTrackerSocket.plug.plugItem.hash)
         ? 'Crucible'
-        : 'Vanguard'
+        : 'Vanguard',
     };
   }
   return null;
@@ -95,21 +90,16 @@ function buildForsakenMasterworkStats(
 ): DimMasterwork | null {
   const masterworkSocket = createdItem.sockets!.sockets.find((socket) =>
     Boolean(
-      socket.plug &&
-        socket.plug.plugItem.plug &&
+      socket.plug?.plugItem.plug &&
         (socket.plug.plugItem.plug.plugCategoryIdentifier.includes('masterworks.stat') ||
           socket.plug.plugItem.plug.plugCategoryIdentifier.endsWith('_masterwork'))
     )
   );
-  if (
-    masterworkSocket &&
-    masterworkSocket.plug &&
-    masterworkSocket.plug.plugItem.investmentStats.length
-  ) {
+  if (masterworkSocket?.plug?.plugItem.investmentStats.length) {
     const masterwork = masterworkSocket.plug.plugItem.investmentStats[0];
     if (!createdItem.element && createdItem.bucket?.sort === 'Armor') {
       createdItem.element =
-        Object.values(defs.DamageType.getAll()).find(
+        Object.values(defs.DamageType).find(
           (damageType) => damageType.enumValue === resistanceMods[masterwork.statTypeHash]
         ) ?? null;
     }
@@ -125,7 +115,7 @@ function buildForsakenMasterworkStats(
       statValue: masterworkSocket.plug.stats
         ? masterworkSocket.plug.stats[masterwork.statTypeHash]
         : 0,
-      tier: masterwork.value
+      tier: masterwork.value,
     };
   }
   return null;
@@ -169,6 +159,6 @@ function buildMasterworkInfo(
     statHash,
     statName: statDef.displayProperties.name,
     statValue: socket.plug.stats ? socket.plug.stats[statHash] : 0,
-    tier: investmentStats[0].value
+    tier: investmentStats[0].value,
   };
 }

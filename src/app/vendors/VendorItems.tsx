@@ -5,12 +5,13 @@ import { D2ManifestDefinitions } from '../destiny2/d2-definitions';
 import BungieImage from '../dim-ui/BungieImage';
 import VendorItemComponent from './VendorItemComponent';
 import { VendorItem } from './vendor-item';
-import { UISref } from '@uirouter/react';
 import FactionIcon from '../progress/FactionIcon';
 import PressTip from '../dim-ui/PressTip';
 import { D2Vendor } from './d2-vendors';
 import styles from './VendorItems.m.scss';
 import { chainComparator, compareBy } from 'app/utils/comparators';
+import { Link } from 'react-router-dom';
+import spiderMats from 'data/d2/spider-mats.json';
 
 const itemSort = chainComparator<VendorItem>(
   compareBy((item) => item.item?.typeName),
@@ -27,7 +28,8 @@ export default function VendorItems({
   vendor,
   ownedItemHashes,
   currencyLookups,
-  filtering
+  filtering,
+  characterId,
 }: {
   defs: D2ManifestDefinitions;
   vendor: D2Vendor;
@@ -36,6 +38,7 @@ export default function VendorItems({
     [itemHash: number]: number;
   };
   filtering?: boolean;
+  characterId: string;
 }) {
   const itemsByCategory = _.groupBy(vendor.items, (item: VendorItem) => item.displayCategoryIndex);
 
@@ -52,7 +55,7 @@ export default function VendorItems({
         ...Object.keys(faction.tokenValues)
           .map((h) => defs.InventoryItem.get(parseInt(h, 10)))
           .filter(Boolean),
-        ...currencies
+        ...currencies,
       ],
       (i) => i.hash
     );
@@ -61,13 +64,7 @@ export default function VendorItems({
   // add all traded planetmats if this vendor is the spider
   if (vendor?.component?.vendorHash === 863940356) {
     currencies = _.uniqBy(
-      [
-        ...vendor.def.itemList
-          .filter((i) => i.currencies.length && i.currencies[0].quantity === 5)
-          .map((i) => defs.InventoryItem.get(i.currencies[0].itemHash))
-          .filter((i) => i.itemCategoryHashes?.includes(2088636411)), // "Reputation Tokens"
-        ...currencies
-      ],
+      [...spiderMats.map((h) => defs.InventoryItem.get(h)), ...currencies],
       (i) => i.hash
     );
   }
@@ -78,7 +75,7 @@ export default function VendorItems({
         <div className={styles.currencies}>
           {currencies.map((currency) => (
             <div className={styles.currency} key={currency.hash}>
-              {((currencyLookups && currencyLookups[currency.hash]) || 0).toLocaleString()}{' '}
+              {(currencyLookups?.[currency.hash] || 0).toLocaleString()}{' '}
               <BungieImage
                 src={currency.displayProperties.icon}
                 title={currency.displayProperties.name}
@@ -106,14 +103,14 @@ export default function VendorItems({
                 </PressTip>
               )}
               {rewardVendorHash && rewardItem && (
-                <UISref to="destiny2.vendor" params={{ id: rewardVendorHash }}>
+                <Link to={`vendors/${rewardVendorHash}?characterId=${characterId}`}>
                   <div className="item" title={rewardItem.displayProperties.name}>
                     <BungieImage
                       className="item-img transparent"
                       src={rewardItem.displayProperties.icon}
                     />
                   </div>
-                </UISref>
+                </Link>
               )}
             </div>
           </div>
@@ -125,9 +122,7 @@ export default function VendorItems({
             vendor.def.displayCategories[categoryIndex].identifier !== 'category_preview' && (
               <div className={styles.vendorRow} key={categoryIndex}>
                 <h3 className={styles.categoryTitle}>
-                  {(vendor.def.displayCategories[categoryIndex] &&
-                    vendor.def.displayCategories[categoryIndex].displayProperties.name) ||
-                    'Unknown'}
+                  {vendor.def.displayCategories[categoryIndex]?.displayProperties.name || 'Unknown'}
                 </h3>
                 <div className={styles.vendorItems}>
                   {items
@@ -140,6 +135,7 @@ export default function VendorItems({
                             defs={defs}
                             item={item}
                             owned={Boolean(ownedItemHashes?.has(item.item.hash))}
+                            characterId={characterId}
                           />
                         )
                     )}

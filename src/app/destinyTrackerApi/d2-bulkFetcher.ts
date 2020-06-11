@@ -1,6 +1,6 @@
 import {
   DestinyVendorSaleItemComponent,
-  DestinyVendorItemDefinition
+  DestinyVendorItemDefinition,
 } from 'bungie-api-ts/destiny2';
 import { loadingTracker } from '../shell/loading-tracker';
 import { handleD2Errors } from './d2-trackerErrorHandler';
@@ -91,8 +91,8 @@ export async function getBulkItems(
               upvotes: 0,
               downvotes: 0,
               total: 0,
-              score: 0
-            }
+              score: 0,
+            },
           });
         }
       }
@@ -112,10 +112,10 @@ export function bulkFetch(
   stores: D2Store[],
   platformSelection: DtrReviewPlatform,
   mode: DtrD2ActivityModes
-): ThunkResult<Promise<DtrRating[]>> {
+): ThunkResult<DtrRating[]> {
   return async (dispatch, getState) => {
     if (!getState().reviews.loadedFromIDB) {
-      await loadReviewsFromIndexedDB()(dispatch, getState, {});
+      await dispatch(loadReviewsFromIndexedDB());
     }
 
     const existingRatings = ratingsSelector(getState());
@@ -137,7 +137,7 @@ export function bulkFetchVendorItems(
   mode: DtrD2ActivityModes,
   vendorSaleItems?: DestinyVendorSaleItemComponent[],
   vendorItems?: DestinyVendorItemDefinition[]
-): ThunkResult<Promise<DtrRating[]>> {
+): ThunkResult<DtrRating[]> {
   return async (dispatch, getState) => {
     const existingRatings = ratingsSelector(getState());
     const bulkRankings = await getVendorBulkFetchPromise(
@@ -218,6 +218,6 @@ function makeRating(dtrRating: D2ItemFetchResponse): DtrRating {
     ratingCount: dtrRating.votes.total,
     votes: dtrRating.votes,
     reviewVotes: dtrRating.reviewVotes,
-    highlightedRatingCount: 0 // bugbug: D2 API doesn't seem to be returning highlighted ratings in fetch
+    highlightedRatingCount: 0, // bugbug: D2 API doesn't seem to be returning highlighted ratings in fetch
   };
 }

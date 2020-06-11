@@ -1,11 +1,12 @@
 import { t } from 'app/i18next-t';
 import _ from 'lodash';
-import { dimItemService } from '../inventory/item-move-service';
-import { StoreServiceType, DimStore } from '../inventory/store-types';
+import { dimItemService, ItemServiceType, MoveReservations } from '../inventory/item-move-service';
+import { DimStore } from '../inventory/store-types';
 import { DimItem } from '../inventory/item-types';
 import { InventoryBucket, InventoryBuckets } from '../inventory/inventory-buckets';
 import { showNotification } from '../notifications/notifications';
 import { postmasterNotification } from 'app/inventory/MoveNotifications';
+import { getVault } from 'app/inventory/stores-helpers';
 
 export async function makeRoomForPostmaster(
   store: DimStore,
@@ -13,9 +14,9 @@ export async function makeRoomForPostmaster(
 ): Promise<void> {
   const buckets = await bucketsService();
   const postmasterItems: DimItem[] = buckets.byCategory.Postmaster.flatMap(
-    (bucket: InventoryBucket) => store.buckets[bucket.id]
+    (bucket: InventoryBucket) => store.buckets[bucket.hash]
   );
-  const postmasterItemCountsByType = _.countBy(postmasterItems, (i) => i.bucket.id);
+  const postmasterItemCountsByType = _.countBy(postmasterItems, (i) => i.bucket.hash);
   // If any category is full, we'll move enough aside
   const itemsToMove: DimItem[] = [];
   _.forIn(postmasterItemCountsByType, (count, bucket) => {
@@ -33,7 +34,7 @@ export async function makeRoomForPostmaster(
               Uncommon: 1,
               Rare: 2,
               Legendary: 3,
-              Exotic: 4
+              Exotic: 4,
             }[i.tier];
             // And low-stat
             if (i.primStat) {
@@ -48,7 +49,12 @@ export async function makeRoomForPostmaster(
   });
   // TODO: it'd be nice if this were a loadout option
   try {
-    await moveItemsToVault(store.getStoresService(), store, itemsToMove, dimItemService);
+    await moveItemsToVault(
+      store.getStoresService().getStores(),
+      store,
+      itemsToMove,
+      dimItemService
+    );
     showNotification({
       type: 'success',
       // t('Loadouts.MakeRoomDone_male')
@@ -60,14 +66,14 @@ export async function makeRoomForPostmaster(
         count: postmasterItems.length,
         movedNum: itemsToMove.length,
         store: store.name,
-        context: store.genderName
-      })
+        context: store.genderName,
+      }),
     });
   } catch (e) {
     showNotification({
       type: 'error',
       title: t('Loadouts.MakeRoom'),
-      body: t('Loadouts.MakeRoomError', { error: e.message })
+      body: t('Loadouts.MakeRoomError', { error: e.message }),
     });
     throw e;
   }
@@ -92,10 +98,7 @@ export function postmasterAlmostFull(store: DimStore) {
 }
 
 export function postmasterSpaceLeft(store: DimStore) {
-  return Math.max(
-    0,
-    POSTMASTER_SIZE - (store.buckets[215593132] && store.buckets[215593132].length)
-  );
+  return Math.max(0, POSTMASTER_SIZE - totalPostmasterItems(store));
 }
 export function postmasterSpaceUsed(store: DimStore) {
   return POSTMASTER_SIZE - postmasterSpaceLeft(store);
@@ -103,10 +106,7 @@ export function postmasterSpaceUsed(store: DimStore) {
 
 // to-do: either typing is wrong and this can return undefined, or this doesn't need &&s and ?.s
 export function totalPostmasterItems(store: DimStore) {
-  return (
-    (store.buckets[215593132] && store.buckets[215593132].length) ||
-    store.buckets.BUCKET_RECOVERY?.length
-  );
+  return store.buckets[215593132]?.length || 0;
 }
 
 const showNoSpaceError = _.throttle(
@@ -114,7 +114,7 @@ const showNoSpaceError = _.throttle(
     showNotification({
       type: 'error',
       title: t('Loadouts.PullFromPostmasterPopupTitle'),
-      body: t('Loadouts.PullFromPostmasterError', { error: e.message })
+      body: t('Loadouts.PullFromPostmasterError', { error: e.message }),
     }),
   1000,
   { leading: true, trailing: false }
@@ -129,7 +129,7 @@ export async function pullFromPostmaster(store: DimStore): Promise<void> {
     showNotification({
       type: 'error',
       title: t('Loadouts.PullFromPostmasterPopupTitle'),
-      body: t('Loadouts.PullFromPostmasterError', { error: message })
+      body: t('Loadouts.PullFromPostmasterError', { error: message }),
     });
   });
 
@@ -165,51 +165,29 @@ export async function pullFromPostmaster(store: DimStore): Promise<void> {
     return succeeded;
   })();
 
-  if ($featureFlags.moveNotifications) {
-    showNotification(postmasterNotification(items.length, store, promise));
-  }
+  showNotification(postmasterNotification(items.length, store, promise));
 
-  const succeeded = await promise;
-
-  if (!$featureFlags.moveNotifications) {
-    if (succeeded > 0) {
-      showNotification({
-        type: 'success',
-        title: t('Loadouts.PullFromPostmasterPopupTitle'),
-        body: t('Loadouts.PullFromPostmasterDone', {
-          // t('Loadouts.PullFromPostmasterDone_male')
-          // t('Loadouts.PullFromPostmasterDone_female')
-          // t('Loadouts.PullFromPostmasterDone_male_plural')
-          // t('Loadouts.PullFromPostmasterDone_female_plural')
-          count: succeeded,
-          store: store.name,
-          context: store.genderName
-        })
-      });
-    }
-  }
+  await promise;
 }
 
 // cribbed from D1FarmingService, but modified
 async function moveItemsToVault(
-  storeService: StoreServiceType,
+  stores: DimStore[],
   store: DimStore,
   items: DimItem[],
-  dimItemService
+  dimItemService: ItemServiceType
 ): Promise<void> {
-  const reservations = {};
+  const reservations: MoveReservations = {};
   // reserve space for all move-asides
   reservations[store.id] = _.countBy(items, (i) => i.type);
 
   for (const item of items) {
     // Move a single item. We reevaluate the vault each time in case things have changed.
-    const vault = storeService.getVault();
-    const vaultSpaceLeft = vault!.spaceLeftForItem(item);
+    const vault = getVault(stores)!;
+    const vaultSpaceLeft = vault.spaceLeftForItem(item);
     if (vaultSpaceLeft <= 1) {
       // If we're down to one space, try putting it on other characters
-      const otherStores = storeService
-        .getStores()
-        .filter((store) => !store.isVault && store.id !== store.id);
+      const otherStores = stores.filter((store) => !store.isVault && store.id !== store.id);
       const otherStoresWithSpace = otherStores.filter((store) => store.spaceLeftForItem(item));
 
       if (otherStoresWithSpace.length) {

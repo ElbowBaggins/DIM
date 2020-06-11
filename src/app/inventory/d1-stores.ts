@@ -1,31 +1,28 @@
 import _ from 'lodash';
-import { compareAccounts, DestinyAccount } from '../accounts/destiny-account';
+import { DestinyAccount } from '../accounts/destiny-account';
 import { bungieErrorToaster } from '../bungie-api/error-toaster';
 import { reportException } from '../utils/exceptions';
-import { getCharacters, getStores } from '../bungie-api/destiny1-api';
+import { getStores } from '../bungie-api/destiny1-api';
 import { getDefinitions, D1ManifestDefinitions } from '../destiny1/d1-definitions';
 import { getBuckets } from '../destiny1/d1-buckets';
-import { NewItemsService } from './store/new-items';
-import { getItemInfoSource, ItemInfoSource } from './dim-item-info';
+import { cleanInfos } from './dim-item-info';
 import { makeCharacter, makeVault } from './store/d1-store-factory';
 import { resetIdTracker, processItems } from './store/d1-item-factory';
 import { D1Store, D1Vault, D1StoreServiceType, DimVault } from './store-types';
-import { D1Item, DimItem } from './item-types';
+import { D1Item } from './item-types';
 import { InventoryBuckets } from './inventory-buckets';
 import { fetchRatings } from '../item-review/destiny-tracker.service';
 import store from '../store/store';
-import { update } from './actions';
+import { update, loadNewItems, error } from './actions';
 import { loadingTracker } from '../shell/loading-tracker';
 import { showNotification } from '../notifications/notifications';
 import { BehaviorSubject, Subject, ConnectableObservable } from 'rxjs';
-import { take, distinctUntilChanged, switchMap, publishReplay, merge } from 'rxjs/operators';
-import { getActivePlatform } from 'app/accounts/platforms';
+import { take, switchMap, publishReplay, merge } from 'rxjs/operators';
+import { storesSelector } from './selectors';
 
 export const D1StoresService = StoreService();
 
 function StoreService(): D1StoreServiceType {
-  let _stores: D1Store[] = [];
-
   // A subject that keeps track of the current account. Because it's a
   // behavior subject, any new subscriber will always see its last
   // value.
@@ -37,8 +34,6 @@ function StoreService(): D1StoreServiceType {
   // A stream of stores that switches on account changes and supports reloading.
   // This is a ConnectableObservable that must be connected to start.
   const storesStream = accountStream.pipe(
-    // Only emit when the account changes
-    distinctUntilChanged(compareAccounts),
     // But also re-emit the current value of the account stream
     // whenever the force reload triggers
     merge(forceReloadTrigger.pipe(switchMap(() => accountStream.pipe(take(1))))),
@@ -52,63 +47,12 @@ function StoreService(): D1StoreServiceType {
   //       nothing changed!
 
   const service = {
-    getActiveStore: () => _stores.find((s) => s.current),
-    getStores: () => _stores,
-    getStore: (id) => _stores.find((s) => s.id === id),
-    getVault: () => _stores.find((s) => s.isVault) as D1Vault | undefined,
-    getAllItems: () => _stores.flatMap((s) => s.items),
-    refreshRatingsData() {
-      return;
-    },
+    getStores: () => storesSelector(store.getState()) as D1Store[],
     getStoresStream,
-    getItemAcrossStores,
-    updateCharacters,
     reloadStores,
-    touch() {
-      store.dispatch(update({ stores: _stores }));
-    }
   };
 
   return service;
-
-  /**
-   * Find an item among all stores that matches the params provided.
-   */
-  function getItemAcrossStores(params: {
-    id?: string;
-    hash?: number;
-    notransfer?: boolean;
-    amount?: number;
-  }) {
-    const predicate = _.iteratee(_.pick(params, 'id', 'hash', 'notransfer', 'amount')) as (
-      i: DimItem
-    ) => boolean;
-    for (const store of _stores) {
-      const result = store.items.find(predicate);
-      if (result) {
-        return result;
-      }
-    }
-    return undefined;
-  }
-
-  /**
-   * Update the high level character information for all the stores
-   * (level, light, int/dis/str, etc.). This does not update the
-   * items in the stores - to do that, call reloadStores.
-   */
-  function updateCharacters(account: DestinyAccount = getActivePlatform()!) {
-    return Promise.all([getDefinitions(), getCharacters(account)]).then(([defs, bungieStores]) => {
-      _stores.forEach((dStore) => {
-        if (!dStore.isVault) {
-          const bStore = bungieStores.find((s) => s.id === dStore.id)!;
-          dStore.updateCharacterInfo(defs, bStore.base);
-        }
-      });
-      service.touch();
-      return _stores;
-    });
-  }
 
   /**
    * Set the current account, and get a stream of stores updates.
@@ -145,21 +89,15 @@ function StoreService(): D1StoreServiceType {
    * Returns a promise for a fresh view of the stores and their items.
    */
   function loadStores(account: DestinyAccount): Promise<D1Store[] | undefined> {
-    // Save a snapshot of all the items before we update
-    const previousItems = NewItemsService.buildItemSet(_stores);
-
     resetIdTracker();
 
     const reloadPromise = Promise.all([
       getDefinitions(),
       getBuckets(),
-      NewItemsService.loadNewItems(account),
-      getItemInfoSource(account),
-      getStores(account)
+      store.dispatch(loadNewItems(account)),
+      getStores(account),
     ])
-      .then(([defs, buckets, newItems, itemInfoService, rawStores]) => {
-        NewItemsService.applyRemovedNewItems(newItems);
-
+      .then(([defs, buckets, , rawStores]) => {
         const lastPlayedDate = findLastPlayedDate(rawStores);
 
         // Currencies object gets mutated by processStore
@@ -168,48 +106,38 @@ function StoreService(): D1StoreServiceType {
         const processStorePromises = Promise.all(
           _.compact(
             (rawStores as any[]).map((raw) =>
-              processStore(
-                raw,
-                defs,
-                buckets,
-                previousItems,
-                newItems,
-                itemInfoService,
-                currencies,
-                lastPlayedDate
-              )
+              processStore(raw, defs, buckets, currencies, lastPlayedDate)
             )
           )
         );
 
-        return Promise.all([buckets, newItems, itemInfoService, processStorePromises]);
+        return Promise.all([buckets, processStorePromises]);
       })
-      .then(([buckets, newItems, itemInfoService, stores]) => {
-        // Save and notify about new items
-        NewItemsService.applyRemovedNewItems(newItems);
-        NewItemsService.saveNewItems(newItems, account);
-
-        _stores = stores;
-
+      .then(([buckets, stores]) => {
         if ($featureFlags.reviewsEnabled) {
           store.dispatch(fetchRatings(stores));
         }
 
-        itemInfoService.cleanInfos(stores);
+        store.dispatch(cleanInfos(stores));
 
         // Let our styling know how many characters there are
         document
           .querySelector('html')!
           .style.setProperty('--num-characters', String(stores.length - 1));
 
-        store.dispatch(update({ stores, buckets, newItems }));
+        store.dispatch(update({ stores, buckets }));
 
         return stores;
       })
       .catch((e) => {
-        showNotification(bungieErrorToaster(e));
         console.error('Error loading stores', e);
         reportException('D1StoresService', e);
+        if (storesSelector(store.getState()).length > 0) {
+          // don't replace their inventory with the error, just notify
+          showNotification(bungieErrorToaster(e));
+        } else {
+          store.dispatch(error(e));
+        }
         // It's important that we swallow all errors here - otherwise
         // our observable will fail on the first error. We could work
         // around that with some rxjs operators, but it's easier to
@@ -228,9 +156,6 @@ function StoreService(): D1StoreServiceType {
     raw,
     defs: D1ManifestDefinitions,
     buckets: InventoryBuckets,
-    previousItems: Set<string>,
-    newItems: Set<string>,
-    itemInfoService: ItemInfoSource,
     currencies: DimVault['currencies'],
     lastPlayedDate: Date
   ) {
@@ -250,16 +175,16 @@ function StoreService(): D1StoreServiceType {
       items = result.items;
     }
 
-    return processItems(store, items, previousItems, newItems, itemInfoService).then((items) => {
+    return processItems(store, items).then((items) => {
       store.items = items;
 
       // by type-bucket
-      store.buckets = _.groupBy(items, (i) => i.location.id);
+      store.buckets = _.groupBy(items, (i) => i.location.hash);
 
       // Fill in any missing buckets
       Object.values(buckets.byType).forEach((bucket) => {
-        if (!store.buckets[bucket.id]) {
-          store.buckets[bucket.id] = [];
+        if (!store.buckets[bucket.hash]) {
+          store.buckets[bucket.hash] = [];
         }
       });
 
@@ -267,21 +192,21 @@ function StoreService(): D1StoreServiceType {
         const vault = store;
         vault.vaultCounts = {};
         const vaultBucketOrder = [
-          'BUCKET_VAULT_WEAPONS',
-          'BUCKET_VAULT_ARMOR',
-          'BUCKET_VAULT_ITEMS'
+          4046403665, // Weapons
+          3003523923, // Armor
+          138197802, // General
         ];
 
         _.sortBy(
           Object.values(buckets.byType).filter((b) => b.vaultBucket),
-          (b) => vaultBucketOrder.indexOf(b.vaultBucket!.id)
+          (b) => vaultBucketOrder.indexOf(b.vaultBucket!.hash)
         ).forEach((bucket) => {
-          const vaultBucketId = bucket.vaultBucket!.id;
+          const vaultBucketId = bucket.vaultBucket!.hash;
           vault.vaultCounts[vaultBucketId] = vault.vaultCounts[vaultBucketId] || {
             count: 0,
-            bucket: bucket.accountWide ? bucket : bucket.vaultBucket
+            bucket: bucket.accountWide ? bucket : bucket.vaultBucket,
           };
-          vault.vaultCounts[vaultBucketId].count += store.buckets[bucket.id].length;
+          vault.vaultCounts[vaultBucketId].count += store.buckets[bucket.hash].length;
         });
       }
 

@@ -1,9 +1,10 @@
 import React from 'react';
 import { DragSourceSpec, DragSourceConnector, ConnectDragSource, DragSource } from 'react-dnd';
 import { DimItem } from './item-types';
-import { itemDrag, stackableDrag } from './actions';
+import { stackableDrag } from './actions';
 import store from '../store/store';
 import { BehaviorSubject } from 'rxjs';
+import { settingsSelector } from 'app/settings/reducer';
 
 interface ExternalProps {
   item: DimItem;
@@ -33,16 +34,18 @@ let dragTimeout: number | null = null;
 const dragSpec: DragSourceSpec<Props, DragObject> = {
   beginDrag(props) {
     if (props.item.maxStackSize > 1 && props.item.amount > 1 && !props.item.uniqueStack) {
-      dragTimeout = requestAnimationFrame(() => {
-        dragTimeout = null;
-        store.dispatch(stackableDrag(true));
-      });
-    } else {
-      dragTimeout = requestAnimationFrame(() => {
-        dragTimeout = null;
-        store.dispatch(itemDrag(true));
-      });
+      store.dispatch(stackableDrag(true));
     }
+
+    dragTimeout = requestAnimationFrame(() => {
+      dragTimeout = null;
+      // The colorblind filters interact badly with this
+      const color = settingsSelector(store.getState()).colorA11y;
+      if (!color || color === '-') {
+        document.body.classList.add('drag-perf-show');
+      }
+    });
+
     isDragging = true;
     isDragging$.next(true);
     return { item: props.item };
@@ -55,9 +58,10 @@ const dragSpec: DragSourceSpec<Props, DragObject> = {
 
     if (props.item.maxStackSize > 1 && props.item.amount > 1 && !props.item.uniqueStack) {
       store.dispatch(stackableDrag(false));
-    } else {
-      store.dispatch(itemDrag(false));
     }
+
+    document.body.classList.remove('drag-perf-show');
+
     isDragging = false;
     isDragging$.next(false);
   },
@@ -67,14 +71,14 @@ const dragSpec: DragSourceSpec<Props, DragObject> = {
     return (!item.location.inPostmaster || item.destinyVersion === 2) && item.notransfer
       ? item.equipment
       : item.equipment || item.bucket.hasTransferDestination;
-  }
+  },
 };
 
 function collect(connect: DragSourceConnector): InternalProps {
   return {
     // Call this function inside render()
     // to let React DnD handle the drag events:
-    connectDragSource: connect.dragSource()
+    connectDragSource: connect.dragSource(),
     // TODO: The monitor param has interesting things for doing animation
   };
 }

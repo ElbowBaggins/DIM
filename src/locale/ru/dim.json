@@ -5,10 +5,17 @@
   },
   "Accounts": {
     "Blizzard": "ПК",
+    "ErrorLoadInventory": "Unable to load your Destiny characters and inventory",
+    "ErrorLoadManifest": "Unable to load Destiny info database from Bungie",
+    "ErrorLoading": "Unable to load Destiny accounts from Bungie.net",
+    "MissingDescription": "The account you're trying to view is not an account linked to your Bungie.net profile.",
+    "MissingTitle": "Account Not Found",
     "NoCharacters": "На данном аккаунте Bungie.net ни одного персонажа Destiny. Попробуйте авторизовать другой аккаунт.",
     "PlayStation": "PS4",
     "Stadia": "Google Stadia",
     "Steam": "Steam",
+    "UnlinkTwitch": "Linking your Twitch account to Bungie.net will cause your D1 accounts to stop working.",
+    "UnlinkTwitchButton": "Unlink Twitch",
     "Xbox": "Xbox One"
   },
   "Activities": {
@@ -17,6 +24,24 @@
     "Nightfall": "Сумрачный налёт",
     "Normal": "Нормальный",
     "WeeklyHeroic": "Недельный Героический Налёт"
+  },
+  "AuditLog": {
+    "Account": "Account",
+    "Action": "Action",
+    "Application": "Application",
+    "Date": "Date",
+    "DeleteAll": "Deleted all saved data",
+    "DeleteLoadout": "Deleted loadout {{name}}",
+    "Description": "This log tracks all the changes you have stored in DIM Sync - including changes to settings, tags, and loadouts. After a while this log gets cleaned up.",
+    "Details": "Details",
+    "Import": "Imported {{loadouts}} loadouts and {{tags}} tagged items",
+    "Loadout": "Changed loadout {{name}}",
+    "RemoveNotes": "Removed notes from item ID {{id}}",
+    "RemoveTag": "Removed tag from item ID {{id}}",
+    "SetNotes": "Set notes to \"{{notes}}\" for item ID {{id}}",
+    "SetTag": "Set tag to {{tag}} for item ID {{id}}",
+    "Setting": "Set {{key}} to {{value}}",
+    "TagCleanup": "Cleaned up tags for dismantled items"
   },
   "Bucket": {
     "Armor": "Броня",
@@ -118,9 +143,8 @@
   "ErrorBoundary": {
     "Title": "Что-то пошло не так"
   },
-  "Faction": {
-    "EngramsAvailable": "Доступна одна энграмма",
-    "EngramsAvailable_plural": "{{count}} энграмм доступно"
+  "ErrorPanel": {
+    "Description": "This is likely an issue that affects all third-party apps. Check to see if Bungie.net loads, or the Destiny 2 Companion App works."
   },
   "FarmingMode": {
     "D2Desc": "DIM препятствует отправке вещей к Почтмейстеру, убедившись, что всегда есть хотя бы одно свободное место для каждого типа предмета на {{store}}. Он перемещает предметы в Хранилище, чтобы освободить место.",
@@ -137,7 +161,6 @@
       "MakeRoom": "Освобождать место для лута путём перемещения снаряжения",
       "Tooltip": "Если включено, DIM переместит оружие и броню, чтобы освободить место в Хранилище для Энграмм."
     },
-    "MoveTokens": "Отправка репутационных предметов в Хранилище",
     "OutOfRoom": "Не хватает свободного места, чтобы переместить предметы с {{character}}. Самое время дешифровать несколько Энграмм и почистить всё от мусора!",
     "OutOfRoomTitle": "Недостаточно свободного места",
     "Stop": "Остановить"
@@ -195,6 +218,7 @@
     "HasNotes": "Показать элементы, к которым применены заметки.",
     "HasOrnament": "Показывает предметы с применённым орнаментом.",
     "HasShader": "Покрашенные шейдерами.",
+    "HoldsMod": "Shows armor compatible with a specific type of Seasonal Mod.",
     "InLoadout": "В ваших Наборах.",
     "Infusable": "Доступные для Синтеза.",
     "Leveling": {
@@ -211,7 +235,7 @@
     "LockAllSuccess": "Задано {{num}} предметов",
     "Locked": "По статусу блокировки.",
     "MaxPower": "Показывает элементы, которые максимизируют уровень мощности света [лайта] для каждого класса персонажей.",
-    "ModSlot": "Показывает броню, совместимую с определенным типом сезонного мода.",
+    "ModSlot": "Shows armor with a specific Seasonal Mod slot.",
     "Mods": {
       "Y2": "Показывает предметы с применённым модом 2го года.",
       "Y3": "Показывает предметы с любыми выбранными модами Брони 2.0."
@@ -309,13 +333,16 @@
       "Shipwright": "Корабел",
       "Speaker": "Глашатай"
     },
-    "VideoExample": "Руководство по фильтрам: {{link}}.",
+    "VideoExample": "Visit our User Guide for in-depth info on using search filters.",
     "WeaponClass": "Оружие по слотам.",
     "WeaponType": "Оружие по типам.",
     "Wishlist": "Совпадающие с wish-list'ом",
     "WishlistDupe": "Показывает предметы, находящиеся в загруженном wish-list'e и представленные на складе и в инвентарях более чем одним экземпляром.",
     "WishlistNotes": "Показывает предметы списка желаний, пункты из которого подходят под поисковый запрос.",
     "Year": "По году Destiny 2."
+  },
+  "General": {
+    "UserGuideLink": "User guide"
   },
   "Ghost": {
     "crucible": "пвп",
@@ -383,10 +410,6 @@
     "SwitchDirection": "Наоборот",
     "TransferItems": "Передать"
   },
-  "ItemInfoService": {
-    "SaveInfoErrorDescription": "Возникла проблема сохранения относящейся к DIM информации о предмете. Одна из проблем заключается в том, что существует ограничение на количество хранимой информации - именно поэтому теги и заметки пока есть только в бета-версии. Ошибка: {{error}}.",
-    "SaveInfoErrorTitle": "Ошибка сохранения информации предмета"
-  },
   "ItemMove": {
     "Consolidate": "Собрали {{name}}",
     "Distributed": "Распределили {{name}}\nтеперь {{name}} поровну распределены между персонажами.",
@@ -423,6 +446,10 @@
   },
   "LB": {
     "AdvancedOptions": "Расширенные настройки",
+    "Chest": "Chest",
+    "ChooseAMod": "Choose your mods",
+    "ChooseAPerk": "Choose a perk",
+    "ClassItem": "Class Item",
     "ClearLocked": "Очистить выбранное",
     "ContainsVendorItems": "Этот набор содержит предметы вендоров",
     "Current": "Текущий",
@@ -430,6 +457,9 @@
     "Exclude": "Исключенные предметы",
     "ExcludeHelp": "Shift + щелчек на предмете (или перетащите его в эту зону), чтобы собрать набор без определенных предметов.",
     "FilterSets": "Наборы фильтров",
+    "Gauntlets": "Gauntlets",
+    "General": "General",
+    "Helmet": "Helmet",
     "Help": {
       "And": "Будет использована броня со всеми этими модулями (\"и\")",
       "ChangeNodes": "Изменяет характеристики Intellect, Discipline, или Strength в игре на отображаемые, чтобы создать каждый набор.",
@@ -451,6 +481,7 @@
     "HideAllConfigs": "Скрыть все настройки",
     "HideConfigs": "Скрыть настройки",
     "LB": "Конструктор Наборов",
+    "Legs": "Legs",
     "LightMode": {
       "HelpCurrent": "Рассчитать набор на текущих уровнях брони.",
       "HelpScaled": "Рассчитать наборы, как будто у всех предметов 350 защиты.",
@@ -462,6 +493,7 @@
     "Locked": "Заданные Предметы",
     "LockedHelp": "Перетащите любой предмет в этот список, чтобы создать набор с этим предметом. Кликните с зажатым Shift на предмет, чтобы исключить его из списка.",
     "Missing2": "Отсутствуют редкие, легендарные или экзотические предметы, чтобы собрать полный набор!",
+    "ModLockButton": "Select mods",
     "ProcessingMode": {
       "Fast": "Быстрый",
       "Full": "Полный",
@@ -470,10 +502,22 @@
       "ProcessingMode": "Режим обработки"
     },
     "Scaled": "Масштабированный",
+    "SearchAMod": "Search a mod or description",
+    "Season": "Season",
+    "Seasonal": "Seasonal",
+    "SelectMods": "Select Mods",
     "ShowAllConfigs": "Показать все настройки",
     "ShowConfigs": "Показать настройки",
     "ShowGear": "{{class}} Броня",
     "Vendor": "Включить предметы Вендоров"
+  },
+  "Loading": {
+    "Accounts": "Loading Destiny accounts...",
+    "AuditLog": "Loading DIM Sync history...",
+    "Code": "Loading DIM code...",
+    "FilterHelp": "Loading search help...",
+    "Profile": "Loading Destiny profile...",
+    "Vendors": "Loading Destiny vendors..."
   },
   "LoadoutBuilder": {
     "AltPerkKey": "Влияет на Статы",
@@ -497,7 +541,7 @@
     "LimitedCombos": "У вас есть {{combosWithoutCaps, number}} возможных комбинаций стата, но мы только смотрели на {{combos, number}} из них, чтобы DIM не крашился. Как результат, некоторые из комбинаций не будут показаны. Заблокируйте несколько предметов или перков или разберите старые, чтобы попасть под этот лимит.",
     "LockEquipped": "Надетое",
     "LockItem": "Фильтр по Предметам",
-    "LockPerk": "Выберите мод или перк",
+    "LockPerk": "Select energy or perk",
     "NewEmptyLoadout": "Новый Набор",
     "NoBuildsFound": "Нет подходящих предметов. Попробуйте расширить критерии Подбора по Бонусам, Характеристикам.",
     "NumStatMixes": "{{count, number}} вариант характеристик",
@@ -517,8 +561,7 @@
     "StatTierIncludeOption": "Включать",
     "TierNumber": "Т{{tier}}",
     "Traction": "\"Тяга\" даёт +1 Мобильности.",
-    "UnlockItem": "Убрать из Фильтра",
-    "YouTubeLink": "Посмотрите учебник по оптимизации снаряжения на YouTube."
+    "UnlockItem": "Убрать из Фильтра"
   },
   "Loadouts": {
     "Abandon": "Не сохраняем Набор?",
@@ -526,37 +569,24 @@
     "AlreadyExistsClass": "Данное Имя уже используется для Набора {{className}}.",
     "AlreadyExistsGlobal": "Имя Набора уже используется.",
     "Any": "Любой класс",
-    "Applied": "Предметы набора переданы {{store}}.",
-    "AppliedAuto": "Авто-Наборы",
     "AppliedError": "Ни один предмет набора не может быть передан.",
     "AppliedWarn": "Набор передан частично, по {{failed}} предметам из {{total}} возникли ошибки.",
-    "Applied_female": "Предметы набора переданы {{store}}.",
-    "Applied_female_plural": "Ваш набор из {{count}} предметов был перемещён в ваш {{store}}.",
-    "Applied_male": "Предметы набора переданы {{store}}.",
-    "Applied_male_plural": "Ваш набор из {{count}} предметов был перемещён в ваш {{store}}.",
-    "Applied_plural": "Ваш набор из {{count}} предметов был передан {{store}}.",
     "ApplySearch": "Передаю запрос \"{{query}}\"",
     "Before": "Перед '{{name}}'",
-    "ChangeName": "Изменить имя",
     "ChooseItem": "Добавить {{name}}",
-    "ClashingDescription": "Снаряжение {{loadoutName}} конфликтует с предыдущим и потому не может быть сохранено. Кликните, чтобы открыть выбор снаряжения.",
-    "ClashingTitle": "Конфликтный набор снаряжения",
     "Classified": "Некоторые ваши предметы секретны, и не могут быть включены в расчет максимально возможной силы.",
     "ClearSpace": "Обеспечить Персонажа местом в инвентаре",
     "ConfirmDelete": "Уверены, что хотите удалить {{name}}?",
     "CouldNotEquip": "Невозможно надеть {{itemname}}",
     "Create": "Набор",
     "Delete": "Удалить Набор",
-    "DeleteErrorDescription": "Не удается удалить набор {{loadoutName}}: {{error}}.",
-    "DeleteErrorTitle": "Ошибка при удалении набора",
     "Edit": "Изменить Набор",
-    "EditLoadoutName": "Редактировать Набор {{loadoutName}}",
     "FilteredItems": "Отфильтрованные предметы",
     "FindAnother": "Найти следующий {{name}}",
     "FromEquipped": "Из экипированных",
     "GatherEngrams": "Собрать Энграммы",
     "GatherEngramsExceptExotics": "Экзотический",
-    "Generated": "T{{tier}} {{Mobility}}/{{Resilience}}/{{Recovery}}",
+    "Generated": "T{{tier}} Loadout",
     "ItemLeveling": "Прокачивание предмета",
     "LoadoutName": "Назовите Набор",
     "Loadouts": "Наборы",
@@ -582,13 +612,8 @@
     "NotificationMessage_plural": "Экипировка снаряжения из {{count}} предметов для {{store}}",
     "NotificationTitle": "Снаряжение: {{name}}",
     "OnlyItems": "Только надеваемые предметы, материалы и расходные материалы могут быть добавлены к набору.",
+    "OpenInOptimizer": "Open in Loadout Optimizer",
     "PullFromPostmaster": "Забрать предметы Почтмейстера",
-    "PullFromPostmasterDone": "1 предмет Почтмейстера передан {{store}}.",
-    "PullFromPostmasterDone_female": "1 предмет Почтмейстера передан {{store}}.",
-    "PullFromPostmasterDone_female_plural": "Передано {{count}} предметов Почтмейстера в {{store}}.",
-    "PullFromPostmasterDone_male": "1 предмет Почтмейстера передан {{store}}.",
-    "PullFromPostmasterDone_male_plural": "Передано {{count}} предметов Почтмейстера в {{store}}.",
-    "PullFromPostmasterDone_plural": "Передано {{count}} предметов Почтмейстера к {{store}}.",
     "PullFromPostmasterError": "Невозможно забрать у Почтмейстера: {{error}}.",
     "PullFromPostmasterNotification": "Получение 1 предмета почтмейстера в {{store}}.",
     "PullFromPostmasterNotification_female": "Получение 1 предмета почтмейстера в {{store}}.",
@@ -601,22 +626,21 @@
     "Random": "Случайно",
     "Randomize": "Рандомизировать",
     "RandomizePrompt": "Рандомизировать активные спек, оружие, броню и призрака?",
+    "RandomizeSearch": "Randomize from Search",
+    "RandomizeSearchPrompt": "Randomize your equipped items from search \"{{query}}\"?",
     "RandomizeWeapons": "Рандомизировать активный спек и оружие?",
     "RestoreAllItems": "Все предметы",
     "Save": "Сохранить",
     "SaveAsNew": "Сохранить как...",
-    "SaveErrorDescription": "Не удается сохранить набор {{loadoutName}}: {{error}}.",
-    "SaveErrorTitle": "Ошибка сохранения набора",
     "TooManyRequested": "В наличии {{total}} {{itemname}}; Набор запрашивает {{requested}}. Передали все замеченные.",
     "VendorsCannotEquip": "Предметы не найдены. ЛКМ для выбора предмета на замену или Х для очистки:",
     "WeaponsOnly": "Оружие"
   },
   "Manifest": {
-    "Build": "Создание локальной базы данных Destiny",
-    "Download": "Загрузка последних данных Destiny от Bungie",
-    "Error": "Ошибка загрузки данных Destiny:\n{{error}}\nПерезагрузите, чтобы повторить попытку.",
-    "Load": "Загрузка сохранённых данных Destiny",
-    "Outdated": "Устаревшие данные Destiny",
+    "Download": "Downloading latest Destiny info database from Bungie...",
+    "Error": "Error loading Destiny info database:\n{{error}}\nReload to retry.",
+    "Load": "Loading Destiny info database...",
+    "Outdated": "Outdated Destiny info database",
     "OutdatedExplanation": "Bungie обновила базу данных Destiny. Перезагрузите DIM, чтобы применить изменения. Обратите внимание, что некоторые вещи могут не работать в DIM несколько часов после того, как Bungie обновят Destiny, пока новые данные не распространятся через все их системы."
   },
   "Milestone": {
@@ -683,13 +707,64 @@
     "BulkMove": "Переместить в",
     "BulkMoveLoadoutName": "Выбранный в Органайзере",
     "BulkTag": "Тег",
+    "Columns": {
+      "Archetype": "Archetype",
+      "BaseStats": "Base Stats",
+      "CustomTotal": "Custom Total",
+      "Damage": "Damage",
+      "Element": "Element",
+      "Energy": "Energy",
+      "Event": "Event",
+      "Ghost": "Ghost Tag",
+      "Icon": "Icon",
+      "KillTracker": "Kill Tracker",
+      "Loadouts": "Loadouts",
+      "MasterworkStat": "Masterwork Stat",
+      "MasterworkTier": "Masterwork Tier",
+      "ModSlot": "Mod Slot",
+      "Name": "Name",
+      "New": "New",
+      "Notes": "Notes",
+      "PercentComplete": "% Complete",
+      "Perks": "Perks",
+      "PerksMods": "Perks, Mods & Shaders",
+      "Quality": "Quality %",
+      "Rating": "Rating",
+      "Reacquireable": "Reacquireable",
+      "Season": "Season",
+      "Source": "Source",
+      "StatQuality": "Stat Quality",
+      "StatQualityStat": "{{stat}}%",
+      "Stats": "Stats",
+      "Tag": "Tag",
+      "Tier": "Tier",
+      "Traits": "Weapon Traits",
+      "WishList": "Wish List",
+      "WishListNotes": "Wish List Notes",
+      "Year": "Year"
+    },
     "EnabledColumns": "Включенные столбцы",
-    "Organizer": "Органайзер"
+    "Lock": "Lock",
+    "NoItems": "No items selected",
+    "NoMobile": "This view isn't great on mobile.",
+    "Note": "Set Note",
+    "NotePrompt": "Note:",
+    "Organizer": "Органайзер",
+    "SelectAll": "Select All",
+    "SelectItem": "Select or unselect {{name}}",
+    "ShiftTip": "Tip: Hold the Shift key and click on a cell to filter items",
+    "Stats": {
+      "Aim": "Aim",
+      "Inventory": "Inventory",
+      "RPM": "RPM",
+      "Recoil": "Recoil",
+      "Reload": "Reload"
+    },
+    "Unlock": "Unlock"
   },
   "Progress": {
     "Bounties": "Контракты",
     "CrucibleRank": "Ранги",
-    "Factions": "Репутация",
     "Items": "Предметы Заданий",
     "Milestones": "Испытания",
     "PercentPrestige": "{{pct}}% обнуления",
@@ -771,51 +846,56 @@
     "Total": "Всего"
   },
   "Storage": {
+    "ApiPermissionPrompt": {
+      "Description": "DIM can now store your tags, loadouts, and settings on our own servers and sync that data between different versions of DIM, with no separate login. You can import your existing data from the Settings page if you haven't enabled DIM Sync before. This was made possible by the support of our OpenCollective backers!",
+      "No": "Not right now",
+      "Title": "Enable DIM Sync?",
+      "Yes": "Enable Sync"
+    },
+    "AuditLog": "DIM Sync Change History",
+    "AuditLogLabel": "View past data changes",
+    "AutoBackup": "We've backed up your data to a file in your downloads folder called dim-data.json, just in case.",
+    "BackUpFirst": "You MUST back up your data first, before you delete it all. Just in case.",
     "BrowserMayClearData": "Браузер может удалить данные, если у вас кончится свободное место или если не посещать DIM часто.",
-    "ClearIgnoredUsers": "Очистить игнорируемых пользователей",
+    "DeleteAllData": "Delete ALL Data from DIM Sync Servers",
+    "DeleteAllDataConfirm": "Are you sure you want to delete ALL your data, for all accounts, from DIM Sync? You can't undo this.",
+    "DeleteAllDataLabel": "Wipe DIM Sync Data",
     "Details": {
-      "GoogleDriveStorage": "DIM может сохранять данные в Google Drive. Если вы войдете в Google Drive на нескольких браузерах, данные будут доступны в любом из них. Данные привязываются к аккаунту Bungie. Если у вас возникают ошибки авторизации, может потребоваться разрешить cookie сторонних приложений в настройках браузера.",
       "IndexedDBStorage": "Локальное Хранилище Браузера хранит ваши данные в кэше браузера на данном устройстве. Очистка данных удалит данные."
     },
-    "Disabled": "Выключено",
+    "DimApiFinePrint": "DIM will save your tags, loadouts, and settings to the DIM servers and sync them between different versions of DIM.",
+    "DimSyncEnabled": "DIM Sync Enabled",
     "DriveLogout": "Выйти из Google Диска",
     "DriveSync": "Войти в Google Диск",
-    "Enabled": "Включено",
-    "Explain": "DIM сохраняет свои данные отдельно от ваших данных Destiny (которые контролируются Bungie.net).",
+    "EnableDimApi": "Enable DIM Sync",
     "Export": "Скачать Бэкап",
-    "ForceSync": "Принудительная синхронизация из облака Google",
-    "ForceSyncWarning": "Обновить данные Сохранённой в Google Drive версией?",
-    "GDriveLogout": "Ваши данные всё ещё присутвуют в Google Диске - если вы зайдёте в него снова, DIM будет использовать их.",
-    "GDriveRevisions": "Восстановить предыдущую версию",
+    "GDriveImport": "Import from legacy Google Drive or Local Storage data",
+    "GDriveImportButton": "Import legacy data",
+    "GDriveImportExplain": "You can restore legacy data stored in your browser or in Google Drive. Use this if you are just now upgrading DIM to v6 and had data stored before that.",
     "GDriveSignInError": "Ошибка входа в Google Диск:",
-    "GDriveSignInWarning": "Если у вас уже есть сохранённые данные DIM в Google Диске, они перезапишут, сохранены локально данные. Вы скорее всего захотите сделать резервную копию данных перед тем, как войти в Google Диск.\n\nПродолжить вход в Google Диск?",
+    "GDriveSignedIn": "Logged in to Google Drive as {{email}}",
     "GoogleApiBlocked": "Google Диск недоступен, потому что блокировщик контента (рекламы) заблокировал JavaScript-код Google Диска. Пожалуйста, добавьте DIM в исключения блокировщиков и попробуйте снова.",
-    "GoogleDriveStorage": "Google Диск",
-    "GoogleDriveUsage": "Google Диск: занято {{usage, humanBytes}} из {{limit, humanBytes}}. {{dimQuotaUsed, humanBytes}} занято данными DIM. Если на Google Диске закончится место, DIM не сможет сохранять данные. ",
-    "GoogleDriveUsageNoFile": "Google Диск: занято {{usage, humanBytes}} из {{limit, humanBytes}}. Мы не можем понять сколько данных занял DIM, скорее всего это проблема. Если на Google Диске закончится место, DIM не сможет сохранять данные.",
-    "GoogleDriveUsageUnlimited": "Google Диск не ограничен.",
-    "IgnoredUsers": "Игнорируемые авторы",
     "Import": "Загрузить Бэкап",
-    "ImportConfirm": "Переписать текущие настройки? В предложенной версии {{stats}}.",
-    "ImportExport": "Бэкапы",
+    "ImportConfirmDimApi": "Are you sure you want to overwrite your current tags, loadouts, and settings with this version? It will completely replace what you had.",
+    "ImportExport": "Backup & Import",
     "ImportFailed": "Ошибка импорта! {{error}}",
     "ImportNoFile": "Не выбран файл!",
-    "ImportSuccess": "Данные DIM импортированы!",
+    "ImportNotification": {
+      "FailedBody": "Unable to import data. {{error}}",
+      "FailedTitle": "Import Failed",
+      "NoData": "No loadouts or tags found in the backup",
+      "SuccessBodyForced": "Imported settings, {{loadouts}} loadouts, and {{tags}} tagged items from your backup into DIM Sync, replacing what was already there.",
+      "SuccessBodyLocal": "Imported settings, {{loadouts}} loadouts, and {{tags}} tagged items from your backup into local storage, replacing what was already there. We cannot guarantee that local storage won't be lost - consider enabling DIM Sync.",
+      "SuccessTitle": "Импортирование выполнено успешно"
+    },
     "ImportTooManyFiles": "Выберите Один файл для импорта.",
     "ImportWrongFileType": "JSON не распознан. Скорее всего это не резервная копия DIM.",
     "IndexedDBStorage": "Локальное Хранилище Браузера",
-    "LoadRevision": "Загрузить содержимое",
-    "LoadoutsD1": "{{value}} наборов Destiny 1",
-    "LoadoutsD2": "{{value}} наборов Destiny 2",
-    "MenuTitle": "Данные и Бэкапы",
-    "NoData": "Нет данных",
-    "RestoreRevision": "Восстановить",
-    "RevisionsDescription": "Google Диск сохраняет 100 последних изменений настроек. Используйте эту страницу, чтобы загрузить старые версии настроек и восстановить их.",
-    "Settings": "Ваши настройки и параметры DIM",
-    "StatLabel": "В настоящий момент содержит:",
-    "TagNotesD1": "{{value}} предметов Destiny 1 с тегами или заметками",
-    "TagNotesD2": "{{value}} предметов Destiny 2 с тегами или заметками",
-    "Title": "Хранение Данных",
+    "MenuTitle": "Синхронизация и резервное копирование",
+    "ProfileErrorBody": "Возникла проблема сохранения загрузке синхронизированных данных из DIM",
+    "ProfileErrorTitle": "Ошибка синхронизации DIM",
+    "UpdateErrorBody": "Возникла проблема сохранения данных при синхронизации DIM",
+    "UpdateErrorTitle": "Ошибка синхронизации DIM",
     "Usage": "Лоакльные Данные: занято {{usage, humanBytes}} из {{quota, humanBytes}} доступного места. В сохраненные данные входят Базы предметов Bungie.net."
   },
   "StoreBucket": {
@@ -838,11 +918,6 @@
     "TagItems": "Отметить предметы",
     "UnlockAll": "Разблокировать всё"
   },
-  "TrialsCard": {
-    "FiveWins": "Награда за 5 побед (Броня)",
-    "Flawless": "Безупречная",
-    "SevenWins": "Награда за 7 побед (Оружие)"
-  },
   "Triumphs": {
     "HideCompleted": "Скрыть выполненное",
     "RevealRedacted": "Показать скрытое"
@@ -859,8 +934,7 @@
     "DestinySets": "Увидеть больше наборов на Destiny Sets",
     "Engram": "Наградные энграммы",
     "FilterToUnacquired": "Только отсутствующие в Коллекции",
-    "Vendors": "Вендоры",
-    "Year2Mods": "Моды второго года игры"
+    "Vendors": "Вендоры"
   },
   "Views": {
     "About": {
@@ -894,6 +968,8 @@
       "Twitter": "Twitter",
       "TwitterHelp": "Советуем убедиться, что вы подписались на наши соц.сети! Подписка поможет быть всегда вкурсе последних обновлений и актуального состояния сервиса!",
       "Version": "Версия {{version}} ({{flavor}}), собрана {{date}}",
+      "Wiki": "DIM User Guide Wiki",
+      "WikiHelp": "Learn how to use DIM and contribute to our community-driven user guide.",
       "YouTube": "YouTube",
       "YouTubeHelp": "Как использовать DIM? В примерах на YouTube."
     },
@@ -921,11 +997,13 @@
     "ExternalSource": "При желании, укажите URL [ссылку] списка пожеланий",
     "Header": "Списоу желаний",
     "Import": "Загрузить перк-роллы списка желаний",
+    "ImportError": "Error loading wish list: {{error}}",
     "ImportFailed": "Данные перков списка желаний отсутствуют.",
     "ImportNoFile": "Не выбран файл!",
     "ImportSuccess": "Из списка желаний загружена информация об одном перк-ролле.{{titleAndDescription}}",
     "ImportSuccess_plural": "Список пожеланий загружен с информацией о {{count, number}} роллах. {{titleAndDescription}}",
     "InvalidExternalSource": "Пожалуйста, введите действительную ссылку для вашего внешнего источника списка желаний. Она должна начинаться с [https://raw.githubusercontent.com...]",
+    "LastUpdated": "Последнее обновление: {{lastUpdatedDate}} в {{lastUpdatedTime}}",
     "Num": "{{num, number}} перк-роллов в вашем списке желаний",
     "UpdateExternalSource": "Обновить список желаний",
     "WishListNotes": "Список пожеланий, примечания: {{notes}}"

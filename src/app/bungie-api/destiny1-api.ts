@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { bungieApiQuery, bungieApiUpdate } from './bungie-api-utils';
 import { error, httpAdapter, handleUniquenessViolation } from './bungie-service-helper';
 import { getActivePlatform } from '../accounts/platforms';
-import { DestinyManifest, ServerResponse } from 'bungie-api-ts/destiny2';
+import { DestinyManifest, ServerResponse, PlatformErrorCodes } from 'bungie-api-ts/destiny2';
 import { D1Store, DimStore } from '../inventory/store-types';
 import { DestinyAccount } from '../accounts/destiny-account';
 import { D1Item, DimItem } from '../inventory/item-types';
@@ -28,9 +28,9 @@ export async function getCharacters(platform: DestinyAccount) {
   if (!response || Object.keys(response.Response).length === 0) {
     throw error(
       t('BungieService.NoAccountForPlatform', {
-        platform: platform.platformLabel
+        platform: platform.platformLabel,
       }),
-      1601
+      PlatformErrorCodes.DestinyAccountNotFound
     );
   }
   return _.map(response.Response.data.characters, (c) => {
@@ -38,7 +38,7 @@ export async function getCharacters(platform: DestinyAccount) {
     return {
       id: c.characterBase.characterId,
       base: c,
-      dateLastPlayed: c.characterBase.dateLastPlayed
+      dateLastPlayed: c.characterBase.dateLastPlayed,
     };
   });
 }
@@ -52,7 +52,7 @@ export async function getStores(platform: DestinyAccount): Promise<any> {
       .catch((e) => console.error('Failed to load character progression', e)),
     getDestinyAdvisors(platform, characters)
       // Don't let failure of advisors fail other requests.
-      .catch((e) => console.error('Failed to load advisors', e))
+      .catch((e) => console.error('Failed to load advisors', e)),
   ]);
   return data[0];
 }
@@ -79,7 +79,7 @@ function getDestinyInventories(platform: DestinyAccount, characters: any[]) {
   // Vault
   const vault = {
     id: 'vault',
-    base: null
+    base: null,
   };
 
   const vaultPromise = httpAdapter(
@@ -149,7 +149,7 @@ export function transfer(item: D1Item, store: D1Store, amount: number) {
       itemId: item.id,
       itemReferenceHash: item.hash,
       stackSize: amount || item.amount,
-      transferToVault: store.isVault
+      transferToVault: store.isVault,
     })
   ).catch((e) => handleUniquenessViolation(e, item, store));
 
@@ -162,7 +162,7 @@ export function equip(item: DimItem) {
     bungieApiUpdate('/D1/Platform/Destiny/EquipItem/', {
       characterId: item.owner,
       membershipType: platform!.originalPlatformType,
-      itemId: item.id
+      itemId: item.id,
     })
   );
 }
@@ -177,11 +177,10 @@ export async function equipItems(store: D1Store, items: D1Item[]) {
     bungieApiUpdate('/D1/Platform/Destiny/EquipItems/', {
       characterId: store.id,
       membershipType: platform!.originalPlatformType,
-      itemIds: items.map((i) => i.id)
+      itemIds: items.map((i) => i.id),
     })
   );
   const data = response.Response;
-  store.updateCharacterInfoFromEquip(data.summary);
   return items.filter((i) => {
     const item = data.equipResults.find((r) => r.itemInstanceId === i.id);
     return item?.equipStatus === 1;
@@ -210,7 +209,7 @@ export function setItemState(
       characterId: store.isVault ? item.owner : store.id,
       membershipType: platform!.originalPlatformType,
       itemId: item.id,
-      state: lockState
+      state: lockState,
     })
   );
 }

@@ -4,7 +4,7 @@ import PresentationNode from './PresentationNode';
 import {
   DestinyProfileResponse,
   DestinyCollectibleState,
-  DestinyRecordState
+  DestinyRecordState,
 } from 'bungie-api-ts/destiny2';
 import { getCollectibleState } from './Collectible';
 import { count } from '../utils/util';
@@ -12,6 +12,8 @@ import { InventoryBuckets } from '../inventory/inventory-buckets';
 import PlugSet from './PlugSet';
 import _ from 'lodash';
 import Record, { getRecordComponent } from './Record';
+import { getMetricComponent } from './Metric';
+import { itemsForPlugSet } from './plugset-helpers';
 
 interface Props {
   presentationNodeHash: number;
@@ -43,7 +45,7 @@ export default class PresentationNodeRoot extends React.Component<Props, State> 
       buckets,
       profileResponse,
       ownedItemHashes,
-      showPlugSets
+      showPlugSets,
     } = this.props;
     const { nodePath } = this.state;
 
@@ -68,7 +70,7 @@ export default class PresentationNodeRoot extends React.Component<Props, State> 
       // Emotes
       { hash: 1155321287, displayItem: 3960522253 },
       // Projections
-      { hash: 499268600, displayItem: 2544954628 }
+      { hash: 499268600, displayItem: 2544954628 },
     ];
 
     return (
@@ -119,7 +121,7 @@ export default class PresentationNodeRoot extends React.Component<Props, State> 
   // TODO: onNodeDeselected!
   private onNodePathSelected = (nodePath: number[]): void => {
     this.setState({
-      nodePath
+      nodePath,
     });
   };
 }
@@ -137,10 +139,7 @@ export function countCollectibles(
   if (presentationNodeDef.redacted) {
     return { [node]: { acquired: 0, visible: 0 } };
   }
-  if (
-    presentationNodeDef.children.collectibles &&
-    presentationNodeDef.children.collectibles.length
-  ) {
+  if (presentationNodeDef.children.collectibles?.length) {
     const collectibleDefs = presentationNodeDef.children.collectibles.map((c) =>
       defs.Collectible.get(c.collectibleHash)
     );
@@ -167,8 +166,8 @@ export function countCollectibles(
     return {
       [node]: {
         acquired: acquiredCollectibles,
-        visible: visibleCollectibles
-      }
+        visible: visibleCollectibles,
+      },
     };
   } else if (presentationNodeDef.children.records?.length) {
     const recordDefs = presentationNodeDef.children.records.map((c) =>
@@ -193,8 +192,30 @@ export function countCollectibles(
     return {
       [node]: {
         acquired: acquiredCollectibles,
-        visible: visibleCollectibles
-      }
+        visible: visibleCollectibles,
+      },
+    };
+  } else if (presentationNodeDef.children.metrics?.length) {
+    const metricDefs = presentationNodeDef.children.metrics.map((c) =>
+      defs.Metric.get(c.metricHash)
+    );
+
+    // TODO: class based on displayStyle
+    const visible = count(metricDefs, (m) => {
+      const metric = m && getMetricComponent(m, profileResponse);
+      return Boolean(metric !== undefined && !metric.invisible);
+    });
+    const acquired = count(metricDefs, (m) => {
+      const metric = m && getMetricComponent(m, profileResponse);
+      return Boolean(
+        metric !== undefined && !metric.invisible && metric.objectiveProgress.complete
+      );
+    });
+    return {
+      [node]: {
+        acquired,
+        visible,
+      },
     };
   } else {
     // call for all children, then add 'em up
@@ -215,21 +236,9 @@ export function countCollectibles(
     Object.assign(ret, {
       [node]: {
         acquired,
-        visible
-      }
+        visible,
+      },
     });
     return ret;
   }
-}
-
-export function itemsForPlugSet(profileResponse: DestinyProfileResponse, plugSetHash: number) {
-  return (
-    (profileResponse.profilePlugSets.data &&
-      profileResponse.profilePlugSets.data.plugs[plugSetHash]) ||
-    []
-  ).concat(
-    Object.values(profileResponse.characterPlugSets.data || {})
-      .filter((d) => d.plugs?.[plugSetHash])
-      .flatMap((d) => d.plugs[plugSetHash])
-  );
 }

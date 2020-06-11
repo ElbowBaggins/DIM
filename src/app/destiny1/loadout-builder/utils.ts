@@ -4,7 +4,7 @@ import {
   ItemBucket,
   SetType,
   ArmorSet,
-  LockedPerkHash
+  LockedPerkHash,
 } from './types';
 
 import { D1Item } from '../../inventory/item-types';
@@ -49,24 +49,8 @@ function getBestItem(
       }
       return total + bonus;
     })!,
-    bonusType: type
+    bonusType: type,
   };
-}
-
-function fillTier(stat) {
-  stat.tier = Math.min((stat.value / 60) >> 0, 5);
-  stat.value = stat.value % 60;
-  stat.tiers = [0, 0, 0, 0, 0];
-  stat.tierMax = 60;
-
-  for (let tier = 0; tier < 5; tier++) {
-    if (tier < stat.tier) {
-      stat.tiers[tier] = 60;
-    } else if (tier === stat.tier) {
-      stat.tiers[tier] = stat.value;
-      break;
-    }
-  }
 }
 
 export function calcArmorStats(
@@ -84,26 +68,29 @@ export function calcArmorStats(
 
     const scaleType = armor.item.tier === 'Rare' ? 'base' : scaleTypeArg;
 
-    stats.STAT_INTELLECT.value += int[scaleType];
-    stats.STAT_DISCIPLINE.value += dis[scaleType];
-    stats.STAT_STRENGTH.value += str[scaleType];
+    // Mark of the Sunforged, Stormcaller Bond and Nightstalker cloak have special fixed stats
+    // that do not scale correctly as the scaling is currently implemented.
+    // See https://github.com/DestinyItemManager/DIM/issues/5191 for details
+    if ([2820418554, 2122538507, 2300914892].includes(armor.item.hash)) {
+      stats[144602215].value += int['base'];
+    } else {
+      stats[144602215].value += int[scaleType];
+      stats[1735777505].value += dis[scaleType];
+      stats[4244567218].value += str[scaleType];
+    }
 
     switch (armor.bonusType) {
       case 'int':
-        stats.STAT_INTELLECT.value += int.bonus;
+        stats[144602215].value += int.bonus;
         break;
       case 'dis':
-        stats.STAT_DISCIPLINE.value += dis.bonus;
+        stats[1735777505].value += dis.bonus;
         break;
       case 'str':
-        stats.STAT_STRENGTH.value += str.bonus;
+        stats[4244567218].value += str.bonus;
         break;
     }
   }
-
-  fillTier(stats.STAT_INTELLECT);
-  fillTier(stats.STAT_DISCIPLINE);
-  fillTier(stats.STAT_STRENGTH);
 }
 
 export function getBonusConfig(armor: ArmorSet['armor']): { [armorType in ArmorTypes]: string } {
@@ -114,7 +101,7 @@ export function getBonusConfig(armor: ArmorSet['armor']): { [armorType in ArmorT
     Leg: armor.Leg.bonusType,
     ClassItem: armor.ClassItem.bonusType,
     Artifact: armor.Artifact.bonusType,
-    Ghost: armor.Ghost.bonusType
+    Ghost: armor.Ghost.bonusType,
   };
 }
 
@@ -142,7 +129,7 @@ export function getBestArmor(
     { stats: [1735777505, 4244567218], type: 'disstr' },
     { stats: [144602215], type: 'int' },
     { stats: [1735777505], type: 'dis' },
-    { stats: [4244567218], type: 'str' }
+    { stats: [4244567218], type: 'str' },
   ];
   const armor = {};
   let best: { item: D1ItemWithNormalStats; bonusType: string }[] = [];
@@ -178,7 +165,7 @@ export function getBestArmor(
             return true;
           }
           function matchNode(perkHash) {
-            return item.talentGrid!.nodes.some((n) => n.hash === perkHash);
+            return item.talentGrid?.nodes.some((n) => n.hash === perkHash);
           }
           return Boolean(
             (orPerkHashes.length && orPerkHashes.some(matchNode)) ||
@@ -280,7 +267,7 @@ export function loadVendorsBucket(
       Leg: [],
       ClassItem: [],
       Artifact: [],
-      Ghost: []
+      Ghost: [],
     };
   }
   return _.map(vendors, (vendor) =>
@@ -317,7 +304,7 @@ function getBuckets(items: D1Item[]): ItemBucket {
     Leg: items.filter((item) => item.type === 'Leg').map(normalizeStats),
     ClassItem: items.filter((item) => item.type === 'ClassItem').map(normalizeStats),
     Artifact: items.filter((item) => item.type === 'Artifact').map(normalizeStats),
-    Ghost: items.filter((item) => item.type === 'Ghost').map(normalizeStats)
+    Ghost: items.filter((item) => item.type === 'Ghost').map(normalizeStats),
   };
 }
 
@@ -330,7 +317,7 @@ function normalizeStats(item: D1ItemWithNormalStats) {
       scaled: stat.scaled ? stat.scaled.min : 0,
       bonus: stat.bonus,
       split: stat.split || 0,
-      qualityPercentage: stat.qualityPercentage ? stat.qualityPercentage.min : 0
+      qualityPercentage: stat.qualityPercentage ? stat.qualityPercentage.min : 0,
     };
   }
   return item;

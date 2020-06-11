@@ -1,6 +1,6 @@
 import {
   DestinyDisplayPropertiesDefinition,
-  DestinyMilestoneChallengeActivity
+  DestinyMilestoneChallengeActivity,
 } from 'bungie-api-ts/destiny2';
 import React from 'react';
 import BungieImage from '../dim-ui/BungieImage';
@@ -42,7 +42,7 @@ export function RaidDisplay(props: Props) {
 export function RaidActivity({
   defs,
   activity,
-  displayName
+  displayName,
 }: {
   defs: D2ManifestDefinitions;
   activity: DestinyMilestoneChallengeActivity;
@@ -61,13 +61,12 @@ export function RaidActivity({
     <div className="raid-tier">
       <span className="milestone-name">{activityName}</span>
       <div className="quest-modifiers">
-        {activity.modifierHashes &&
-          activity.modifierHashes.map(
-            (modifierHash) =>
-              modifierHash !== armsmasterModifierHash && (
-                <ActivityModifier key={modifierHash} modifierHash={modifierHash} defs={defs} />
-              )
-          )}
+        {activity.modifierHashes?.map(
+          (modifierHash) =>
+            modifierHash !== armsmasterModifierHash && (
+              <ActivityModifier key={modifierHash} modifierHash={modifierHash} defs={defs} />
+            )
+        )}
         <LoadoutRequirementModifier defs={defs} activity={activity} />
       </div>
       <div className="quest-objectives">

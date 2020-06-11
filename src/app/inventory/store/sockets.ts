@@ -7,7 +7,7 @@ import {
   DestinyItemComponentSetOfint64,
   DestinyItemPlugBase,
   DestinyObjectiveProgress,
-  DestinySocketCategoryStyle
+  DestinySocketCategoryStyle,
 } from 'bungie-api-ts/destiny2';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
 import { DimSockets, DimSocketCategory, DimSocket, DimPlug } from '../item-types';
@@ -36,7 +36,7 @@ const EXCLUDED_PLUGS = new Set([
   1961001474,
   3612467353,
   // Default Shader
-  4248210736
+  4248210736,
 ]);
 
 /** The item category hash for "intrinsic perk" */
@@ -130,29 +130,40 @@ export function buildInstancedSockets(
     return null;
   }
 
-  const realSockets = sockets.map((socket, i) =>
-    buildSocket(
+  const realSockets: (DimSocket | undefined)[] = [];
+  for (let i = 0; i < sockets.length; i++) {
+    const built = buildSocket(
       defs,
-      socket,
+      sockets[i],
       itemDef.sockets.socketEntries[i],
       i,
       reusablePlugData?.[i],
       plugObjectivesData
-    )
-  );
+    );
 
-  const categories = itemDef.sockets.socketCategories.map(
-    (category): DimSocketCategory => ({
+    realSockets.push(built);
+  }
+
+  const categories: DimSocketCategory[] = [];
+
+  for (const category of itemDef.sockets.socketCategories) {
+    const sockets: DimSocket[] = [];
+    for (const index of category.socketIndexes) {
+      const s = realSockets[index];
+      if (s) {
+        sockets.push(s);
+      }
+    }
+
+    categories.push({
       category: defs.SocketCategory.get(category.socketCategoryHash),
-      sockets: category.socketIndexes
-        .map((index) => realSockets[index])
-        .filter(Boolean) as DimSocket[]
-    })
-  );
+      sockets,
+    });
+  }
 
   return {
-    sockets: realSockets.filter(Boolean) as DimSocket[], // Flat list of sockets
-    categories: categories.sort(compareBy((c) => c.category.index)) // Sockets organized by category
+    sockets: _.compact(realSockets), // Flat list of sockets
+    categories: categories.sort(compareBy((c) => c.category.index)), // Sockets organized by category
   };
 }
 
@@ -168,21 +179,35 @@ function buildDefinedSockets(
     return null;
   }
 
-  const realSockets = sockets.map((socket, i) => buildDefinedSocket(defs, socket, i));
+  const realSockets: (DimSocket | undefined)[] = [];
   // TODO: check out intrinsicsockets as well
 
-  const categories = itemDef.sockets.socketCategories.map(
-    (category): DimSocketCategory => ({
+  for (let i = 0; i < sockets.length; i++) {
+    const socket = sockets[i];
+    realSockets.push(buildDefinedSocket(defs, socket, i));
+  }
+
+  const categories: DimSocketCategory[] = [];
+
+  for (const category of itemDef.sockets.socketCategories) {
+    const sockets: DimSocket[] = [];
+
+    for (const index of category.socketIndexes) {
+      const s = realSockets[index];
+      if (s?.plugOptions.length) {
+        sockets.push(s);
+      }
+    }
+
+    categories.push({
       category: defs.SocketCategory.get(category.socketCategoryHash),
-      sockets: _.compact(category.socketIndexes.map((index) => realSockets[index])).filter(
-        (s) => s.plugOptions.length
-      )
-    })
-  );
+      sockets,
+    });
+  }
 
   return {
     sockets: _.compact(realSockets), // Flat list of sockets
-    categories: categories.sort(compareBy((c) => c.category.index)) // Sockets organized by category
+    categories: categories.sort(compareBy((c) => c.category.index)), // Sockets organized by category
   };
 }
 
@@ -197,6 +222,9 @@ function filterReusablePlug(reusablePlug: DimPlug) {
   );
 }
 
+/**
+ * Build a socket from definitions, without the benefit of live profile info.
+ */
 function buildDefinedSocket(
   defs: D2ManifestDefinitions,
   socketDef: DestinyItemSocketEntryDefinition,
@@ -222,17 +250,38 @@ function buildDefinedSocket(
     socketCategoryDef.categoryStyle === DestinySocketCategoryStyle.LargePerk;
 
   // The currently equipped plug, if any
-  const reusablePlugs = _.compact(
-    (socketDef.reusablePlugItems || []).map((reusablePlug) => buildDefinedPlug(defs, reusablePlug))
-  );
+  const reusablePlugs: DimPlug[] = [];
+
+  // We only build a larger list of plug options if this is a perk socket, since users would
+  // only want to see (and search) the plug options for perks. For other socket types (mods, shaders, etc.)
+  // we will only populate plugOptions with the currently inserted plug.
+  if (isPerk) {
+    if (socketDef.reusablePlugSetHash) {
+      const plugSet = defs.PlugSet.get(socketDef.reusablePlugSetHash);
+      for (const reusablePlug of plugSet.reusablePlugItems) {
+        const built = buildDefinedPlug(defs, reusablePlug);
+        if (built) {
+          reusablePlugs.push(built);
+        }
+      }
+    } else if (socketDef.reusablePlugItems) {
+      for (const reusablePlug of socketDef.reusablePlugItems) {
+        const built = buildDefinedPlug(defs, reusablePlug);
+        if (built) {
+          reusablePlugs.push(built);
+        }
+      }
+    }
+  }
+
   const plugOptions: DimPlug[] = [];
 
   if (reusablePlugs.length) {
-    reusablePlugs.forEach((reusablePlug) => {
+    for (const reusablePlug of reusablePlugs) {
       if (filterReusablePlug(reusablePlug)) {
         plugOptions.push(reusablePlug);
       }
-    });
+    }
   }
 
   return {
@@ -243,7 +292,7 @@ function buildDefinedSocket(
     hasRandomizedPlugItems:
       Boolean(socketDef.randomizedPlugSetHash) || socketTypeDef.alwaysRandomizeSockets,
     isPerk,
-    socketDefinition: socketDef
+    socketDefinition: socketDef,
   };
 }
 
@@ -278,9 +327,9 @@ function buildPlug(
   }
 
   const failReasons = plug.enableFailIndexes
-    ? plug.enableFailIndexes
-        .map((index) => plugItem.plug.enabledRules[index].failureMessage)
-        .join('\n')
+    ? _.compact(
+        plug.enableFailIndexes.map((index) => plugItem.plug.enabledRules[index]?.failureMessage)
+      ).join('\n')
     : '';
 
   return {
@@ -289,7 +338,7 @@ function buildPlug(
     enableFailReasons: failReasons,
     plugObjectives: plugObjectivesData?.[plugHash] || [],
     perks: plugItem.perks ? plugItem.perks.map((perk) => defs.SandboxPerk.get(perk.perkHash)) : [],
-    stats: null
+    stats: null,
   };
 }
 
@@ -310,7 +359,7 @@ function buildDefinedPlug(
     enableFailReasons: '',
     plugObjectives: [],
     perks: (plugItem.perks || []).map((perk) => defs.SandboxPerk.get(perk.perkHash)),
-    stats: null
+    stats: null,
   };
 }
 
@@ -361,32 +410,23 @@ function buildSocket(
   // only want to see (and search) the plug options for perks. For other socket types (mods, shaders, etc.)
   // we will only populate plugOptions with the currently inserted plug.
   if (isPerk && reusablePlugs) {
-    // This perk's list of plugs comes from the live reusablePlugs component.
-    const reusableDimPlugs = reusablePlugs
-      ? _.compact(
-          reusablePlugs.map((reusablePlug) =>
-            buildPlug(defs, reusablePlug, socketDef, plugObjectivesData)
-          )
-        )
-      : [];
-    if (reusableDimPlugs.length) {
-      reusableDimPlugs.forEach((reusablePlug) => {
-        if (filterReusablePlug(reusablePlug)) {
-          if (plug && reusablePlug.plugItem.hash === plug.plugItem.hash) {
-            // Use the inserted plug we built earlier in this position, rather than the one we build from reusablePlugs.
-            plugOptions.shift();
-            plugOptions.push(plug);
-          } else {
-            // API Bugfix: Filter out intrinsic perks past the first: https://github.com/Bungie-net/api/issues/927
-            if (
-              !reusablePlug.plugItem.itemCategoryHashes ||
-              !reusablePlug.plugItem.itemCategoryHashes.includes(INTRINSIC_PLUG_CATEGORY)
-            ) {
-              plugOptions.push(reusablePlug);
-            }
+    for (const reusablePlug of reusablePlugs) {
+      const built = buildPlug(defs, reusablePlug, socketDef, plugObjectivesData);
+      if (built && filterReusablePlug(built)) {
+        if (plug && built.plugItem.hash === plug.plugItem.hash) {
+          // Use the inserted plug we built earlier in this position, rather than the one we build from reusablePlugs.
+          plugOptions.shift();
+          plugOptions.push(plug);
+        } else {
+          // API Bugfix: Filter out intrinsic perks past the first: https://github.com/Bungie-net/api/issues/927
+          if (
+            !built.plugItem.itemCategoryHashes ||
+            !built.plugItem.itemCategoryHashes.includes(INTRINSIC_PLUG_CATEGORY)
+          ) {
+            plugOptions.push(built);
           }
         }
-      });
+      }
     }
   }
 
@@ -401,6 +441,6 @@ function buildSocket(
     hasRandomizedPlugItems,
     reusablePlugItems: reusablePlugs,
     isPerk,
-    socketDefinition: socketDef
+    socketDefinition: socketDef,
   };
 }

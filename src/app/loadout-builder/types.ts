@@ -1,3 +1,4 @@
+import { Armor2ModPlugCategories } from 'app/utils/item-utils';
 import { DimItem } from '../inventory/item-types';
 import { DestinyInventoryItemDefinition } from 'bungie-api-ts/destiny2';
 import { InventoryBucket } from 'app/inventory/inventory-buckets';
@@ -41,10 +42,12 @@ export interface LockedPerk {
   perk: DestinyInventoryItemDefinition;
   bucket: InventoryBucket;
 }
-export interface LockedMod {
-  type: 'mod';
+export interface LockedModBase {
   mod: DestinyInventoryItemDefinition;
   plugSetHash: number;
+}
+export interface LockedMod extends LockedModBase {
+  type: 'mod';
   bucket: InventoryBucket;
 }
 export interface LockedBurn {
@@ -60,8 +63,24 @@ export interface LockedExclude {
 
 export type LockedItemType = LockedItemCase | LockedPerk | LockedMod | LockedBurn | LockedExclude;
 
-/** A map from bucket to the list of locked and excluded perks, items, and burns. */
-export type LockedMap = Readonly<{ [bucketHash: number]: readonly LockedItemType[] | undefined }>;
+/** A map from bucketHash or seasonal to the list of locked and excluded perks, items, and burns. */
+export type LockedMap = Readonly<{
+  [bucketHash: number]: readonly LockedItemType[] | undefined;
+}>;
+
+export const ModPickerCategories = { ...Armor2ModPlugCategories, seasonal: 'seasonal' } as const;
+export type ModPickerCategory = typeof ModPickerCategories[keyof typeof ModPickerCategories];
+
+export interface LockedArmor2Mod {
+  /** Essentially an identifier for each mod, as a single mod definition can be selected multiple times.*/
+  key: number;
+  mod: DestinyInventoryItemDefinition;
+  category: ModPickerCategory;
+}
+
+export type LockedArmor2ModMap = {
+  [T in ModPickerCategory]: LockedArmor2Mod[];
+};
 
 /**
  * An individual "stat mix" of loadouts where each slot has a list of items with the same stat options.
@@ -103,5 +122,5 @@ export const LockableBuckets = {
   chest: 14239492,
   leg: 20886954,
   classitem: 1585787867,
-  ghost: 4023194814
+  ghost: 4023194814,
 };

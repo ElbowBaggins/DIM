@@ -8,20 +8,21 @@ import {
   DestinyInventoryItemDefinition,
   DestinyEnergyType,
   DestinyItemPlug,
-  DestinyItemPlugBase
+  DestinyItemPlugBase,
 } from 'bungie-api-ts/destiny2';
 import BungieImage, { bungieNetPath } from 'app/dim-ui/BungieImage';
 import { RootState } from 'app/store/reducers';
-import { storesSelector, profileResponseSelector } from 'app/inventory/reducer';
+import { storesSelector, profileResponseSelector } from 'app/inventory/selectors';
 import { connect } from 'react-redux';
 import clsx from 'clsx';
 import styles from './SocketDetails.m.scss';
 import ElementIcon from 'app/inventory/ElementIcon';
 import { compareBy, chainComparator, reverseComparator } from 'app/utils/comparators';
 import { createSelector } from 'reselect';
-import { itemsForPlugSet } from 'app/collections/PresentationNodeRoot';
+import { itemsForPlugSet } from 'app/collections/plugset-helpers';
 import _ from 'lodash';
 import SocketDetailsSelectedPlug from './SocketDetailsSelectedPlug';
+import { emptySet } from 'app/utils/empty';
 
 interface ProvidedProps {
   item: D2Item;
@@ -35,8 +36,6 @@ interface StoreProps {
   unlockedPlugs: Set<number>;
 }
 
-const EMPTY_SET = new Set<number>();
-
 function mapStateToProps() {
   /** Build the hashes of all plug set item hashes that are unlocked by any character/profile. */
   const unlockedPlugsSelector = createSelector(
@@ -46,7 +45,7 @@ function mapStateToProps() {
       props.socket.socketDefinition.randomizedPlugSetHash,
     (profileResponse, plugSetHash) => {
       if (!plugSetHash || !profileResponse) {
-        return EMPTY_SET;
+        return emptySet<number>();
       }
       const unlockedPlugs = new Set<number>();
       const plugSetItems = itemsForPlugSet(profileResponse, plugSetHash);
@@ -71,7 +70,7 @@ function mapStateToProps() {
           socketType.plugWhitelist
         )
       ) {
-        return EMPTY_SET;
+        return emptySet<number>();
       }
 
       const modHashes = new Set<number>();
@@ -93,7 +92,7 @@ function mapStateToProps() {
   return (state: RootState, props: ProvidedProps): StoreProps => ({
     defs: state.manifest.d2Manifest!,
     inventoryPlugs: inventoryPlugs(state, props),
-    unlockedPlugs: unlockedPlugsSelector(state, props)
+    unlockedPlugs: unlockedPlugsSelector(state, props),
   });
 }
 
@@ -230,7 +229,7 @@ function SocketDetails({ defs, item, socket, unlockedPlugs, inventoryPlugs, onCl
             className={clsx(styles.clickableMod, {
               [styles.selected]: selectedPlug === mod,
               [styles.notUnlocked]:
-                !unlockedPlugs.has(mod.hash) && !otherUnlockedPlugs.has(mod.hash)
+                !unlockedPlugs.has(mod.hash) && !otherUnlockedPlugs.has(mod.hash),
             })}
             itemDef={mod}
             defs={defs}
@@ -250,7 +249,7 @@ export const SocketDetailsMod = React.memo(
     itemDef,
     defs,
     className,
-    onClick
+    onClick,
   }: {
     itemDef: DestinyInventoryItemDefinition;
     defs: D2ManifestDefinitions;
@@ -275,7 +274,7 @@ export const SocketDetailsMod = React.memo(
         {costElementIcon && (
           <>
             <div
-              style={{ backgroundImage: `url(${bungieNetPath(costElementIcon)}` }}
+              style={{ backgroundImage: `url("${bungieNetPath(costElementIcon)}")` }}
               className="energyCostOverlay"
             />
             <div className="energyCost">{itemDef.plug.energyCost.energyCost}</div>

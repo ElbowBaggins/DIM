@@ -9,6 +9,7 @@ import { searchFilterSelector } from '../search/search-filters';
 import { InventoryWishListRoll } from '../wishlists/wishlists';
 import { wishListsEnabledSelector, inventoryWishListsSelector } from '../wishlists/reducer';
 import { settingsSelector } from 'app/settings/reducer';
+import { itemInfosSelector } from './selectors';
 
 // Props provided from parents
 interface ProvidedProps {
@@ -16,9 +17,9 @@ interface ProvidedProps {
   allowFilter?: boolean;
   ignoreSelectedPerks?: boolean;
   innerRef?: React.Ref<HTMLDivElement>;
-  onClick?(e): void;
-  onShiftClick?(e): void;
-  onDoubleClick?(e): void;
+  onClick?(e: React.MouseEvent): void;
+  onShiftClick?(e: React.MouseEvent): void;
+  onDoubleClick?(e: React.MouseEvent): void;
 }
 
 // Props from Redux via mapStateToProps
@@ -36,18 +37,20 @@ function mapStateToProps(state: RootState, props: ProvidedProps): StoreProps {
   const { item } = props;
 
   const settings = settingsSelector(state);
-
-  const dtrRating = getRating(item, ratingsSelector(state));
-  const showRating = shouldShowRating(dtrRating);
+  const dtrRating = $featureFlags.reviewsEnabled
+    ? getRating(item, ratingsSelector(state))
+    : undefined;
+  const showRating = $featureFlags.reviewsEnabled && shouldShowRating(dtrRating);
+  const itemInfos = itemInfosSelector(state);
 
   return {
     isNew: settings.showNewItems ? state.inventory.newItems.has(item.id) : false,
-    tag: getTag(item, state.inventory.itemInfos),
-    notes: getNotes(item, state.inventory.itemInfos) ? true : false,
+    tag: getTag(item, itemInfos),
+    notes: getNotes(item, itemInfos) ? true : false,
     rating: dtrRating && showRating ? dtrRating.overallScore : undefined,
     searchHidden: props.allowFilter && !searchFilterSelector(state)(item),
     wishListsEnabled: wishListsEnabledSelector(state),
-    inventoryWishListRoll: inventoryWishListsSelector(state)[item.id]
+    inventoryWishListRoll: inventoryWishListsSelector(state)[item.id],
   };
 }
 
@@ -70,7 +73,7 @@ function ConnectedInventoryItem({
   inventoryWishListRoll,
   wishListsEnabled,
   ignoreSelectedPerks,
-  innerRef
+  innerRef,
 }: Props) {
   return (
     <InventoryItem

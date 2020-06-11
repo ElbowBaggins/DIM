@@ -2,32 +2,33 @@ import React from 'react';
 import { t } from 'app/i18next-t';
 import _ from 'lodash';
 import { Loadout } from './loadout-types';
-import { router } from '../router';
+import { DestinyClass } from 'bungie-api-ts/destiny2';
+import { Prompt } from 'react-router';
+import { Link } from 'react-router-dom';
+import { getClass } from 'app/inventory/store/character-utils';
 
-export default function LoadoutDrawerOptions(
-  this: void,
-  {
-    loadout,
-    showClass,
-    isNew,
-    classTypeOptions,
-    updateLoadout,
-    saveLoadout,
-    saveAsNew
-  }: {
-    loadout?: Loadout;
-    showClass: boolean;
-    isNew: boolean;
-    clashingLoadout?: Loadout;
-    classTypeOptions: {
-      label: string;
-      value: number;
-    }[];
-    updateLoadout(loadout: Loadout);
-    saveLoadout(e);
-    saveAsNew(e);
-  }
-) {
+export default function LoadoutDrawerOptions({
+  loadout,
+  showClass,
+  isNew,
+  classTypeOptions,
+  updateLoadout,
+  clashingLoadout,
+  saveLoadout,
+  saveAsNew,
+}: {
+  loadout?: Readonly<Loadout>;
+  showClass: boolean;
+  isNew: boolean;
+  clashingLoadout?: Loadout;
+  classTypeOptions: {
+    label: string;
+    value: DestinyClass;
+  }[];
+  updateLoadout(loadout: Loadout);
+  saveLoadout(e);
+  saveAsNew(e);
+}) {
   if (!loadout) {
     return null;
   }
@@ -35,26 +36,40 @@ export default function LoadoutDrawerOptions(
   const setName = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateLoadout({
       ...loadout,
-      name: e.target.value
+      name: e.target.value,
     });
   };
 
   const setClassType = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateLoadout({
       ...loadout,
-      classType: parseInt(e.target.value, 10)
+      classType: parseInt(e.target.value, 10),
     });
   };
 
   const setClearSpace = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateLoadout({
       ...loadout,
-      clearSpace: e.target.checked
+      clearSpace: e.target.checked,
     });
   };
 
+  // TODO: make the link to loadout optimizer bring the currently equipped items along in route state
+
+  const saveDisabled =
+    !loadout.name.length ||
+    !loadout.items.length ||
+    // There's an existing loadout with the same name & class and it's not the loadout we are currently editing
+    Boolean(clashingLoadout && clashingLoadout.id !== loadout.id);
+
+  const saveAsNewDisabled =
+    saveDisabled ||
+    // There's an existing loadout with the same name & class
+    Boolean(clashingLoadout);
+
   return (
     <div className="loadout-options">
+      <Prompt when={isNew && loadout.items.length > 0} message={t('Loadouts.Abandon')} />
       <form onSubmit={saveLoadout}>
         <div className="input-group loadout-name">
           <input
@@ -84,22 +99,33 @@ export default function LoadoutDrawerOptions(
           )}
         </div>
         <div className="input-group">
-          <button
-            className="dim-button"
-            disabled={!loadout.name.length || _.isEmpty(loadout.items)}
-          >
+          <button className="dim-button" type="submit" disabled={saveDisabled}>
             {t('Loadouts.Save')}
           </button>
           {!isNew && (
-            <button className="dim-button" onClick={saveAsNew}>
+            <button
+              className="dim-button"
+              onClick={saveAsNew}
+              type="button"
+              title={
+                clashingLoadout
+                  ? clashingLoadout.classType !== DestinyClass.Unknown
+                    ? t('Loadouts.AlreadyExistsClass', {
+                        className: getClass(clashingLoadout.classType),
+                      })
+                    : t('Loadouts.AlreadyExistsGlobal')
+                  : t('Loadouts.SaveAsNew')
+              }
+              disabled={saveAsNewDisabled}
+            >
               {t('Loadouts.SaveAsNew')}
             </button>
           )}
         </div>
         <div className="input-group">
-          <button className="dim-button" onClick={(e) => goToLoadoutBuilder(e, loadout)}>
-            {t('LB.LB')}
-          </button>
+          <Link className="dim-button" to={{ pathname: 'optimizer', state: { loadout } }}>
+            {t('Loadouts.OpenInOptimizer')}
+          </Link>
         </div>
         <div className="input-group">
           <label>
@@ -108,19 +134,15 @@ export default function LoadoutDrawerOptions(
           </label>
         </div>
       </form>
+      {clashingLoadout && clashingLoadout.id !== loadout.id && (
+        <div className="dim-already-exists">
+          {clashingLoadout.classType !== DestinyClass.Unknown
+            ? t('Loadouts.AlreadyExistsClass', {
+                className: getClass(clashingLoadout.classType),
+              })
+            : t('Loadouts.AlreadyExistsGlobal')}
+        </div>
+      )}
     </div>
   );
-}
-
-function goToLoadoutBuilder(e, loadout?: Loadout) {
-  e.preventDefault();
-  if (!loadout) {
-    return;
-  }
-
-  if (_.size(loadout.items) === 0 || confirm(t('Loadouts.Abandon'))) {
-    router.stateService.go(
-      loadout.destinyVersion === 2 ? 'destiny2.loadoutbuilder' : 'destiny1.loadout-builder'
-    );
-  }
 }

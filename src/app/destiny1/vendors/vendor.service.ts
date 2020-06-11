@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { get, set, keys, del } from 'idb-keyval';
+import { get, set } from 'idb-keyval';
 import { compareAccounts, DestinyAccount } from '../../accounts/destiny-account';
 import { getVendorForCharacter } from '../../bungie-api/destiny1-api';
 import { getDefinitions, D1ManifestDefinitions } from '../d1-definitions';
@@ -10,11 +10,11 @@ import { D1Item } from '../../inventory/item-types';
 import { updateVendorRankings } from '../../item-review/destiny-tracker.service';
 import { D1StoresService } from '../../inventory/d1-stores';
 import { loadingTracker } from '../../shell/loading-tracker';
-import { D1ManifestService } from '../../manifest/d1-manifest-service';
 import { handleLocalStorageFullError } from '../../compatibility';
 import store from '../../store/store';
 import { BehaviorSubject, ConnectableObservable, Observable } from 'rxjs';
 import { distinctUntilChanged, switchMap, publishReplay, tap, filter, map } from 'rxjs/operators';
+import { getVault } from 'app/inventory/stores-helpers';
 
 /*
 const allVendors = [
@@ -59,7 +59,7 @@ const allVendors = [
 
 // Vendors we don't want to load by default
 const vendorBlackList = [
-  2021251983 // Postmaster,
+  2021251983, // Postmaster,
 ];
 
 // Hashes for 'Decode Engram'
@@ -152,7 +152,7 @@ function VendorService(): VendorServiceType {
     totalVendors: 0,
     loadedVendors: 0,
     requestRatings,
-    countCurrencies
+    countCurrencies,
     // TODO: expose getVendor promise, idempotently?
   };
 
@@ -186,26 +186,7 @@ function VendorService(): VendorServiceType {
     ]
   >;
 
-  const clearVendors = _.once(() => {
-    D1ManifestService.newManifest$.subscribe(() => {
-      service.vendors = {};
-      service.vendorsLoaded = false;
-      deleteCachedVendors();
-    });
-  });
-
   return service;
-
-  function deleteCachedVendors() {
-    // Everything's in one table, so we can't just clear
-    keys().then((keys) => {
-      keys.forEach((key) => {
-        if (key.toString().startsWith('vendor')) {
-          del(key);
-        }
-      });
-    });
-  }
 
   /**
    * Set the current account, and get a stream of vendor and stores updates.
@@ -220,7 +201,6 @@ function VendorService(): VendorServiceType {
     // Start the stream the first time it's asked for. Repeated calls
     // won't do anything.
     vendorsStream.connect();
-    clearVendors(); // Install listener to clear vendors
     return vendorsStream;
   }
 
@@ -352,9 +332,7 @@ function VendorService(): VendorServiceType {
    * Get this character's level for the given faction.
    */
   function factionLevel(store: D1Store, factionHash: number) {
-    const rep =
-      store.progression &&
-      store.progression.progressions.find((rep) => rep.faction?.hash === factionHash);
+    const rep = store.progression?.progressions.find((rep) => rep.faction?.hash === factionHash);
     return rep?.level || 0;
   }
 
@@ -365,7 +343,7 @@ function VendorService(): VendorServiceType {
     const factionsByHash = {
       489342053: 'Future War Cult',
       2397602219: 'Dead Orbit',
-      3197190122: 'New Monarchy'
+      3197190122: 'New Monarchy',
     };
     const factionAlignment = store.factionAlignment();
 
@@ -431,7 +409,7 @@ function VendorService(): VendorServiceType {
                   status: e.status,
                   expires: Date.now() + 60 * 60 * 1000 + (Math.random() - 0.5) * (60 * 60 * 1000),
                   factionLevel: factionLevel(store, vendorDef.summary.factionHash),
-                  factionAligned: factionAligned(store, vendorDef.summary.factionHash)
+                  factionAligned: factionAligned(store, vendorDef.summary.factionHash),
                 };
 
                 return set(key, vendor)
@@ -488,8 +466,8 @@ function VendorService(): VendorServiceType {
         [store.id]: {
           expires: vendor.expires,
           factionLevel: vendor.factionLevel,
-          factionAligned: vendor.factionAligned
-        }
+          factionAligned: vendor.factionAligned,
+        },
       },
       vendorOrder: def.vendorSubcategoryHash + def.vendorOrder,
       faction: def.factionHash, // TODO: show rep!
@@ -500,7 +478,7 @@ function VendorService(): VendorServiceType {
       factionLevel: 0,
       factionAligned: false,
       allItems: [],
-      categories: []
+      categories: [],
     };
 
     const saleItems = vendor.saleItemCategories.flatMap((categoryData) => categoryData.saleItems);
@@ -534,7 +512,7 @@ function VendorService(): VendorServiceType {
                       'itemName',
                       'icon',
                       'itemHash'
-                    )
+                    ),
                   }))
                   .filter((c) => c.value > 0),
                 item: itemsById[`vendor-${vendorDef.hash}-${saleItem.vendorItemIndex}`],
@@ -543,7 +521,7 @@ function VendorService(): VendorServiceType {
                 unlockedByCharacter: unlocked ? [store.id] : [],
                 failureStrings: saleItem.failureIndexes
                   .map((i) => vendorDef.failureStrings[i])
-                  .join('. ')
+                  .join('. '),
               };
             })
           );
@@ -551,7 +529,7 @@ function VendorService(): VendorServiceType {
           return {
             index: category.categoryIndex,
             title: categoryInfo.displayTitle,
-            saleItems: categoryItems
+            saleItems: categoryItems,
           };
         })
       );
@@ -577,7 +555,7 @@ function VendorService(): VendorServiceType {
   }
 
   async function fulfillRatingsRequest() {
-    if (service.vendorsLoaded && _ratingsRequested) {
+    if ($featureFlags.reviewsEnabled && service.vendorsLoaded && _ratingsRequested) {
       // TODO: Throttle this. Right now we reload this on every page
       // view and refresh of the vendors page.
       store.dispatch(updateVendorRankings(service.vendors));
@@ -606,7 +584,7 @@ function VendorService(): VendorServiceType {
         case 2534352370:
         case 3159615086:
         case 2749350776:
-          totalCoins[currencyHash] = D1StoresService.getVault()!.currencies.find(
+          totalCoins[currencyHash] = getVault(stores)!.currencies.find(
             (c) => c.itemHash === currencyHash
           )!.quantity;
           break;
