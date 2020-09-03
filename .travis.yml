@@ -2,7 +2,7 @@ language: node_js
 node_js: 13
 os: linux
 dist: xenial
-script: build/travis_build.sh
+script: chmod +x build/travis_build.sh && build/travis_build.sh
 cache:
   yarn: true
   directories:
