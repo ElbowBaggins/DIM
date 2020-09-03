@@ -17,6 +17,7 @@ import {
   DestinyItemPlugBase,
   DestinyDamageTypeDefinition,
   DestinyEnergyTypeDefinition,
+  DestinyBreakerTypeDefinition,
 } from 'bungie-api-ts/destiny2';
 import { DimStore, StoreServiceType, D1StoreServiceType, D2StoreServiceType } from './store-types';
 import { InventoryBucket } from './inventory-buckets';
@@ -109,7 +110,9 @@ export interface DimItem {
   classTypeNameLocalized: string;
   /** Whether this item can be locked. */
   lockable: boolean;
-  /** Is this item tracked? (D1 quests/bounties). */
+  /** Can this item be tracked? (For quests/bounties.) */
+  trackable: boolean;
+  /** Is this item tracked? (For quests/bounties). */
   tracked: boolean;
   /**
    * Is this item locked?
@@ -196,8 +199,6 @@ export interface D1Item extends DimItem {
   year: number;
   /** Hashes that allow us to figure out where this item can be found (what activities, locations, etc.) */
   sourceHashes: number[];
-  /** Can this item be tracked? (For quests/bounties.) */
-  trackable: boolean;
 
   getStoresService(): D1StoreServiceType;
 }
@@ -216,6 +217,8 @@ export interface D2Item extends DimItem {
   energy: DestinyItemInstanceEnergy | null;
   /** If this exists, it's the limit of an item's PL. If NOT, display no information. Maybe it's unlimited PL. Maybe it's a weird item. */
   powerCap: number | null;
+  /** an item's current breaker type, if it has one */
+  breakerType: DestinyBreakerTypeDefinition | null;
   /** Information about how this item works with infusion. */
   infusionQuality: DestinyItemQualityBlockDefinition | null;
   /** More infusion information about what can be infused with the item. */
@@ -257,14 +260,16 @@ export interface DimMasterwork {
   typeIcon: string;
   /** The localized description associated with the type. */
   typeDesc: string | null;
-  /** The stat that is enhanced by this masterwork. */
-  statHash?: number;
-  /** The name of the stat enhanced by this masterwork. */
-  statName?: string;
   /** The tier of the masterwork (not the same as the stat!). */
   tier?: number;
-  /** How much the stat is enhanced by this masterwork. */
-  statValue?: number;
+  /** The stats that are enhanced by this masterwork. */
+  stats?: {
+    hash?: number;
+    /** The name of the stat enhanced by this masterwork. */
+    name?: string;
+    /** How much the stat is enhanced by this masterwork. */
+    value?: number;
+  }[];
 }
 
 export interface DimStat {
@@ -278,6 +283,8 @@ export interface DimStat {
   value: number;
   /** Base stat without bonus perks applied. Important in D2 for armor. */
   base: number;
+  /** If negative mods are found and the investment stat is 0, the base value may be incorrect */
+  baseMayBeWrong?: boolean;
   /** The maximum value this stat can have. */
   maximumValue: number;
   /** Should this be displayed as a bar or just a number? */
@@ -387,13 +394,18 @@ export interface D1GridNode extends DimGridNode {
   dtrRoll: string;
 }
 
+/** an InventoryItem known to have a plug attribute, because this item is located in a socket */
+export interface PluggableInventoryItemDefinition extends DestinyInventoryItemDefinition {
+  plug: NonNullable<DestinyInventoryItemDefinition['plug']>;
+}
+
 /**
  * DIM's view of a "Plug" - an item that can go into a socket.
  * In D2, both perk grids and mods/shaders are sockets with plugs.
  */
 export interface DimPlug {
-  /** The item associated with this plug. */
-  plugItem: DestinyInventoryItemDefinition;
+  /** The InventoryItem definition associated with this plug. */
+  plugDef: PluggableInventoryItemDefinition;
   /** Perks associated with the use of this plug. TODO: load on demand? */
   perks: DestinySandboxPerkDefinition[];
   /** Objectives associated with this plug, usually used to unlock it. */
@@ -412,7 +424,7 @@ export interface DimSocket {
   /** The index of this socket in the overall socket list, used for the AWA InsertPlug API. */
   socketIndex: number;
   /** The currently inserted plug item, if any. */
-  plug: DimPlug | null;
+  plugged: DimPlug | null;
   /**
    * The displayable/searchable list of potential plug choices for this socket.
    * For perks, this is all the potential perks in the perk column.
@@ -420,6 +432,8 @@ export interface DimSocket {
    * Look at TODO to figure out the full list of possible plugs for this socket.
    */
   plugOptions: DimPlug[];
+  /** Plug hashes in this item visible in the collections roll, if this is a perk */
+  curatedRoll: number[] | null;
   /** Reusable plug items from runtime info, for the plug viewer. */
   reusablePlugItems?: DestinyItemPlugBase[];
   /** Does the socket contain randomized plug items? */
@@ -439,7 +453,7 @@ export interface DimSocketCategory {
 
 export interface DimSockets {
   /** A flat list of all sockes on the item. */
-  sockets: DimSocket[];
+  allSockets: DimSocket[];
   /** Sockets grouped by category. */
   categories: DimSocketCategory[];
 }

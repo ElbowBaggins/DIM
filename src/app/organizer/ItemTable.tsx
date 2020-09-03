@@ -9,18 +9,17 @@ import { ItemInfos, TagInfo } from 'app/inventory/dim-item-info';
 import { DtrRating } from 'app/item-review/dtr-api-types';
 import { InventoryWishListRoll } from 'app/wishlists/wishlists';
 import { loadingTracker } from 'app/shell/loading-tracker';
-import { showNotification } from 'app/notifications/notifications';
-import { t } from 'app/i18next-t';
+import { t, tl } from 'app/i18next-t';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
 import ItemActions from './ItemActions';
 import { DimStore } from 'app/inventory/store-types';
 import EnabledColumnsSelector from './EnabledColumnsSelector';
-import { bulkTagItems } from 'app/inventory/tag-items';
+import { bulkTagItems, bulkLockItems } from 'app/inventory/bulk-actions';
 import { connect } from 'react-redux';
 import { createSelector } from 'reselect';
-import { RootState, ThunkDispatchProp } from 'app/store/reducers';
+import { RootState, ThunkDispatchProp } from 'app/store/types';
 import { storesSelector, itemInfosSelector } from 'app/inventory/selectors';
-import { searchFilterSelector } from 'app/search/search-filters';
+import { searchFilterSelector } from 'app/search/search-filter';
 import { inventoryWishListsSelector } from 'app/wishlists/reducer';
 import { toggleSearchQueryComponent } from 'app/shell/actions';
 import clsx from 'clsx';
@@ -30,14 +29,13 @@ import { applyLoadout } from 'app/loadout/loadout-apply';
 import { getColumns, getColumnSelectionId } from './Columns';
 import { ratingsSelector } from 'app/item-review/reducer';
 import { DestinyClass } from 'bungie-api-ts/destiny2';
-import { setItemLockState } from 'app/inventory/item-move-service';
 import { emptyObject, emptyArray } from 'app/utils/empty';
 import { Row, ColumnDefinition, SortDirection, ColumnSort } from './table-types';
 import { compareBy, chainComparator, reverseComparator } from 'app/utils/comparators';
-import { touch, setItemNote } from 'app/inventory/actions';
+import { setItemNote } from 'app/inventory/actions';
 import { settingsSelector } from 'app/settings/reducer';
 import { setSetting } from 'app/settings/actions';
-import { KeyedStatHashLists } from 'app/dim-ui/CustomStatTotal';
+import { StatHashListsKeyedByDestinyClass } from 'app/dim-ui/CustomStatTotal';
 import { Loadout } from 'app/loadout/loadout-types';
 import { loadoutsSelector } from 'app/loadout/reducer';
 import { StatInfo } from 'app/compare/Compare';
@@ -50,6 +48,16 @@ const categoryToClass = {
   22: DestinyClass.Titan,
   21: DestinyClass.Warlock,
 };
+
+const downloadButtonSettings = [
+  { categoryId: ['weapons'], csvType: 'Weapons' as const, label: tl('Bucket.Weapons') },
+  {
+    categoryId: ['hunter', 'titan', 'warlock'],
+    csvType: 'Armor' as const,
+    label: tl('Bucket.Armor'),
+  },
+  { categoryId: ['ghosts'], csvType: 'Ghost' as const, label: tl('Bucket.Ghost') },
+];
 
 interface ProvidedProps {
   categories: ItemCategoryTreeNode[];
@@ -66,7 +74,7 @@ interface StoreProps {
   };
   isPhonePortrait: boolean;
   enabledColumns: string[];
-  customTotalStatsByClass: KeyedStatHashLists;
+  customTotalStatsByClass: StatHashListsKeyedByDestinyClass;
   loadouts: Loadout[];
   newItems: Set<string>;
 }
@@ -97,6 +105,8 @@ function mapStateToProps() {
   return (state: RootState, props: ProvidedProps): StoreProps => {
     const items = itemsSelector(state, props);
     const isWeapon = items[0]?.bucket.inWeapons;
+    const isArmor = items[0]?.bucket.inArmor;
+    const itemType = isWeapon ? 'weapon' : isArmor ? 'armor' : 'ghost';
     return {
       items,
       defs: state.manifest.d2Manifest!,
@@ -105,9 +115,7 @@ function mapStateToProps() {
       ratings: $featureFlags.reviewsEnabled ? ratingsSelector(state) : emptyObject(),
       wishList: inventoryWishListsSelector(state),
       isPhonePortrait: state.shell.isPhonePortrait,
-      enabledColumns: settingsSelector(state)[
-        isWeapon ? 'organizerColumnsWeapons' : 'organizerColumnsArmor'
-      ],
+      enabledColumns: settingsSelector(state)[columnSetting(itemType)],
       customTotalStatsByClass: settingsSelector(state).customTotalStatsByClass,
       loadouts: loadoutsSelector(state),
       newItems: state.inventory.newItems,
@@ -142,7 +150,7 @@ function ItemTable({
 
   const classCategoryHash =
     categories.map((n) => n.itemCategoryHash).find((hash) => hash in categoryToClass) ?? 999;
-  const classIfAny: DestinyClass = categoryToClass[classCategoryHash]! ?? DestinyClass.Unknown;
+  const classIfAny: DestinyClass = categoryToClass[classCategoryHash] ?? DestinyClass.Unknown;
 
   // Calculate the true height of the table header, for sticky-ness
   const tableRef = useRef<HTMLDivElement>(null);
@@ -170,8 +178,8 @@ function ItemTable({
   );
 
   const firstItem = items[0];
-  const isWeapon = firstItem?.bucket.inWeapons;
-  const isArmor = firstItem?.bucket.inArmor;
+  const isWeapon = Boolean(firstItem?.bucket.inWeapons);
+  const isArmor = Boolean(firstItem?.bucket.inArmor);
   const itemType = isWeapon ? 'weapon' : isArmor ? 'armor' : 'ghost';
   const customStatTotal = customTotalStatsByClass[classIfAny] ?? emptyArray();
   const destinyVersion = firstItem?.destinyVersion || 2;
@@ -234,7 +242,7 @@ function ItemTable({
     ({ checked, id }: { checked: boolean; id: string }) => {
       dispatch(
         setSetting(
-          isWeapon ? 'organizerColumnsWeapons' : 'organizerColumnsArmor',
+          columnSetting(itemType),
           _.uniq(
             _.compact(
               columns.map((c) => {
@@ -250,38 +258,12 @@ function ItemTable({
         )
       );
     },
-    [dispatch, columns, enabledColumns, isWeapon]
+    [dispatch, columns, enabledColumns, itemType]
   );
-  // TODO: stolen from SearchFilter, should probably refactor into a shared thing
+
   const onLock = loadingTracker.trackPromise(async (lock: boolean) => {
     const selectedItems = items.filter((i) => selectedItemIds.includes(i.id));
-
-    const state = lock;
-    try {
-      for (const item of selectedItems) {
-        await setItemLockState(item, state);
-
-        // TODO: Gotta do this differently in react land
-        item.locked = lock;
-      }
-      showNotification({
-        type: 'success',
-        title: state
-          ? t('Filter.LockAllSuccess', { num: selectedItems.length })
-          : t('Filter.UnlockAllSuccess', { num: selectedItems.length }),
-      });
-    } catch (e) {
-      showNotification({
-        type: 'error',
-        title: state ? t('Filter.LockAllFailed') : t('Filter.UnlockAllFailed'),
-        body: e.message,
-      });
-    } finally {
-      // Touch the stores service to update state
-      if (selectedItems.length) {
-        dispatch(touch());
-      }
-    }
+    dispatch(bulkLockItems(selectedItems, lock));
   });
 
   const onNote = (note?: string) => {
@@ -420,46 +402,29 @@ function ItemTable({
 
   // TODO: drive the CSV export off the same column definitions as this table!
   let downloadAction: ReactNode | null = null;
-  if (categories.length > 1) {
+  const downloadButtonSetting = downloadButtonSettings.find((setting) =>
+    setting.categoryId.includes(categories[1]?.id)
+  );
+  if (downloadButtonSetting) {
     const downloadCsv = (type: 'Armor' | 'Weapons' | 'Ghost') => {
       downloadCsvFiles(stores, itemInfos, type);
       ga('send', 'event', 'Download CSV', type);
     };
+    const downloadHandler = (e) => {
+      e.preventDefault();
+      downloadCsv(downloadButtonSetting.csvType);
+      return false;
+    };
 
-    if (categories[1].id === 'weapons') {
-      const downloadWeaponCsv = (e) => {
-        e.preventDefault();
-        downloadCsv('Weapons');
-        return false;
-      };
-      downloadAction = (
-        <button className={clsx(styles.importButton, 'dim-button')} onClick={downloadWeaponCsv}>
-          <AppIcon icon={spreadsheetIcon} /> <span>{t('Bucket.Weapons')}.csv</span>
-        </button>
-      );
-    } else if (categories[1].id === 'armor') {
-      const downloadArmorCsv = (e) => {
-        e.preventDefault();
-        downloadCsv('Armor');
-        return false;
-      };
-      downloadAction = (
-        <button className={clsx(styles.importButton, 'dim-button')} onClick={downloadArmorCsv}>
-          <AppIcon icon={spreadsheetIcon} /> <span>{t('Bucket.Armor')}.csv</span>
-        </button>
-      );
-    } else {
-      const downloadGhostCsv = (e) => {
-        e.preventDefault();
-        downloadCsv('Ghost');
-        return false;
-      };
-      downloadAction = (
-        <button className={clsx(styles.importButton, 'dim-button')} onClick={downloadGhostCsv}>
-          <AppIcon icon={spreadsheetIcon} /> <span>{t('Bucket.Ghost')}.csv</span>
-        </button>
-      );
-    }
+    downloadAction = (
+      <button
+        type="button"
+        className={clsx(styles.importButton, 'dim-button')}
+        onClick={downloadHandler}
+      >
+        <AppIcon icon={spreadsheetIcon} /> <span>{t(downloadButtonSetting.label)}.csv</span>
+      </button>
+    );
   }
 
   const importCsv: DropzoneOptions['onDrop'] = async (acceptedFiles) => {
@@ -670,6 +635,7 @@ function TableRow({
   return (
     <>
       {filteredColumns.map((column: ColumnDefinition) => (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <div
           key={column.id}
           onClick={narrowQueryFunction(row, column)}
@@ -686,3 +652,14 @@ function TableRow({
 }
 
 export default connect<StoreProps>(mapStateToProps)(ItemTable);
+
+function columnSetting(itemType: 'weapon' | 'armor' | 'ghost') {
+  switch (itemType) {
+    case 'weapon':
+      return 'organizerColumnsWeapons';
+    case 'armor':
+      return 'organizerColumnsArmor';
+    case 'ghost':
+      return 'organizerColumnsGhost';
+  }
+}

@@ -1,9 +1,9 @@
 import './FilterHelp.scss';
 
 import React from 'react';
-import { RootState } from '../store/reducers';
+import { RootState } from 'app/store/types';
 import { connect } from 'react-redux';
-import { destinyVersionSelector } from '../accounts/reducer';
+import { destinyVersionSelector } from 'app/accounts/selectors';
 import { t } from 'app/i18next-t';
 import { DestinyVersion } from '@destinyitemmanager/dim-api-types';
 import UserGuideLink from 'app/dim-ui/UserGuideLink';
@@ -45,14 +45,6 @@ function FilterHelp({ destinyVersion }: { destinyVersion: DestinyVersion }) {
               </td>
               <td>{t('Filter.Dupe')}</td>
             </tr>
-            {destinyVersion === 2 && (
-              <tr>
-                <td>
-                  <span>is:reacquirable</span>
-                </td>
-                <td>{t('Filter.Reacquirable')}</td>
-              </tr>
-            )}
             <tr>
               <td>
                 <span>is:equipped</span>
@@ -321,6 +313,20 @@ function FilterHelp({ destinyVersion }: { destinyVersion: DestinyVersion }) {
                   <span>energycapacity:arc:&lt;=value</span>
                 </td>
                 <td>{t('Filter.Energy')}</td>
+              </tr>
+            )}
+            {destinyVersion === 2 && (
+              <tr>
+                <td>
+                  <span>breaker:barrier</span>
+                  <span>breaker:antibarrier</span>
+                  <span>breaker:shieldpiercing</span>
+                  <span>breaker:overload</span>
+                  <span>breaker:disruption</span>
+                  <span>breaker:unstoppable</span>
+                  <span>breaker:stagger</span>
+                </td>
+                <td>{t('Filter.Breaker')}</td>
               </tr>
             )}
             {destinyVersion === 2 && (

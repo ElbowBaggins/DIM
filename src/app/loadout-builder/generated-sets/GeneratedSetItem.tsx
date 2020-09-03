@@ -1,36 +1,21 @@
 import React, { useMemo, Dispatch } from 'react';
-import { DimPlug, DimItem } from '../../inventory/item-types';
+import { DimItem } from '../../inventory/item-types';
 import LoadoutBuilderItem from '../LoadoutBuilderItem';
-import { LockedItemType, LockedArmor2Mod } from '../types';
+import { LockedItemType, LockedArmor2Mod, StatTypes } from '../types';
 import ItemSockets from 'app/item-popup/ItemSockets';
 import _ from 'lodash';
 import styles from './GeneratedSetItem.m.scss';
 import { AppIcon, faRandom, lockIcon } from 'app/shell/icons';
 import { showItemPicker } from 'app/item-picker/item-picker';
 import { t } from 'app/i18next-t';
-import { lockedItemsEqual } from './utils';
-import { generateMixesFromPerks, matchLockedItem } from '../process';
-import { SocketDetailsMod } from 'app/item-popup/SocketDetails';
+import { lockedItemsEqual } from '../utils';
+import { generateMixesFromPerks } from '../utils';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
-import './GeneratedSetItemLockedMods.scss';
 import { DestinyInventoryItemDefinition } from 'bungie-api-ts/destiny2';
-import clsx from 'clsx';
-import { LoadoutBuilderAction } from '../LoadoutBuilder';
+import { matchLockedItem } from '../preProcessFilter';
+import { LoadoutBuilderAction } from '../loadoutBuilderReducer';
+import GeneratedSetSockets from './GeneratedSetSockets';
 
-/**
- * Figure out which (if any) non-selected perks should be selected to get the chosen stat mix.
- */
-function identifyAltPerkChoicesForChosenStats(item: DimItem, chosenValues: number[]) {
-  let altPerks: DimPlug[] = [];
-  generateMixesFromPerks(item, {}, (mix, plugs) => {
-    if (plugs && mix.every((val, index) => val === chosenValues[index])) {
-      altPerks = plugs;
-      return false;
-    }
-    return true;
-  });
-  return altPerks;
-}
 /**
  * An individual item in a generated set. Includes a perk display and a button for selecting
  * alternative items with the same stat mix.
@@ -41,6 +26,7 @@ export default function GeneratedSetItem({
   defs,
   statValues,
   itemOptions,
+  statOrder,
   lockedMods,
   lbDispatch,
 }: {
@@ -49,12 +35,14 @@ export default function GeneratedSetItem({
   defs: D2ManifestDefinitions;
   statValues: number[];
   itemOptions: DimItem[];
-  lockedMods?: LockedArmor2Mod[];
+  statOrder: StatTypes[];
+  lockedMods: LockedArmor2Mod[];
   lbDispatch: Dispatch<LoadoutBuilderAction>;
 }) {
-  const altPerks = useMemo(() => identifyAltPerkChoicesForChosenStats(item, statValues), [
+  const altPerks = useMemo(() => generateMixesFromPerks(item, statValues, statOrder), [
     item,
     statValues,
+    statOrder,
   ]);
 
   const addLockedItem = (item: LockedItemType) => lbDispatch({ type: 'addItemToLockedMap', item });
@@ -62,7 +50,7 @@ export default function GeneratedSetItem({
     lbDispatch({ type: 'removeItemFromLockedMap', item });
 
   const classesByHash = altPerks.reduce(
-    (memo, perk) => ({ ...memo, [perk.plugItem.hash]: styles.altPerk }),
+    (memo, perk) => ({ ...memo, [perk.plugDef.hash]: styles.altPerk }),
     {}
   );
   if (locked) {
@@ -79,7 +67,6 @@ export default function GeneratedSetItem({
     try {
       const { item } = await showItemPicker({
         prompt: t('LoadoutBuilder.ChooseAlternate'),
-        hideStoreEquip: true,
         filterItems: (item: DimItem) => ids.has(item.id),
       });
 
@@ -114,6 +101,7 @@ export default function GeneratedSetItem({
 
       {itemOptions.length > 1 ? (
         <button
+          type="button"
           className={styles.swapButton}
           title={t('LoadoutBuilder.ChooseAlternateTitle')}
           onClick={chooseReplacement}
@@ -123,6 +111,7 @@ export default function GeneratedSetItem({
       ) : (
         locked?.some((li) => li.type === 'item') && (
           <button
+            type="button"
             className={styles.swapButton}
             title={t('LoadoutBuilder.UnlockItem')}
             onClick={() => removeLockedItem({ type: 'item', item, bucket: item.bucket })}
@@ -141,25 +130,12 @@ export default function GeneratedSetItem({
       )}
       {$featureFlags.armor2ModPicker && (
         <div className={styles.lockedSockets}>
-          {Boolean(lockedMods?.length) && (
-            <div className={clsx('lockedItems', styles.lockedSocketsRow)}>
-              {lockedMods?.map((mod) => (
-                <SocketDetailsMod key={mod.key} itemDef={mod.mod} defs={defs} />
-              ))}
-            </div>
-          )}
-          {Boolean(lockedOldMods.length) && (
-            <div className={clsx('lockedItems', styles.lockedSocketsRow)}>
-              {lockedOldMods?.map((def) => (
-                <SocketDetailsMod key={def.hash} itemDef={def} defs={defs} />
-              ))}
-            </div>
-          )}
-          <div className={clsx('lockedItems', 'lockedPerks', styles.lockedSocketsRow)}>
-            {lockedPerks?.map((def) => (
-              <SocketDetailsMod key={def.hash} itemDef={def} defs={defs} />
-            ))}
-          </div>
+          <GeneratedSetSockets
+            item={item}
+            lockedMods={lockedMods}
+            defs={defs}
+            lbDispatch={lbDispatch}
+          />
         </div>
       )}
     </div>

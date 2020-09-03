@@ -2,40 +2,16 @@ import { Reducer } from 'redux';
 import * as actions from './actions';
 import { ActionType, getType } from 'typesafe-actions';
 import { DimStore } from './store-types';
-import { InventoryBuckets } from './inventory-buckets';
-import { AccountsAction, currentAccountSelector } from '../accounts/reducer';
+import { AccountsAction } from '../accounts/reducer';
 import { setCurrentAccount } from '../accounts/actions';
-import { RootState } from '../store/reducers';
 import { DestinyProfileResponse } from 'bungie-api-ts/destiny2';
-import { observeStore } from 'app/utils/redux-utils';
 import _ from 'lodash';
-import { set } from 'idb-keyval';
-import { handleLocalStorageFullError } from 'app/compatibility';
 import { DimItem } from './item-types';
 import { DimError } from 'app/bungie-api/bungie-service-helper';
-import { StoreProto as D2StoreProto } from './store/d2-store-factory';
+import { StoreProto as D2StoreProto, StoreProto } from './store/d2-store-factory';
 import { StoreProto as D1StoreProto } from './store/d1-store-factory';
-/**
- * Set up an observer on the store that'll save item infos to sync service (google drive).
- * We specifically watch the legacy state, not the new one.
- */
-export const saveItemInfosOnStateChange = _.once(() => {
-  // Sneak in another observer for saving new-items to IDB
-  observeStore(
-    (state: RootState) => state.inventory.newItems,
-    _.debounce(async (_, newItems, rootState) => {
-      const account = currentAccountSelector(rootState);
-      if (account) {
-        const key = `newItems-m${account.membershipId}-d${account.destinyVersion}`;
-        try {
-          return await set(key, newItems);
-        } catch (e) {
-          handleLocalStorageFullError(e);
-        }
-      }
-    }, 1000)
-  );
-});
+import { getItemAcrossStores, getStore } from './stores-helpers';
+import { ItemProto } from './store/d2-item-factory';
 
 // TODO: Should this be by account? Accounts need IDs
 export interface InventoryState {
@@ -44,8 +20,6 @@ export interface InventoryState {
   // Updates to items need to deeply modify their store though.
   // TODO: ReadonlyArray<Readonly<DimStore>>
   readonly stores: DimStore[];
-
-  readonly buckets?: InventoryBuckets;
 
   readonly profileResponse?: DestinyProfileResponse;
 
@@ -84,6 +58,9 @@ export const inventory: Reducer<InventoryState, InventoryAction | AccountsAction
         // Make a new array to break change detection for the root stores components
         stores: [...state.stores],
       };
+
+    case getType(actions.touchItem):
+      return touchItem(state, action.payload);
 
     case getType(actions.charactersUpdated):
       return updateCharacters(state, action.payload);
@@ -149,11 +126,9 @@ function updateInventory(
   state: InventoryState,
   {
     stores,
-    buckets,
     profileResponse,
   }: {
     stores: DimStore[];
-    buckets?: InventoryBuckets | undefined;
     profileResponse?: DestinyProfileResponse | undefined;
   }
 ) {
@@ -165,9 +140,6 @@ function updateInventory(
     newItems: computeNewItems(state.stores, state.newItems, stores),
     profileError: undefined,
   };
-  if (buckets) {
-    newState.buckets = buckets;
-  }
   if (profileResponse) {
     newState.profileResponse = profileResponse;
   }
@@ -278,6 +250,10 @@ function computeNewItems(oldStores: DimStore[], oldNewItems: Set<string>, newSto
  * Compute if two sets are equal by seeing that every item of each set is present in the other.
  */
 function setsEqual<T>(first: Set<T>, second: Set<T>) {
+  if (first.size !== second.size) {
+    return false;
+  }
+
   let equal = true;
   for (const itemId of first) {
     if (!second.has(itemId)) {
@@ -294,4 +270,28 @@ function setsEqual<T>(first: Set<T>, second: Set<T>) {
     }
   }
   return equal;
+}
+
+function touchItem(state: InventoryState, itemId: string) {
+  let item = getItemAcrossStores(state.stores, { id: itemId })!;
+  if (!item) {
+    return state;
+  }
+  let store = getStore(state.stores, item.owner)!;
+  item = Object.assign(Object.create(ItemProto), item) as DimItem;
+  store = Object.assign(Object.create(StoreProto), {
+    ...store,
+    items: store.items.map((i) => (i.id === item.id ? item : i)),
+    buckets: {
+      ...store.buckets,
+      [item.location.hash]: store.buckets[item.location.hash].map((i) =>
+        i.id === item.id ? item : i
+      ),
+    },
+  });
+
+  return {
+    ...state,
+    stores: state.stores.map((s) => (s.id === store.id ? store : s)),
+  };
 }

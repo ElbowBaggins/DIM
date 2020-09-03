@@ -6,7 +6,12 @@ import { characterSortSelector } from '../settings/character-sort';
 import store from '../store/store';
 import { getTag, tagConfig } from '../inventory/dim-item-info';
 import { getRating } from '../item-review/reducer';
-import { itemInfosSelector } from 'app/inventory/selectors';
+import { itemInfosSelector, itemHashTagsSelector } from 'app/inventory/selectors';
+import {
+  CONSUMABLES_BUCKET,
+  MATERIALS_BUCKET,
+  MODIFICATIONS_BUCKET,
+} from 'app/search/d2-known-values';
 // This file defines filters for DIM that may be shared among
 // different parts of DIM.
 
@@ -107,7 +112,7 @@ const D1_MATERIAL_SORT_ORDER = [
 // Bucket IDs that'll never be sorted.
 // Don't resort postmaster items - that way people can see
 // what'll get bumped when it's full.
-const ITEM_SORT_BLACKLIST = new Set([
+const ITEM_SORT_DENYLIST = new Set([
   2197472680, // Bounties (D1)
   375726501, // Mission (D1)
   1801258597, // Quests (D1)
@@ -137,7 +142,11 @@ const ITEM_COMPARATORS: { [key: string]: Comparator<DimItem> } = {
   name: compareBy((item: DimItem) => item.name),
   amount: reverseComparator(compareBy((item: DimItem) => item.amount)),
   tag: compareBy((item: DimItem) => {
-    const tag = getTag(item, itemInfosSelector(store.getState()));
+    const tag = getTag(
+      item,
+      itemInfosSelector(store.getState()),
+      itemHashTagsSelector(store.getState())
+    );
     return tag && tagConfig[tag] ? tagConfig[tag].sortOrder : 1000;
   }),
   archive: compareBy((item: DimItem) => {
@@ -156,18 +165,18 @@ export function sortItems(items: DimItem[], itemSortOrder: string[]) {
   }
 
   const itemLocationId = items[0].location.hash;
-  if (!items.length || ITEM_SORT_BLACKLIST.has(itemLocationId)) {
+  if (!items.length || ITEM_SORT_DENYLIST.has(itemLocationId)) {
     return items;
   }
 
   let specificSortOrder: number[] = [];
   // Group like items in the General Section
-  if (itemLocationId === 1469714392) {
+  if (itemLocationId === CONSUMABLES_BUCKET) {
     specificSortOrder = D1_CONSUMABLE_SORT_ORDER;
   }
 
   // Group like items in the General Section
-  if (itemLocationId === 3865314626) {
+  if (itemLocationId === MATERIALS_BUCKET) {
     specificSortOrder = D1_MATERIAL_SORT_ORDER;
   }
 
@@ -180,7 +189,7 @@ export function sortItems(items: DimItem[], itemSortOrder: string[]) {
   }
 
   // Re-sort mods
-  if (itemLocationId === 3313201758) {
+  if (itemLocationId === MODIFICATIONS_BUCKET) {
     const comparators = [ITEM_COMPARATORS.typeName, ITEM_COMPARATORS.name];
     if (itemSortOrder.includes('rarity')) {
       comparators.unshift(ITEM_COMPARATORS.rarity);
@@ -189,7 +198,7 @@ export function sortItems(items: DimItem[], itemSortOrder: string[]) {
   }
 
   // Re-sort consumables
-  if (itemLocationId === 1469714392) {
+  if (itemLocationId === CONSUMABLES_BUCKET) {
     return items.sort(
       chainComparator(
         ITEM_COMPARATORS.typeName,
@@ -255,7 +264,7 @@ export function dtrRatingColor(value: number, property = 'color') {
 }
 
 export function storeBackgroundColor(store: DimStore, index = 0, header = false) {
-  if (!store.isDestiny2() || !store.color) {
+  if ($featureFlags.gradientBackground || !store.isDestiny2() || !store.color) {
     return undefined;
   }
 

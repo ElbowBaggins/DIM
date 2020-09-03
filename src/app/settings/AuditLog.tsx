@@ -6,9 +6,9 @@ import {
 } from '@destinyitemmanager/dim-api-types';
 import { getAuditLog } from 'app/dim-api/dim-api';
 import { DestinyAccount, PLATFORM_ICONS } from 'app/accounts/destiny-account';
-import { accountsSelector } from 'app/accounts/reducer';
+import { accountsSelector } from 'app/accounts/selectors';
 import { connect } from 'react-redux';
-import { RootState } from 'app/store/reducers';
+import { RootState } from 'app/store/types';
 import styles from './AuditLog.m.scss';
 import { AppIcon } from 'app/shell/icons';
 import { t } from 'app/i18next-t';
@@ -64,7 +64,9 @@ function AuditLog({ accounts }: Props) {
       case 'delete_all':
         return t('AuditLog.DeleteAll');
       case 'tag_cleanup':
-        return t('AuditLog.TagCleanup');
+        return logEntry.payload.deleted === undefined
+          ? t('AuditLog.TagCleanupUnknown')
+          : t('AuditLog.TagCleanup', { count: logEntry.payload.deleted });
       default:
         return JSON.stringify((logEntry as any).payload);
     }

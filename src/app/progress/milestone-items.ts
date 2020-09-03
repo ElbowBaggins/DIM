@@ -16,6 +16,7 @@ import { t } from 'app/i18next-t';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
 import { InventoryBuckets } from 'app/inventory/inventory-buckets';
 import _ from 'lodash';
+import { ItemCategoryHashes } from 'data/d2/generated-enums';
 
 export function milestoneToItems(
   milestone: DestinyMilestone,
@@ -71,6 +72,8 @@ function availableQuestToItem(
   const questRewards = questDef.questRewards
     ? _.take(
         questDef.questRewards.items
+          // 75% of "rewards" are the invalid hash 0
+          .filter((r) => r.itemHash)
           .map((r) => defs.InventoryItem.get(r.itemHash))
           // Filter out rewards that are for other characters
           .filter(
@@ -78,7 +81,7 @@ function availableQuestToItem(
               i &&
               (i.classType === characterClass || i.classType === DestinyClass.Unknown) &&
               // And quest steps, they're not interesting
-              !i.itemCategoryHashes.includes(16)
+              !i.itemCategoryHashes?.includes(ItemCategoryHashes.QuestStep)
           ),
         1
       )

@@ -2,10 +2,8 @@ import { Reducer } from 'redux';
 import * as actions from './actions';
 import { ActionType, getType } from 'typesafe-actions';
 import { getInventoryWishListRolls } from './wishlists';
-import { RootState } from '../store/reducers';
+import { RootState } from 'app/store/types';
 import _ from 'lodash';
-import { observeStore } from '../utils/redux-utils';
-import { set } from 'idb-keyval';
 import { WishListAndInfo } from './types';
 import { createSelector } from 'reselect';
 import { storesSelector } from '../inventory/selectors';
@@ -68,21 +66,13 @@ export const wishLists: Reducer<WishListsState, WishListAction> = (
         loaded: true,
       };
     }
+    case getType(actions.touchWishLists): {
+      return {
+        ...state,
+        lastFetched: new Date(),
+      };
+    }
     default:
       return state;
   }
 };
-
-export function saveWishListToIndexedDB() {
-  return observeStore(
-    (state) => state.wishLists,
-    (_, nextState) => {
-      if (nextState.loaded) {
-        set('wishlist', {
-          wishListAndInfo: nextState.wishListAndInfo,
-          lastFetched: nextState.lastFetched,
-        });
-      }
-    }
-  );
-}

@@ -14,6 +14,7 @@ interface CssExports {
   'importButton': string;
   'inlineIcon': string;
   'isPerk': string;
+  'itemIcon': string;
   'loadouts': string;
   'locked': string;
   'masterwork': string;
@@ -30,7 +31,6 @@ interface CssExports {
   'positive': string;
   'power': string;
   'rating': string;
-  'reacquireable': string;
   'season': string;
   'selection': string;
   'shiftHeld': string;

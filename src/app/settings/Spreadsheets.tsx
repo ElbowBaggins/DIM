@@ -8,7 +8,7 @@ import { DimStore } from 'app/inventory/store-types';
 import { ItemInfos } from 'app/inventory/dim-item-info';
 import { connect } from 'react-redux';
 import { storesSelector, storesLoadedSelector, itemInfosSelector } from 'app/inventory/selectors';
-import { RootState, ThunkDispatchProp } from 'app/store/reducers';
+import { RootState, ThunkDispatchProp } from 'app/store/types';
 
 interface StoreProps {
   disabled?: boolean;
@@ -75,13 +75,28 @@ function Spreadsheets({ stores, itemInfos, disabled, dispatch }: Props) {
           {t('Settings.ExportSS')}
         </label>
         <div>
-          <button className="dim-button" onClick={downloadWeaponCsv} disabled={disabled}>
+          <button
+            type="button"
+            className="dim-button"
+            onClick={downloadWeaponCsv}
+            disabled={disabled}
+          >
             <AppIcon icon={spreadsheetIcon} /> <span>{t('Bucket.Weapons')}</span>
           </button>{' '}
-          <button className="dim-button" onClick={downloadArmorCsv} disabled={disabled}>
+          <button
+            type="button"
+            className="dim-button"
+            onClick={downloadArmorCsv}
+            disabled={disabled}
+          >
             <AppIcon icon={spreadsheetIcon} /> <span>{t('Bucket.Armor')}</span>
           </button>{' '}
-          <button className="dim-button" onClick={downloadGhostCsv} disabled={disabled}>
+          <button
+            type="button"
+            className="dim-button"
+            onClick={downloadGhostCsv}
+            disabled={disabled}
+          >
             <AppIcon icon={spreadsheetIcon} /> <span>{t('Bucket.Ghost')}</span>
           </button>
         </div>

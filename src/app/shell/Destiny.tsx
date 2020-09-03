@@ -3,25 +3,21 @@ import ItemPopupContainer from '../item-popup/ItemPopupContainer';
 import ItemPickerContainer from '../item-picker/ItemPickerContainer';
 import MoveAmountPopupContainer from '../inventory/MoveAmountPopupContainer';
 import { t } from 'app/i18next-t';
-import GlobalHotkeys from '../hotkeys/GlobalHotkeys';
 import { itemTagList } from '../inventory/dim-item-info';
 import { Hotkey } from '../hotkeys/hotkeys';
 import { connect } from 'react-redux';
 import { loadVendorDropsFromIndexedDB } from 'app/vendorEngramsXyzApi/reducer';
-import { ThunkDispatchProp, RootState } from 'app/store/reducers';
+import { RootState, ThunkDispatchProp } from 'app/store/types';
 import { DimError } from 'app/bungie-api/bungie-service-helper';
 import ErrorPanel from './ErrorPanel';
-import { PlatformErrorCodes } from 'bungie-api-ts/destiny2';
-import ExternalLink from 'app/dim-ui/ExternalLink';
-import { getToken } from 'app/bungie-api/oauth-tokens';
-import { AppIcon, banIcon } from './icons';
 import { fetchWishList } from 'app/wishlists/wishlist-fetch';
 import { DestinyVersion } from '@destinyitemmanager/dim-api-types';
-import { accountsSelector, accountsLoadedSelector } from 'app/accounts/reducer';
+import { accountsSelector, accountsLoadedSelector } from 'app/accounts/selectors';
 import { DestinyAccount } from 'app/accounts/destiny-account';
 import { Switch, Route, Redirect, useRouteMatch } from 'react-router';
 import { setActivePlatform, getPlatforms } from 'app/accounts/platforms';
 import ShowPageLoading from 'app/dim-ui/ShowPageLoading';
+import { useHotkeys } from 'app/hotkeys/useHotkey';
 
 // TODO: Could be slightly better to group these a bit, but for now we break them each into a separate chunk.
 const Inventory = React.lazy(() =>
@@ -30,8 +26,8 @@ const Inventory = React.lazy(() =>
 const Progress = React.lazy(() =>
   import(/* webpackChunkName: "progress" */ 'app/progress/Progress')
 );
-const LoadoutBuilder = React.lazy(() =>
-  import(/* webpackChunkName: "loadoutBuilder" */ 'app/loadout-builder/LoadoutBuilder')
+const LoadoutBuilderContainer = React.lazy(() =>
+  import(/* webpackChunkName: "loadoutBuilder" */ 'app/loadout-builder/LoadoutBuilderContainer')
 );
 const D1LoadoutBuilder = React.lazy(() =>
   import(/* webpackChunkName: "d1LoadoutBuilder" */ 'app/destiny1/loadout-builder/D1LoadoutBuilder')
@@ -111,51 +107,6 @@ function Destiny({ accountsLoaded, account, dispatch, profileError }: Props) {
 
   const { path, url } = useRouteMatch();
 
-  if (!account) {
-    return accountsLoaded ? (
-      <div className="dim-page">
-        <ErrorPanel
-          title={t('Accounts.MissingTitle')}
-          fallbackMessage={t('Accounts.MissingDescription')}
-          showTwitters={true}
-        />
-      </div>
-    ) : (
-      <ShowPageLoading message={t('Loading.Accounts')} />
-    );
-  }
-
-  if (profileError) {
-    const isManifestError = profileError.name === 'ManifestError';
-    const token = getToken()!;
-    return (
-      <div className="dim-page">
-        <ErrorPanel
-          title={
-            isManifestError ? t('Accounts.ErrorLoadManifest') : t('Accounts.ErrorLoadInventory')
-          }
-          error={profileError}
-          showTwitters={true}
-          showReload={true}
-        >
-          {!isManifestError &&
-            account.destinyVersion === 1 &&
-            profileError.code === PlatformErrorCodes.DestinyUnexpectedError && (
-              <p>
-                <ExternalLink
-                  className="dim-button"
-                  href={`https://www.bungie.net/en/Profile/Settings/254/${token.bungieMembershipId}?category=Accounts`}
-                >
-                  <AppIcon icon={banIcon} /> {t('Accounts.UnlinkTwitchButton')}
-                </ExternalLink>{' '}
-                <b>{t('Accounts.UnlinkTwitch')}</b>
-              </p>
-            )}
-        </ErrorPanel>
-      </div>
-    );
-  }
-
   // Define some hotkeys without implementation, so they show up in the help
   const hotkeys: Hotkey[] = [
     {
@@ -180,6 +131,39 @@ function Destiny({ accountsLoaded, account, dispatch, profileError }: Props) {
       });
     }
   });
+  useHotkeys(hotkeys);
+
+  if (!account) {
+    return accountsLoaded ? (
+      <div className="dim-page">
+        <ErrorPanel
+          title={t('Accounts.MissingTitle')}
+          fallbackMessage={t('Accounts.MissingDescription')}
+          showTwitters={true}
+        />
+      </div>
+    ) : (
+      <ShowPageLoading message={t('Loading.Accounts')} />
+    );
+  }
+
+  if (profileError) {
+    const isManifestError = profileError.name === 'ManifestError';
+    return (
+      <div className="dim-page">
+        <ErrorPanel
+          title={
+            isManifestError
+              ? t('Accounts.ErrorLoadManifest')
+              : t('Accounts.ErrorLoadInventory', { version: account.destinyVersion })
+          }
+          error={profileError}
+          showTwitters={true}
+          showReload={true}
+        />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -200,7 +184,7 @@ function Destiny({ accountsLoaded, account, dispatch, profileError }: Props) {
           )}
           <Route path={`${path}/optimizer`} exact>
             {account.destinyVersion === 2 ? (
-              <LoadoutBuilder account={account} />
+              <LoadoutBuilderContainer account={account} />
             ) : (
               <D1LoadoutBuilder />
             )}
@@ -213,7 +197,11 @@ function Destiny({ accountsLoaded, account, dispatch, profileError }: Props) {
               path={`${path}/vendors/:vendorId`}
               exact
               render={({ match }) => (
-                <SingleVendor account={account} vendorHash={match.params.vendorId} />
+                <SingleVendor
+                  key={match.params.vendorId}
+                  account={account}
+                  vendorHash={match.params.vendorId}
+                />
               )}
             />
           )}
@@ -239,7 +227,6 @@ function Destiny({ accountsLoaded, account, dispatch, profileError }: Props) {
           </Route>
         </Switch>
       </div>
-      <GlobalHotkeys hotkeys={hotkeys} />
       <ItemPopupContainer boundarySelector=".store-header" />
       <ItemPickerContainer />
       <MoveAmountPopupContainer />

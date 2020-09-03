@@ -2,20 +2,38 @@ import { PlatformErrorCodes, ServerResponse } from 'bungie-api-ts/common';
 import { HttpClientConfig } from 'bungie-api-ts/http';
 import { t } from 'app/i18next-t';
 import { API_KEY } from './bungie-api-utils';
-import { getActivePlatform } from '../accounts/platforms';
 import { fetchWithBungieOAuth, goToLoginPage } from './authenticated-fetch';
 import { rateLimitedFetch } from './rate-limiter';
-import { stringify } from 'simple-query-string';
 import { DimItem } from '../inventory/item-types';
 import { DimStore } from '../inventory/store-types';
 import { delay } from 'app/utils/util';
 import store from 'app/store/store';
 import { needsDeveloper } from 'app/accounts/actions';
+import { showNotification } from 'app/notifications/notifications';
+import _ from 'lodash';
 
 export interface DimError extends Error {
   code?: PlatformErrorCodes | string;
   status?: string;
 }
+
+const TIMEOUT = 15000;
+const notifyTimeout = _.throttle(
+  (startTime: number, timeout: number) => {
+    // Only notify if the timeout fired around the right time - this guards against someone pausing
+    // the tab and coming back in an hour, for example
+    if (navigator.onLine && Math.abs(Date.now() - (startTime + timeout)) <= 1000) {
+      showNotification({
+        type: 'warning',
+        title: t('BungieService.Slow'),
+        body: t('BungieService.SlowDetails'),
+        duration: 15000,
+      });
+    }
+  },
+  5 * 60 * 1000, // 5 minutes
+  { leading: true, trailing: false }
+);
 
 const ourFetch = rateLimitedFetch(fetchWithBungieOAuth);
 
@@ -25,6 +43,9 @@ export async function httpAdapter(
   config: HttpClientConfig,
   skipAuth?: boolean
 ): Promise<ServerResponse<any>> {
+  const startTime = Date.now();
+  const timer = setTimeout(() => notifyTimeout(startTime, TIMEOUT), TIMEOUT);
+
   if (numThrottled > 0) {
     // Double the wait time, starting with 1 second, until we reach 5 minutes.
     const waitTime = Math.min(5 * 60 * 1000, Math.pow(2, numThrottled) * 500);
@@ -63,13 +84,21 @@ export async function httpAdapter(
         break;
     }
     throw e;
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
   }
 }
 
 export function buildOptions(config: HttpClientConfig, skipAuth?: boolean): Request {
   let url = config.url;
   if (config.params) {
-    url = `${url}?${stringify(config.params)}`;
+    // strip out undefined params keys. bungie-api-ts creates them for optional endpoint parameters
+    for (const key in config.params) {
+      typeof config.params[key] === 'undefined' && delete config.params[key];
+    }
+    url = `${url}?${new URLSearchParams(config.params).toString()}`;
   }
 
   return new Request(url, {
@@ -173,13 +202,7 @@ export async function handleErrors<T>(response: Response): Promise<ServerRespons
 
     case PlatformErrorCodes.DestinyAccountNotFound:
       if (response.url.indexOf('/Account/') >= 0 && response.url.indexOf('/Character/') < 0) {
-        const account = getActivePlatform();
-        throw error(
-          t('BungieService.NoAccount', {
-            platform: account ? t(`Accounts.${account.platformLabel}`) : 'Unknown',
-          }),
-          errorCode
-        );
+        throw error(t('BungieService.NoAccount'), errorCode);
       } else {
         throw error(t('BungieService.Difficulties'), errorCode);
       }

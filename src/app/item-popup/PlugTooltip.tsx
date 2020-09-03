@@ -8,11 +8,11 @@ import BestRatedIcon from './BestRatedIcon';
 import BungieImage from 'app/dim-ui/BungieImage';
 import { InventoryWishListRoll } from 'app/wishlists/wishlists';
 import _ from 'lodash';
-import { statWhiteList } from 'app/inventory/store/stats';
+import { statAllowList } from 'app/inventory/store/stats';
+import RichDestinyText from 'app/dim-ui/RichDestinyText';
 
 // TODO: Connect this to redux
 export default function PlugTooltip({
-  item,
   plug,
   defs,
   wishListsEnabled,
@@ -30,47 +30,35 @@ export default function PlugTooltip({
 
   const sourceString =
     defs &&
-    plug.plugItem.collectibleHash &&
-    defs.Collectible.get(plug.plugItem.collectibleHash).sourceString;
-
-  // display perk's synergy with masterwork stat
-  const synergyStat =
-    item.masterworkInfo?.statHash &&
-    plug.plugItem.investmentStats &&
-    plug.plugItem.investmentStats.some(
-      (stat) =>
-        stat.value > 0 &&
-        stat.statTypeHash &&
-        item.masterworkInfo &&
-        item.masterworkInfo.statHash === stat.statTypeHash
-    ) &&
-    ` (${item.masterworkInfo.statName})`;
+    plug.plugDef.collectibleHash &&
+    defs.Collectible.get(plug.plugDef.collectibleHash).sourceString;
 
   return (
     <>
-      <h2>
-        {plug.plugItem.displayProperties.name}
-        {synergyStat}
-      </h2>
+      <h2>{plug.plugDef.displayProperties.name}</h2>
 
-      {plug.plugItem.displayProperties.description ? (
-        <div>{plug.plugItem.displayProperties.description}</div>
+      {plug.plugDef.displayProperties.description ? (
+        <div>
+          <RichDestinyText text={plug.plugDef.displayProperties.description} defs={defs} />
+        </div>
       ) : (
         plug.perks.map((perk) => (
           <div key={perk.hash}>
-            {plug.plugItem.displayProperties.name !== perk.displayProperties.name && (
+            {plug.plugDef.displayProperties.name !== perk.displayProperties.name && (
               <div>{perk.displayProperties.name}</div>
             )}
-            <div>{perk.displayProperties.description}</div>
+            <div>
+              <RichDestinyText text={perk.displayProperties.description} defs={defs} />
+            </div>
           </div>
         ))
       )}
       {sourceString && <div className="plug-source">{sourceString}</div>}
-      {defs && Boolean(plug?.plugItem?.investmentStats?.length) && (
+      {defs && Boolean(plug?.plugDef?.investmentStats?.length) && (
         <div className="plug-stats">
           {plug.stats &&
             _.sortBy(Object.keys(plug.stats), (h) =>
-              statWhiteList.indexOf(parseInt(h, 10))
+              statAllowList.indexOf(parseInt(h, 10))
             ).map((statHash) => (
               <StatValue
                 key={statHash + '_'}
@@ -90,14 +78,14 @@ export default function PlugTooltip({
       )}
       {plug.enableFailReasons && <div>{plug.enableFailReasons}</div>}
 
-      {(!wishListsEnabled || !inventoryWishListRoll) && bestPerks?.has(plug.plugItem.hash) && (
+      {(!wishListsEnabled || !inventoryWishListRoll) && bestPerks?.has(plug.plugDef.hash) && (
         <>
           <BestRatedIcon wishListsEnabled={wishListsEnabled} /> = {t('DtrReview.BestRatedTip')}
         </>
       )}
       {wishListsEnabled &&
         inventoryWishListRoll &&
-        inventoryWishListRoll.wishListPerks.has(plug.plugItem.hash) && (
+        inventoryWishListRoll.wishListPerks.has(plug.plugDef.hash) && (
           <>
             <BestRatedIcon wishListsEnabled={wishListsEnabled} /> = {t('WishListRoll.BestRatedTip')}
           </>

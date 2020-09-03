@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { t } from 'app/i18next-t';
 import i18next from 'i18next';
 import { setSetting, setCharacterOrder } from './actions';
-import { RootState, ThunkDispatchProp } from '../store/reducers';
+import { RootState, ThunkDispatchProp } from 'app/store/types';
 import InventoryItem from '../inventory/InventoryItem';
 import SortOrderEditor, { SortProperty } from './SortOrderEditor';
 import CharacterOrderEditor from './CharacterOrderEditor';
@@ -18,7 +18,8 @@ import { D2StoresService } from '../inventory/d2-stores';
 import { D1StoresService } from '../inventory/d1-stores';
 import Checkbox from './Checkbox';
 import Select, { mapToOptions, listToOptions } from './Select';
-import { getPlatforms, getActivePlatform } from '../accounts/platforms';
+import { getPlatforms } from '../accounts/platforms';
+import { getActivePlatform } from '../accounts/get-active-platform';
 import { itemSortOrder } from './item-sort';
 import { Settings } from './initial-settings';
 import { settingsSelector } from './reducer';
@@ -35,13 +36,24 @@ import DimApiSettings from 'app/storage/DimApiSettings';
 import { clearRatings } from 'app/item-review/actions';
 import { fetchRatings } from 'app/item-review/destiny-tracker.service';
 import { emptyArray } from 'app/utils/empty';
-import { storesLoadedSelector } from 'app/inventory/selectors';
+import { storesLoadedSelector, sortedStoresSelector } from 'app/inventory/selectors';
 import ShowPageLoading from 'app/dim-ui/ShowPageLoading';
+import { StatTotalToggle } from 'app/dim-ui/CustomStatTotal';
+import { DestinyClass } from 'bungie-api-ts/destiny2';
+import { dimHunterIcon, dimWarlockIcon, dimTitanIcon } from 'app/shell/icons/custom';
+import { DimStore } from 'app/inventory/store-types';
+
+const classIcons = {
+  [DestinyClass.Hunter]: dimHunterIcon,
+  [DestinyClass.Titan]: dimTitanIcon,
+  [DestinyClass.Warlock]: dimWarlockIcon,
+};
 
 interface StoreProps {
   settings: Settings;
   isPhonePortrait: boolean;
   storesLoaded: boolean;
+  stores: DimStore[];
   reviewModeOptions: D2ReviewMode[];
 }
 
@@ -49,6 +61,7 @@ function mapStateToProps(state: RootState): StoreProps {
   return {
     settings: settingsSelector(state),
     storesLoaded: storesLoadedSelector(state),
+    stores: sortedStoresSelector(state),
     isPhonePortrait: state.shell.isPhonePortrait,
     reviewModeOptions: $featureFlags.reviewsEnabled ? reviewModesSelector(state) : emptyArray(),
   };
@@ -146,10 +159,11 @@ function SettingsPage({
   isPhonePortrait,
   reviewModeOptions,
   storesLoaded,
+  stores,
   dispatch,
 }: Props) {
   useEffect(() => {
-    getDefinitions();
+    dispatch(getDefinitions());
     dispatch(getPlatforms()).then(() => {
       const account = getActivePlatform();
       if (account) {
@@ -236,7 +250,7 @@ function SettingsPage({
     // archetype: 'Archetype'
   };
 
-  const charColOptions = _.range(3, 6).map((num) => ({
+  const charColOptions = _.range(2, 6).map((num) => ({
     value: num,
     name: t('Settings.ColumnSize', { num }),
   }));
@@ -277,6 +291,11 @@ function SettingsPage({
     return <ShowPageLoading message={t('Loading.Profile')} />;
   }
 
+  const uniqChars = _.uniqBy(
+    stores.filter((s) => !s.isVault),
+    (s) => s.classType
+  );
+
   return (
     <PageWithMenu>
       <PageWithMenu.Menu>
@@ -302,7 +321,7 @@ function SettingsPage({
               />
               {languageChanged && (
                 <div>
-                  <button className="dim-button" onClick={reloadDim}>
+                  <button type="button" className="dim-button" onClick={reloadDim}>
                     <AppIcon icon={refreshIcon} /> <span>{t('Settings.ReloadDIM')}</span>
                   </button>
                 </div>
@@ -342,7 +361,7 @@ function SettingsPage({
                     onChange={onChange}
                   />
                   {Math.max(48, settings.itemSize)}px
-                  <button className="dim-button" onClick={resetItemSize}>
+                  <button type="button" className="dim-button" onClick={resetItemSize}>
                     {t('Settings.ResetToDefault')}
                   </button>
                 </div>
@@ -362,6 +381,23 @@ function SettingsPage({
 
               <SortOrderEditor order={itemSortCustom} onSortOrderChanged={itemSortOrderChanged} />
               <div className="fineprint">{t('Settings.DontForgetDupes')}</div>
+            </div>
+            <div className="setting">
+              <label htmlFor="">{t('Organizer.Columns.CustomTotal')}</label>
+              <div className="fineprint">{t('Settings.CustomStatDesc')}</div>
+              <div className="customStats">
+                {uniqChars.map(
+                  (store) =>
+                    !store.isVault && (
+                      <React.Fragment key={store.classType}>
+                        <div>
+                          <AppIcon icon={classIcons[store.classType]} /> {store.className}:{' '}
+                        </div>
+                        <StatTotalToggle forClass={store.classType} />
+                      </React.Fragment>
+                    )
+                )}
+              </div>
             </div>
           </section>
 

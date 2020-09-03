@@ -24,12 +24,13 @@ import {
   BungieMembershipType,
   getItem,
   DestinyItemResponse,
+  setQuestTrackedState,
 } from 'bungie-api-ts/destiny2';
 import { t } from 'app/i18next-t';
 import _ from 'lodash';
 import { DestinyAccount } from '../accounts/destiny-account';
 import { httpAdapter, handleUniquenessViolation } from './bungie-service-helper';
-import { getActivePlatform } from '../accounts/platforms';
+import { getActivePlatform } from '../accounts/get-active-platform';
 import { DimItem } from '../inventory/item-types';
 import { DimStore } from '../inventory/store-types';
 import { reportException } from '../utils/exceptions';
@@ -293,6 +294,28 @@ export function setLockState(
     membershipType: account!.originalPlatformType,
     itemId: item.id,
     state: lockState,
+  });
+}
+
+/**
+ * Set the tracked state of an item.
+ */
+export function setTrackedState(
+  store: DimStore,
+  item: DimItem,
+  trackedState: boolean
+): Promise<ServerResponse<number>> {
+  const account = getActivePlatform();
+
+  if (item.id === '0') {
+    throw new Error("Can't track non-instanced items");
+  }
+
+  return setQuestTrackedState(httpAdapter, {
+    characterId: store.isVault ? item.owner : store.id,
+    membershipType: account!.originalPlatformType,
+    itemId: item.id,
+    state: trackedState,
   });
 }
 

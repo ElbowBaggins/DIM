@@ -111,17 +111,13 @@ function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
   return result;
 }
 
-class SortEditorItemList extends React.Component<{ order: SortProperty[] }, never> {
-  shouldComponentUpdate(nextProps) {
-    return nextProps.order !== this.props.order;
-  }
-
-  render() {
-    return this.props.order.map((item, index) => (
+const SortEditorItemList = React.memo(({ order }: { order: SortProperty[] }) => (
+  <>
+    {order.map((item, index) => (
       <SortEditorItem key={item.id} item={item} index={index} />
-    ));
-  }
-}
+    ))}
+  </>
+));
 
 function SortEditorItem(props: { index: number; item: SortProperty }) {
   const { index, item } = props;
@@ -144,12 +140,15 @@ function SortEditorItem(props: { index: number; item: SortProperty }) {
           <span className="name" {...provided.dragHandleProps}>
             {item.displayName}
           </span>
-          <AppIcon icon={moveUpIcon} className="sort-button sort-up" />
-          <AppIcon icon={moveDownIcon} className="sort-button sort-down" />
-          <AppIcon
-            icon={item.enabled ? enabledIcon : unselectedCheckIcon}
-            className="sort-button sort-toggle"
-          />
+          <span className="sort-button sort-up">
+            <AppIcon icon={moveUpIcon} />
+          </span>
+          <span className="sort-button sort-down">
+            <AppIcon icon={moveDownIcon} />
+          </span>
+          <span className="sort-button sort-toggle">
+            <AppIcon icon={item.enabled ? enabledIcon : unselectedCheckIcon} />
+          </span>
         </div>
       )}
     </Draggable>

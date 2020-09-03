@@ -1,6 +1,8 @@
 import { HttpClientConfig } from 'bungie-api-ts/http';
-import { stringify } from 'simple-query-string';
-import { getActiveToken as getBungieToken } from 'app/bungie-api/authenticated-fetch';
+import {
+  getActiveToken as getBungieToken,
+  FatalTokenError,
+} from 'app/bungie-api/authenticated-fetch';
 import { dedupePromise } from 'app/utils/util';
 import store from 'app/store/store';
 import { needsDeveloper } from 'app/accounts/actions';
@@ -26,7 +28,7 @@ export async function unauthenticatedApi<T>(
 
   let url = `${DIM_API_HOST}${config.url}`;
   if (config.params) {
-    url = `${url}?${stringify(config.params)}`;
+    url = `${url}?${new URLSearchParams(config.params)}`;
   }
 
   const headers = {};
@@ -45,7 +47,16 @@ export async function unauthenticatedApi<T>(
     })
   );
 
-  return response.json() as Promise<T>;
+  if (response.status === 401) {
+    // Delete our token
+    deleteDimApiToken();
+    throw new FatalTokenError('Unauthorized call to ' + config.url);
+  }
+  if (response.ok) {
+    return response.json() as Promise<T>;
+  }
+
+  throw new Error('Failed to call DIM API: ' + response.status);
 }
 
 /**
@@ -60,7 +71,7 @@ export async function authenticatedApi<T>(config: HttpClientConfig): Promise<T> 
 
   let url = `${DIM_API_HOST}${config.url}`;
   if (config.params) {
-    url = `${url}?${stringify(config.params)}`;
+    url = `${url}?${new URLSearchParams(config.params)}`;
   }
 
   const headers = {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { popperGenerator, Instance, Options, Padding } from '@popperjs/core/lib/popper-lite';
 import flip from '@popperjs/core/lib/modifiers/flip';
@@ -14,12 +14,9 @@ import _ from 'lodash';
 interface Props {
   tooltip: React.ReactNode;
   children: React.ReactElement<any, any>;
+  allowClickThrough?: boolean;
   /** By default everything gets wrapped in a div, but you can choose a different element type here. */
   elementType?: React.ReactType;
-}
-
-interface State {
-  isOpen: boolean;
 }
 
 /** Makes a custom popper that doesn't have the event listeners modifier */
@@ -79,10 +76,101 @@ const popperOptions = (): Partial<Options> => {
   };
 };
 
+type ControlProps = Props &
+  React.HTMLAttributes<HTMLDivElement> & {
+    open: boolean;
+    triggerRef: React.RefObject<HTMLDivElement>;
+  };
+
+/**
+ * <PressTip.Control /> can be used to have a controlled version of the PressTip
+ *
+ * Example:
+ *
+ * const ref = useRef<HTMLDivElement>(null);
+ * <PressTip.Control
+ *   open={true}
+ *   triggerRef={ref}
+ *   tooltip={() => (
+ *     <span>
+ *       PressTip Content
+ *     </span>
+ *   )}>
+ *   PressTip context element
+ * </PressTip.Control>
+ */
+function Control({
+  tooltip,
+  open,
+  triggerRef,
+  children,
+  elementType: Component = 'div',
+  ...rest
+}: ControlProps) {
+  const popper = useRef<Instance | undefined>();
+  const tooltipContents = useRef<HTMLDivElement>(null);
+
+  const destroy = () => {
+    if (popper.current) {
+      popper.current.destroy();
+      popper.current = undefined;
+    }
+  };
+
+  useEffect(() => {
+    // Reposition the popup as it is shown or if its size changes
+    if (!open) {
+      return destroy();
+    }
+
+    if (!tooltipContents.current || !triggerRef.current) {
+      return;
+    } else {
+      if (popper.current) {
+        popper.current.update();
+      } else {
+        const options = popperOptions();
+
+        popper.current = createPopper(triggerRef.current, tooltipContents.current, options);
+        popper.current.update();
+        setTimeout(() => popper.current?.update(), 0); // helps fix arrow position
+      }
+    }
+
+    return () => {
+      destroy();
+    };
+  }, [open, triggerRef]);
+
+  if (!tooltip) {
+    return <Component>{children}</Component>;
+  }
+
+  // TODO: if we reuse a stable tooltip container instance we could animate between them
+  return (
+    <Component ref={triggerRef} {...rest}>
+      {children}
+      {open &&
+        ReactDOM.createPortal(
+          <div className={styles.tooltip} ref={tooltipContents}>
+            <div className={styles.content}>{_.isFunction(tooltip) ? tooltip() : tooltip}</div>
+            <div className={styles.arrow} />
+          </div>,
+          document.body
+        )}
+    </Component>
+  );
+}
+
 /**
  * A "press tip" is a tooltip that can be shown by pressing on an element, or via hover.
  *
  * Tooltop content can be any React element, and can be updated through React.
+ *
+ * PressTip stops event propagation, so mobile can hold down on an element in lieu of hovering.
+ * `allowClickThrough` property suppresses this and lets click events propagate.
+ *
+ * <PressTip /> wraps <PressTip.Control /> to give you a simpler API for rendering a basic tooltip.
  *
  * Example:
  *
@@ -95,114 +183,47 @@ const popperOptions = (): Partial<Options> => {
  *   PressTip context element
  * </PressTip>
  */
-export default class PressTip extends React.Component<Props, State> {
-  private popper?: Instance;
-  private timer: number;
-  private tooltipContents = React.createRef<HTMLDivElement>();
-  private ref = React.createRef<HTMLDivElement>();
+function PressTip({ allowClickThrough, ...rest }: Props) {
+  const timer = useRef<number>(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState<boolean>(false);
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      isOpen: false,
-    };
-  }
-
-  componentDidMount() {
-    this.reposition();
-  }
-
-  componentWillUnmount() {
-    this.destroy();
-    clearTimeout(this.timer);
-  }
-
-  componentDidUpdate() {
-    this.reposition();
-  }
-
-  showTip = () => {
-    this.setState({ isOpen: true });
+  const closeToolTip = (e) => {
+    allowClickThrough || e.preventDefault();
+    allowClickThrough || e.stopPropagation();
+    setOpen(false);
+    clearTimeout(timer.current);
   };
 
-  closeToolTip = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    this.setState({ isOpen: false });
-    clearTimeout(this.timer);
-  };
-
-  hover = () => {
-    this.timer = window.setTimeout(() => {
-      this.showTip();
+  const hover = () => {
+    timer.current = window.setTimeout(() => {
+      setOpen(true);
     }, 100);
   };
 
-  press = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    this.showTip();
+  const press = (e) => {
+    allowClickThrough || e.preventDefault();
+    allowClickThrough || e.stopPropagation();
+    setOpen(true);
   };
 
-  render() {
-    const { tooltip, children } = this.props;
-    const { isOpen } = this.state;
+  useEffect(() => () => clearTimeout(timer.current), []);
 
-    if (!tooltip) {
-      return <div>{children}</div>;
-    }
-
-    const Component = this.props.elementType ?? 'div';
-
-    // TODO: if we reuse a stable tooltip container instance we could animate between them
-    return (
-      <Component
-        ref={this.ref}
-        onMouseEnter={this.hover}
-        onMouseDown={this.press}
-        onTouchStart={this.press}
-        onMouseUp={this.closeToolTip}
-        onMouseLeave={this.closeToolTip}
-        onTouchEnd={this.closeToolTip}
-      >
-        {children}
-        {isOpen &&
-          ReactDOM.createPortal(
-            <div className={styles.tooltip} ref={this.tooltipContents}>
-              <div className={styles.content}>{_.isFunction(tooltip) ? tooltip() : tooltip}</div>
-              <div className={styles.arrow} />
-            </div>,
-            document.body
-          )}
-      </Component>
-    );
-  }
-
-  // Reposition the popup as it is shown or if its size changes
-  private reposition = () => {
-    if (this.state.isOpen) {
-      if (!this.tooltipContents.current || !this.ref.current) {
-        return;
-      } else {
-        if (this.popper) {
-          this.popper.update();
-        } else {
-          const options = popperOptions();
-
-          this.popper = createPopper(this.ref.current, this.tooltipContents.current, options);
-          this.popper?.update();
-          setTimeout(() => this.popper?.update(), 0); // helps fix arrow position
-        }
-      }
-    } else {
-      this.destroy();
-    }
-  };
-
-  private destroy() {
-    if (this.popper) {
-      this.popper.destroy();
-      this.popper = undefined;
-    }
-  }
+  return (
+    <Control
+      open={open}
+      triggerRef={ref}
+      onMouseEnter={hover}
+      onMouseDown={press}
+      onTouchStart={press}
+      onMouseUp={closeToolTip}
+      onMouseLeave={closeToolTip}
+      onTouchEnd={closeToolTip}
+      {...rest}
+    />
+  );
 }
+
+PressTip.Control = Control;
+
+export default PressTip;

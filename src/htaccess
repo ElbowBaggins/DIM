@@ -461,7 +461,7 @@ AddDefaultCharset utf-8
 # attacks.
 #
 # This can be done by setting a `Content Security Policy` which
-# whitelists trusted sources of content for your website.
+# lists trusted sources of content for your website.
 #
 # The example header below allows ONLY scripts that are loaded from
 # the current website's origin (no inline scripts, no CDN, etc).
@@ -519,13 +519,13 @@ AddDefaultCharset utf-8
 # https://www.mnot.net/blog/2010/04/07/well-known
 # https://tools.ietf.org/html/rfc5785
 
-# <IfModule mod_rewrite.c>
-#     RewriteEngine On
-#     RewriteCond %{REQUEST_URI} "!(^|/)\.well-known/([^./]+./?)+$" [NC]
-#     RewriteCond %{SCRIPT_FILENAME} -d [OR]
-#     RewriteCond %{SCRIPT_FILENAME} -f
-#     RewriteRule "(^|/)\." - [F]
-# </IfModule>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} "!(^|/)\.well-known/([^./]+./?)+$" [NC]
+    RewriteCond %{SCRIPT_FILENAME} -d [OR]
+    RewriteCond %{SCRIPT_FILENAME} -f
+    RewriteRule "(^|/)\." - [F]
+</IfModule>
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -736,6 +736,7 @@ AddEncoding br .br
     # Redirect unknown paths to index.html
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !\.(json|wasm|js|css|png|jpg|map)(\.(gz|br))?$
     RewriteRule (.*) index.html [QSA,L]
 </IfModule>
 

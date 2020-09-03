@@ -1,6 +1,181 @@
 ## Next
 
+* Use the dark theme for Twitter widget ➡️
+
+## 6.27.0 <span className="changelog-date">(2020-08-30)</span>
+
+* The new armor 2.0 mod workflow is available in the Loadout Optimizer, this includes:
+  * A new Mod Picker component to let you choose armor 2.0 mods to lock.
+  * The mod sockets shown in the optimiser are now the locked mods, rather than the mods currently equipped on the item.
+  * Clicking on a mod socket will open the picker to show available mods for that slot. Note that locking a mod from this won't guarantee it gets locked to the item specifically.
+  * Items have different levels of grouping depending on the requirements of the locked mods. Locking no mods keeps the previous grouping behaviour.
+  * The mods stat contributions are now shown in the picker.
+  * The Mod Picker can now filter for items from a specific season, just filter by the season number directly e.g. "11" for arrivals.
+* The search bar now remembers your past searches and allows you to save your favorite searches. These saved and recent searches are synced between devices using DIM Sync.
+* The quick item picker (plus icon) menu no longer has an option to equip the selected item. Instead it will always just move the item - very few users selected "Equip" and it won't ever work in game activities.
+* Added background colors for items and characters before their images load in, which should reduce the "pop-in" effect.
+* Shaders can be tagged from the Collections page and the tags/notes show up there as well.
+* Shift+Click on the Notes field in Organizer while in edit mode no longer applies a search.
+* For pages with sidebars (like Progress), scrollbars appearing will no longer cover content.
+* Add character stats to loadout sheet if full armor set is added.
+
+### Beta Only
+
+* Long-pressing on an item in mobile mode will bring up a quick actions menu - drag and release on a button to apply the action to the item you pressed on.
+* Move Sub-class out of Weapons to the General category
+
+## 6.26.0 <span className="changelog-date">(2020-08-23)</span>
+
+* Better touchscreen support for drag and drop.
+* Wishlists now support Github gists (raw text URLs), so there's no need to set up an entire repository to host them. If you are making wishlists, you can try out changes easier than ever. If you're not making wishlists, hopefully you're using them. If you don't know what wishlists are, [here you go](https://destinyitemmanager.fandom.com/wiki/Wish_Lists)
+* Engrams get a more form-fitting outline on mouse hover.
+* If you have a search query active, DIM will not automatically reload to update itself.
+* The `is:curated` search has been overhauled to better find curated rolls.
+* Fixes to how the character headers look in different browsers.
+* Fixed the missing armor.csv button on the Organizer.
+
+### Beta Only
+* Loadout Optimizer: DIM Beta is now using the new Mod Picker, a separate and improved picker just for armor mods. Try it out and let us know how it feels
+* In Beta only, the filter search bar has been upgraded to remember recent searches and let you save your favorite searches.
+* Phone/mobile resolutions will now show a mini-popup to make inspecting and moving items much easier.
+
+## 6.25.0 <span className="changelog-date">(2020-08-16)</span>
+
+* Removed `is:reacquireable` as it is inaccurate in its current state
+* Removed outline from clicked character headers on iOS
+* Adjusted spacing on items in the loadout drawer, so they can fit 3-wide again
+* Main (top) search field is now the place to filter items for the Loadout Optimizer
+* For real, stat bars should be the right length this time
+* Keyboard controls in the Notes field: ESC reverts and leaves editing, ENTER saves the value
+* Item notes can now be edited directly in the notes column of the Organizer tab
+* Mobile - changes in DIM beta only: different parts of the header now stick with you as you scroll down.
+* Armor CSV export appearing properly on the Organizer tab again.
+
+## 6.24.1 <span className="changelog-date">(2020-08-12)</span>
+
+* Updated the character tiles, now uses triple dot instead of chevron
+* Solstice of Heroes is back and so is the **Solstice of Heroes** section of the **Progress** tab. Check it out and view your progress toward upgrading armor.
+
+## 6.24.0 <span className="changelog-date">(2020-08-09)</span>
+
+* Configure a custom armor stat per-class in Settings, and it'll show up in item popups, Organizer, Compare, and the new `stat:custom:` search.
+* Speed improvements to wishlist processing.
+* `is:smg` for if you're as bad at remembering "submachine gun" as.. some of us are.
+* No more accidental app reloads when swiping down hard on the page on mobile.
+* Spring (Summer?) cleaning in the Item Popup. Some less important elements have been moved or removed, to make room for more functionality and stats.
+* Bar-based stat values in the Mod preview menu are no longer extremely large bois.
+* Anti-champion damage types are now interpreted in tooltip descriptions.
+* Seasonal Artifact is now previewable, but be warned:
+  * Some data from the API is wrong, and the Season 11 artifact is incorrectly labeled.
+  * It can show seasonal mods you have equipped, but Season 11 mods still aren't in Collections data, so mod unlocks aren't displayed.
+* Spreadsheet columns slightly adjusted to get them back to their usual column names.
+* Lots going on behind the scenes to clear up errors and get Loadout Optimizer ready for upgrades!
+
+## 6.23.0 <span className="changelog-date">(2020-08-02)</span>
+
+* You can add tags and notes to shaders! Keep track of your favorites and which shaders you could do without.
+* Searches now support parentheses for grouping, the "and" keyword, and the "not" keyword. Example: `(is:weapon and is:sniperrifle) or not (is:armor and modslot:arrival)`. "and" has higher precedence than "or", which has higher precedence than just a space (which still means "and").
+* Fixed the size of damage type icons in D1.
+* Our Content Security Policy is more restrictive now, external and injected scripts may fail but this keeps your account and data safer.
+
+## 6.22.1 <span className="changelog-date">(2020-07-27)</span>
+
+## 6.22.0 <span className="changelog-date">(2020-07-26)</span>
+
+* New: More detailed gear information is available by hovering or clicking the Maximum Gear Power stat in each character's header.
+* Improved detection that you need to reauthorize DIM to your Bungie account.
+* Fixes to how stat bars display when affected by negative modifiers & perks.
+* Clearer errors if DIM is unable to save the item information database.
+* Organizer
+  * Power Limit column now generates the right filter when Shift-clicked.
+  * Traits column content has been narrowed down.
+  * Improved top level categories take fewer clicks to reach your items.
+* Loadout Optimizer
+  * Fixed finding slots for seasonal mods.
+
+## 6.21.0 <span className="changelog-date">(2020-07-19)</span>
+
+* Added support for negative stats on mods. This should be visible in item displays and make loadout optimizer results more accurate.
+* Fix quick item picker not remembering your preference for "equip" vs "store".
+* Some quests can now be tracked or untracked from DIM.
+* Locking or unlocking items from DIM is now reflected immediately on the item tiles.
+* Items with the Arrivals mod slot now match the `holdsmod:dawn` search.
+
+## 6.20.0 <span className="changelog-date">(2020-07-12)</span>
+
+* Fix sorting by Power Limit in the compare pane.
+* When opening a loadout in the loadout optimizer from the inventory page, the correct character is now selected rather than the last played character.
+* Allow masterworks to affect more than one stat
+* Exclude subclasses from `is:weapon` filter.
+* Fixed Loadout Optimizer not including all the right tiers when tier filtering was in place.
+
+## 6.19.0 <span className="changelog-date">(2020-07-05)</span>
+
+* Loadout Optimizer has been... optimized. It now calculates sets in the background, so you can still interact with it while it works.
+* Removed ghosts from loadout optimizer as they don't have enough interesting perks to build into loadouts.
+* The filter help button is now always shown in the search bar, even when a search is active.
+* The item count in the search bar is now more accurate to what you see on the inventory screen.
+* Make it clearer that not having Google Drive set up doesn't matter that much since it's only for importing legacy data.
+* Better handling for if the DIM Sync API is down.
+
+## 6.18.0 <span className="changelog-date">(2020-07-02)</span>
+
+* Breaker type is now shown on the item popup and in the Organizer.
+* New filter for breaker types on weapons, `breaker:`.
+* Fixed another crash on the vendors screen also caused by the Twitch gift sub shader.
+* Protect against certain weird cases where DIM can get stuck in a non-working state until you really, thoroughly, clear your cache.
+
+## 6.17.1 <span className="changelog-date">(2020-07-01)</span>
+
+* Fix a crash with the Twitch gift sub shader.
+
+## 6.17.0 <span className="changelog-date">(2020-06-28)</span>
+
+* You can now filter out armor in the Loadout Optimizer by minimum total stats. This narrows down how many items are considered for builds and speeds up the optimizer.
+* Renamed the "is:reacquireable" filter to "is:reacquirable"
+* Searches like "is:inleftchar" now work with consumables in the postmaster.
+* Fixed the inventory screen jumping a bit when the item popup is open on mobile.
+* Add a link to the troubleshooting guide to error pages.
+* Seasonal mods in the loadout optimizer now force armor to match their element, again.
+* The stat in parentheses in a weapon perk tooltip, is the stat matching the masterwork. UI slightly updated to help show this.
+
+## 6.16.1 <span className="changelog-date">(2020-06-22)</span>
+
+* Fix a crash when opening some items in Organizer.
+
+## 6.16.0 <span className="changelog-date">(2020-06-21)</span>
+
+* Remove `is:ikelos` filter
+* Loadout Optimizer: Save stat order and "assume masterworked" choices.
+* Fixed a bug that caused the inventory view to jump to the top of the screen when items were inspected.
+* Add a disclaimer to power limit displays that they may change in the future. Please see https://www.bungie.net/en/Help/Article/49106 for updates
+* Save column selection for Ghosts in the Organizer separate from Armor.
+* Display how many tags were cleaned up in the DIM Sync audit log.
+* Fix a bug where canceling setting a note in the Organizer would wipe notes from selected items.
+* Add a pointer cursor on item icons in the Organzier to indicate they're clickable.
+* Fix minimum page width when there are fewer than three characters.
+* Fix Arrival mods not appearing in the Loadout Optimizer.
+* Fix a bug when DIM Sync is off that could repeatedly show a notification that an import had failed. Please consider enabling DIM Sync though, your data WILL get lost if it's disabled.
+
+## 6.15.1 <span className="changelog-date">(2020-06-15)</span>
+
+## 6.15.0 <span className="changelog-date">(2020-06-14)</span>
+
+* Items now show their power limit in the item popup, Compare, and in the Organizer (new column). Keep in mind some power limits may change in upcoming seasons.
+* Try the `sunsetsafter:` or `powerlimit:` filters to find things by their power limit.
+* Fix the season icon for reissued items.
+* Fix not being able to dismiss the item popup on the Organizer in certain cases.
+* Remove the 15 second timeout for loading data from Bungie.net.
+* Fix umbral engrams showing up weird in the engram row.
+* Prevent Chrome on Android from showing a "download this image" prompt when long-pressing on images.
+* Fix non-selected perks not showing on old fixed-roll weapons.
+* Add Charge Rate and Guard Endurance stat to swords.
+
 ## 6.14.0 <span className="changelog-date">(2020-06-07)</span>
+
+* Fixed misdetection of seasonal mods in Compare.
+* Work around a Bungie.net issue that could prevent the Destiny info database from loading.
+* Improved the experience for users who previously had DIM Sync off.
 
 ## 6.13.2 <span className="changelog-date">(2020-06-03)</span>
 

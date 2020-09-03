@@ -1,11 +1,9 @@
-import { DestinyVendorResponse, DestinyProfileResponse } from 'bungie-api-ts/destiny2';
-import React, { useState, useEffect, useCallback } from 'react';
+import { DestinyProfileResponse } from 'bungie-api-ts/destiny2';
+import React, { useEffect } from 'react';
 import { DestinyAccount } from '../accounts/destiny-account';
-import { getVendor as getVendorApi } from '../bungie-api/destiny2-api';
 import { D2ManifestDefinitions } from '../destiny2/d2-definitions';
 import Countdown from '../dim-ui/Countdown';
 import VendorItems from './VendorItems';
-import { fetchRatingsForVendor, fetchRatingsForVendorDef } from './vendor-ratings';
 import { DimStore } from '../inventory/store-types';
 import ErrorBoundary from '../dim-ui/ErrorBoundary';
 import { D2StoresService, mergeCollectibles } from '../inventory/d2-stores';
@@ -17,17 +15,21 @@ import {
   storesSelector,
   ownedItemsSelector,
   profileResponseSelector,
+  bucketsSelector,
 } from '../inventory/selectors';
-import { RootState, ThunkDispatchProp } from '../store/reducers';
+import { RootState, ThunkDispatchProp } from 'app/store/types';
 import { toVendor } from './d2-vendors';
 import styles from './SingleVendor.m.scss';
 import vendorStyles from './Vendor.m.scss';
 import { getCurrentStore } from 'app/inventory/stores-helpers';
 import { useLocation } from 'react-router';
-import { parse } from 'simple-query-string';
 import ShowPageLoading from 'app/dim-ui/ShowPageLoading';
 import { t } from 'app/i18next-t';
 import { useSubscription } from 'app/utils/hooks';
+import clsx from 'clsx';
+import { VendorsState } from './reducer';
+import { loadAllVendors } from './actions';
+import ErrorPanel from 'app/shell/ErrorPanel';
 
 interface ProvidedProps {
   account: DestinyAccount;
@@ -40,6 +42,7 @@ interface StoreProps {
   buckets?: InventoryBuckets;
   ownedItemHashes: Set<number>;
   profileResponse?: DestinyProfileResponse;
+  vendors: VendorsState['vendorsByCharacter'];
 }
 
 function mapStateToProps() {
@@ -47,9 +50,10 @@ function mapStateToProps() {
   return (state: RootState): StoreProps => ({
     stores: storesSelector(state),
     ownedItemHashes: ownedItemSelectorInstance(state),
-    buckets: state.inventory.buckets,
+    buckets: bucketsSelector(state),
     defs: state.manifest.d2Manifest,
     profileResponse: profileResponseSelector(state),
+    vendors: state.vendors.vendorsByCharacter,
   });
 }
 
@@ -67,58 +71,39 @@ function SingleVendor({
   profileResponse,
   vendorHash,
   dispatch,
+  vendors,
 }: Props) {
-  const [vendorResponse, setVendorResponse] = useState<DestinyVendorResponse>();
   const { search } = useLocation();
 
   // TODO: get for all characters, or let people select a character? This is a hack
   // we at least need to display that character!
-  let characterId = parse(search).characterId as string;
+  const characterId =
+    (search && new URLSearchParams(search).get('characterId')) ||
+    (stores.length && getCurrentStore(stores)?.id);
   if (!characterId) {
-    if (stores) {
-      characterId = getCurrentStore(stores)!.id;
-    }
+    throw new Error('no characters chosen or found to use for vendor API call');
   }
 
-  const loadVendor = useCallback(async () => {
-    if (!defs) {
-      throw new Error('expected defs');
-    }
-
-    const vendorDef = defs.Vendor.get(vendorHash);
-    if (!vendorDef) {
-      throw new Error(`No known vendor with hash ${vendorHash}`);
-    }
-
-    // TODO: if we had a cache per vendor (maybe in redux?) we could avoid this load sometimes?
-
-    if (vendorDef.returnWithVendorRequest) {
-      const vendorResponse = await getVendorApi(account, characterId, vendorHash);
-
-      setVendorResponse(vendorResponse);
-
-      if ($featureFlags.reviewsEnabled) {
-        dispatch(fetchRatingsForVendor(defs, vendorResponse));
-      }
-    } else {
-      if ($featureFlags.reviewsEnabled) {
-        dispatch(fetchRatingsForVendorDef(defs, vendorDef));
-      }
-    }
-  }, [account, characterId, defs, dispatch, vendorHash]);
+  const vendorData = characterId ? vendors[characterId] : undefined;
+  const vendorResponse = vendorData?.vendorsResponse;
 
   useSubscription(() =>
     refresh$.subscribe(() => {
-      loadingTracker.addPromise(loadVendor());
+      if (defs?.Vendor.get(vendorHash)?.returnWithVendorRequest) {
+        loadingTracker.addPromise(dispatch(loadAllVendors(account, characterId)));
+      }
     })
   );
 
   useEffect(() => {
-    D2StoresService.getStoresStream(account);
-    if (defs) {
-      loadingTracker.addPromise(loadVendor());
+    if (characterId && defs?.Vendor.get(vendorHash)?.returnWithVendorRequest) {
+      dispatch(loadAllVendors(account, characterId));
     }
-  }, [account, defs, loadVendor]);
+  }, [account, characterId, defs, dispatch, vendorHash]);
+
+  useEffect(() => {
+    D2StoresService.getStoresStream(account);
+  }, [account]);
 
   if (!defs || !buckets) {
     return <ShowPageLoading message={t('Manifest.Load')} />;
@@ -126,7 +111,19 @@ function SingleVendor({
 
   const vendorDef = defs.Vendor.get(vendorHash);
   if (!vendorDef) {
-    throw new Error(`No known vendor with hash ${vendorHash}`);
+    return <ErrorPanel error={new Error(`No known vendor with hash ${vendorHash}`)} />;
+  }
+
+  if (vendorData?.error) {
+    return <ErrorPanel error={vendorData.error} />;
+  }
+  if (vendorDef.returnWithVendorRequest) {
+    if (!profileResponse) {
+      return <ShowPageLoading message={t('Loading.Profile')} />;
+    }
+    if (!vendorResponse) {
+      return <ShowPageLoading message={t('Loading.Vendors')} />;
+    }
   }
 
   // TODO:
@@ -134,10 +131,12 @@ function SingleVendor({
   // * enabled
   // * filter by character class
   // * load all classes?
-  const vendor = vendorResponse?.vendor.data;
+  const vendor = vendorResponse?.vendors.data?.[vendorHash];
 
   const destinationDef =
-    vendor && defs.Destination.get(vendorDef.locations[vendor.vendorLocationIndex].destinationHash);
+    vendor?.vendorLocationIndex && vendorDef.locations[vendor.vendorLocationIndex]
+      ? defs.Destination.get(vendorDef.locations[vendor.vendorLocationIndex].destinationHash)
+      : undefined;
   const placeDef = destinationDef && defs.Place.get(destinationDef.placeHash);
 
   const placeString = [destinationDef?.displayProperties.name, placeDef?.displayProperties.name]
@@ -155,17 +154,17 @@ function SingleVendor({
     buckets,
     vendor,
     account,
-    vendorResponse?.itemComponents,
-    vendorResponse?.sales.data,
+    vendorResponse?.itemComponents[vendorHash],
+    vendorResponse?.sales.data?.[vendorHash]?.saleItems,
     mergedCollectibles
   );
 
   if (!d2Vendor) {
-    return null;
+    return <ErrorPanel error={new Error(`No known vendor with hash ${vendorHash}`)} />;
   }
 
   return (
-    <div className="vendor dim-page">
+    <div className={clsx(styles.page, 'dim-page')}>
       <ErrorBoundary name="SingleVendor">
         <div className={styles.featuredHeader}>
           <h1>

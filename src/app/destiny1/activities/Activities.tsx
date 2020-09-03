@@ -2,9 +2,9 @@ import React from 'react';
 import clsx from 'clsx';
 import BungieImage, { bungieBackgroundStyle } from '../../dim-ui/BungieImage';
 import { DimStore, D1Store } from '../../inventory/store-types';
-import { RootState } from '../../store/reducers';
+import { RootState } from 'app/store/types';
 import { sortedStoresSelector } from '../../inventory/selectors';
-import SimpleCharacterTile from '../../inventory/SimpleCharacterTile';
+import CharacterTileButton from '../../character-tile/CharacterTileButton';
 import CollapsibleTitle from '../../dim-ui/CollapsibleTitle';
 import { AppIcon, starIcon } from '../../shell/icons';
 import { t } from 'app/i18next-t';
@@ -86,7 +86,7 @@ class Activities extends React.Component<Props> {
         <div className="activities-characters">
           {characters.map((store) => (
             <div key={store.id} className="activities-character">
-              <SimpleCharacterTile character={store} />
+              <CharacterTileButton character={store} />
             </div>
           ))}
         </div>
@@ -151,7 +151,7 @@ class Activities extends React.Component<Props> {
   // efficient to just fish the info out of there.
 
   private init = (stores: D1Store[], defs: D1ManifestDefinitions) => {
-    const whitelist = [
+    const allowList = [
       'vaultofglass',
       'crota',
       'kingsfall',
@@ -162,10 +162,10 @@ class Activities extends React.Component<Props> {
     ];
 
     const rawActivities = Object.values(stores[0].advisors.activities).filter(
-      (a: any) => a.activityTiers && whitelist.includes(a.identifier)
+      (a: any) => a.activityTiers && allowList.includes(a.identifier)
     );
     const activities = _.sortBy(rawActivities, (a: any) => {
-      const ix = whitelist.indexOf(a.identifier);
+      const ix = allowList.indexOf(a.identifier);
       return ix === -1 ? 999 : ix;
     }).map((a) => this.processActivities(defs, stores, a));
 

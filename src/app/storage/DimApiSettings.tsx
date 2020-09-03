@@ -5,7 +5,7 @@ import { t } from 'app/i18next-t';
 import ImportExport from './ImportExport';
 import { apiPermissionGrantedSelector } from 'app/dim-api/selectors';
 import { connect } from 'react-redux';
-import { RootState, ThunkDispatchProp, ThunkResult } from 'app/store/reducers';
+import { RootState, ThunkDispatchProp, ThunkResult } from 'app/store/types';
 import { setApiPermissionGranted } from 'app/dim-api/basic-actions';
 import _ from 'lodash';
 import { deleteAllApiData, loadDimApiData } from 'app/dim-api/actions';
@@ -16,7 +16,7 @@ import { exportDimApiData } from 'app/dim-api/dim-api';
 import { exportBackupData } from './export-data';
 import ErrorPanel from 'app/shell/ErrorPanel';
 import { Link } from 'react-router-dom';
-import { ExportResponse } from '@destinyitemmanager/dim-api-types';
+import { ExportResponse, DestinyVersion } from '@destinyitemmanager/dim-api-types';
 import { parseProfileKey } from 'app/dim-api/reducer';
 import { importDataBackup } from 'app/dim-api/import';
 import { showNotification } from 'app/notifications/notifications';
@@ -115,7 +115,7 @@ function DimApiSettings({ apiPermissionGranted, dispatch, profileLoadedError }: 
       {apiPermissionGranted && (
         <div className="setting horizontal">
           <label>{t('Storage.DeleteAllDataLabel')}</label>
-          <button className="dim-button" onClick={deleteAllData}>
+          <button type="button" className="dim-button" onClick={deleteAllData}>
             <AppIcon icon={deleteIcon} /> {t('Storage.DeleteAllData')}
           </button>
         </div>
@@ -139,6 +139,9 @@ function exportLocalData(): ThunkResult<ExportResponse> {
       settings: dimApiState.settings,
       loadouts: [],
       tags: [],
+      triumphs: [],
+      itemHashTags: [],
+      searches: [],
     };
 
     for (const profileKey in dimApiState.profiles) {
@@ -159,6 +162,22 @@ function exportLocalData(): ThunkResult<ExportResponse> {
             destinyVersion,
           });
         }
+
+        exportResponse.triumphs.push({
+          platformMembershipId,
+          triumphs: dimApiState.profiles[profileKey].triumphs,
+        });
+      }
+    }
+
+    exportResponse.itemHashTags = Object.values(dimApiState.itemHashTags);
+
+    for (const destinyVersion in dimApiState.searches) {
+      for (const search of dimApiState.searches[destinyVersion]) {
+        exportResponse.searches.push({
+          destinyVersion: parseInt(destinyVersion, 10) as DestinyVersion,
+          search,
+        });
       }
     }
 

@@ -73,11 +73,6 @@
   }
 }
 
-html,
-body {
-  height: 100%;
-}
-
 // Suppress outline on focusable divs
 div[tabindex='-1']:focus {
   outline: 0;
@@ -162,6 +157,12 @@ h3 {
   margin-bottom: 15px;
 }
 
+html,
+body {
+  // Disable pull to refresh in Android
+  overscroll-behavior: none;
+}
+
 body {
   margin: 0 auto;
   background-color: #313233;
@@ -170,8 +171,6 @@ body {
   font-size: 12px;
   // Disable drag and drop so we can use our polyfill
   -webkit-user-drag: none;
-  // Disable pull to refresh in Android
-  overscroll-behavior: contain;
 }
 
 #system {
@@ -413,5 +412,21 @@ a.dim-button {
 
   .app-icon {
     margin: auto 0 auto 4px;
+  }
+}
+
+.gradientBackground {
+  &::before {
+    @include below-header;
+    background: radial-gradient(circle at 50% 70px, #454568 0%, #161626 100%);
+    background-position: center top;
+    background-repeat: no-repeat;
+    content: '';
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: fixed;
+    will-change: transform;
+    z-index: -1;
   }
 }

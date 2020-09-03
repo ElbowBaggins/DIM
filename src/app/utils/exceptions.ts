@@ -27,9 +27,10 @@ if ($featureFlags.sentry) {
       'HTTP 503 returned',
       'Waiting due to HTTP 503',
       'Bungie.net was too slow to respond.',
+      'Bungie.net is currently experiencing difficulties.',
       /AbortError/,
       /Non-Error promise rejection/,
-      'VendorEngrams.xyz service call failed.',
+      /VendorEngrams\.xyz/,
     ],
     ignoreUrls: [
       // Chrome extensions
@@ -40,6 +41,12 @@ if ($featureFlags.sentry) {
     attachStackTrace: true,
     // We're flooding Sentry for some reason
     sampleRate: 0.05,
+    beforeSend: function (event, hint) {
+      if (hint.originalException.errorCode) {
+        event.fingerprint = ['{{ default }}', String(hint.originalException.errorCode)];
+      }
+      return event;
+    },
   });
 
   reportException = (name: string, e: Error, errorInfo?: {}) => {

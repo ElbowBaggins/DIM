@@ -1,5 +1,5 @@
 import { DimData } from 'app/storage/sync.service';
-import { ThunkResult } from 'app/store/reducers';
+import { ThunkResult } from 'app/store/types';
 import { importData } from './dim-api';
 import { loadDimApiData } from './actions';
 import { DimApiState, makeProfileKey } from './reducer';
@@ -15,12 +15,13 @@ import {
 import { showNotification } from 'app/notifications/notifications';
 import { t } from 'app/i18next-t';
 import { observeStore } from 'app/utils/redux-utils';
+import _ from 'lodash';
 
 /**
  * Import data (either legacy-format from SyncService or the new DIM Sync export) into DIM Sync.
  * This is from a user clicking "Import" and will always overwrite the data saved locally or on the server.
  */
-export function importDataBackup(data: DimData | ExportResponse): ThunkResult {
+export function importDataBackup(data: DimData | ExportResponse, silent = false): ThunkResult {
   return async (dispatch, getState) => {
     const dimApiData = getState().dimApi;
 
@@ -42,8 +43,10 @@ export function importDataBackup(data: DimData | ExportResponse): ThunkResult {
         // Reload from the server
         return dispatch(loadDimApiData(true));
       } catch (e) {
-        console.error('[importLegacyData] Error importing legacy data into DIM API', e);
-        showImportFailedNotification(e);
+        if (!silent) {
+          console.error('[importLegacyData] Error importing legacy data into DIM API', e);
+          showImportFailedNotification(e);
+        }
         return;
       }
     } else {
@@ -51,13 +54,18 @@ export function importDataBackup(data: DimData | ExportResponse): ThunkResult {
       const settings = data.settings || data['settings-v1.0'];
       const loadouts = extractLoadouts(data);
       const tags = extractItemAnnotations(data);
+      const triumphs: ExportResponse['triumphs'] = data.triumphs || [];
+      const itemHashTags: ExportResponse['itemHashTags'] = data.itemHashTags || [];
+      const importedSearches: ExportResponse['searches'] = data.searches || [];
 
       if (!loadouts.length && !tags.length) {
-        console.error(
-          '[importLegacyData] Error importing legacy data into DIM API - no data',
-          data
-        );
-        showImportFailedNotification(new Error(t('Storage.ImportNotification.NoData')));
+        if (!silent) {
+          console.error(
+            '[importLegacyData] Error importing legacy data into DIM API - no data',
+            data
+          );
+          showImportFailedNotification(new Error(t('Storage.ImportNotification.NoData')));
+        }
         return;
       }
 
@@ -71,6 +79,7 @@ export function importDataBackup(data: DimData | ExportResponse): ThunkResult {
             profiles[key] = {
               loadouts: {},
               tags: {},
+              triumphs: [],
             };
           }
           profiles[key].loadouts[loadout.id] = loadout;
@@ -84,16 +93,42 @@ export function importDataBackup(data: DimData | ExportResponse): ThunkResult {
             profiles[key] = {
               loadouts: {},
               tags: {},
+              triumphs: [],
             };
           }
           profiles[key].tags[tag.id] = tag;
         }
       }
 
+      for (const triumphData of triumphs) {
+        const { platformMembershipId, triumphs } = triumphData;
+        if (platformMembershipId) {
+          const key = makeProfileKey(platformMembershipId, 2);
+          if (!profiles[key]) {
+            profiles[key] = {
+              loadouts: {},
+              tags: {},
+              triumphs: [],
+            };
+          }
+          profiles[key].triumphs = triumphs;
+        }
+      }
+
+      const searches: DimApiState['searches'] = {
+        1: [],
+        2: [],
+      };
+      for (const search of importedSearches) {
+        searches[search.destinyVersion].push(search.search);
+      }
+
       dispatch(
         profileLoadedFromIDB({
           settings: { ...initialSettingsState, ...settings },
           profiles,
+          itemHashTags: _.keyBy(itemHashTags, (t) => t.hash),
+          searches,
           updateQueue: [],
         })
       );

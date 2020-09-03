@@ -4,6 +4,7 @@ import { DimStore } from '../inventory/store-types';
 import { t } from 'app/i18next-t';
 import ItemActionButton, { ItemActionButtonGroup } from './ItemActionButton';
 import styles from './ItemMoveLocation.m.scss';
+import { FINISHERS_BUCKET, SEASONAL_ARTIFACT_BUCKET } from 'app/search/d2-known-values';
 
 interface Props {
   item: DimItem;
@@ -16,48 +17,12 @@ interface Props {
  * Buttons for the ItemActions component. These show the applicable
  * actions for the given store to move/equip the given item.
  */
-export default class ItemMoveLocation extends React.PureComponent<Props> {
-  render() {
-    const { item, store } = this.props;
+export default function ItemMoveLocation({ item, itemOwnerStore, store, moveItemTo }: Props) {
+  const moveItem = () => moveItemTo(store);
+  const equipItem = () => moveItemTo(store, true);
 
-    return (
-      <ItemActionButtonGroup key={store.id}>
-        {this.canShowVault(store) && (
-          <ItemActionButton
-            className={styles.moveVault}
-            title={t('MovePopup.Vault')}
-            aria-label={`${t('MovePopup.Equip')} ${store.name}`}
-            onClick={this.moveItem}
-            label={t('MovePopup.Vault')}
-          />
-        )}
-        {!(item.owner === store.id && item.equipped) && item.canBeEquippedBy(store) && (
-          <ItemActionButton
-            title={store.name}
-            aria-label={`${t('MovePopup.Equip')} ${store.name}`}
-            onClick={this.equipItem}
-            icon={store.icon}
-            label={t('MovePopup.Equip')}
-          />
-        )}
-        {this.canShowStore(store) && (
-          <ItemActionButton
-            title={store.name}
-            aria-label={`${t('MovePopup.Store')} ${store.name}`}
-            onClick={this.moveItem}
-            icon={store.icon}
-            label={t('MovePopup.Store')}
-          />
-        )}
-      </ItemActionButtonGroup>
-    );
-  }
-
-  private moveItem = () => this.props.moveItemTo(this.props.store);
-  private equipItem = () => this.props.moveItemTo(this.props.store, true);
-
-  private canShowVault = (buttonStore: DimStore): boolean => {
-    const { item, itemOwnerStore: store } = this.props;
+  const canShowVault = (buttonStore: DimStore): boolean => {
+    const store = itemOwnerStore;
 
     // If my store is the vault, don't show a vault button.
     // Can't vault a vaulted item.
@@ -82,8 +47,8 @@ export default class ItemMoveLocation extends React.PureComponent<Props> {
     return true;
   };
 
-  private canShowStore = (buttonStore: DimStore): boolean => {
-    const { item, itemOwnerStore: store } = this.props;
+  const canShowStore = (buttonStore: DimStore): boolean => {
+    const store = itemOwnerStore;
 
     // Can't store into a vault
     if (buttonStore.isVault || !store) {
@@ -93,8 +58,8 @@ export default class ItemMoveLocation extends React.PureComponent<Props> {
     // Don't show "Store" for finishers, seasonal artifacts, or clan banners
     if (
       item.location.capacity === 1 ||
-      item.location.hash === 1506418338 ||
-      item.location.hash === 3683254069
+      item.location.hash === SEASONAL_ARTIFACT_BUCKET ||
+      item.location.hash === FINISHERS_BUCKET
     ) {
       return false;
     }
@@ -118,4 +83,33 @@ export default class ItemMoveLocation extends React.PureComponent<Props> {
 
     return false;
   };
+
+  return (
+    <ItemActionButtonGroup key={store.id}>
+      {canShowVault(store) && (
+        <ItemActionButton
+          className={styles.moveVault}
+          title={t('MovePopup.Vault')}
+          onClick={moveItem}
+          label={t('MovePopup.Vault')}
+        />
+      )}
+      {!(item.owner === store.id && item.equipped) && item.canBeEquippedBy(store) && (
+        <ItemActionButton
+          title={t('MovePopup.EquipWithName', { character: store.name })}
+          onClick={equipItem}
+          icon={store.icon}
+          label={t('MovePopup.Equip')}
+        />
+      )}
+      {canShowStore(store) && (
+        <ItemActionButton
+          title={t('MovePopup.StoreWithName', { character: store.name })}
+          onClick={moveItem}
+          icon={store.icon}
+          label={t('MovePopup.Store')}
+        />
+      )}
+    </ItemActionButtonGroup>
+  );
 }

@@ -10,11 +10,12 @@ import { D1Item } from '../../inventory/item-types';
 import { updateVendorRankings } from '../../item-review/destiny-tracker.service';
 import { D1StoresService } from '../../inventory/d1-stores';
 import { loadingTracker } from '../../shell/loading-tracker';
-import { handleLocalStorageFullError } from '../../compatibility';
 import store from '../../store/store';
 import { BehaviorSubject, ConnectableObservable, Observable } from 'rxjs';
 import { distinctUntilChanged, switchMap, publishReplay, tap, filter, map } from 'rxjs/operators';
 import { getVault } from 'app/inventory/stores-helpers';
+import rxStore from '../../store/store';
+import { bucketsSelector } from 'app/inventory/selectors';
 
 /*
 const allVendors = [
@@ -58,12 +59,12 @@ const allVendors = [
   */
 
 // Vendors we don't want to load by default
-const vendorBlackList = [
+const vendorDenyList = [
   2021251983, // Postmaster,
 ];
 
 // Hashes for 'Decode Engram'
-const categoryBlacklist = [3574600435, 3612261728, 1333567905, 2634310414];
+const categoryDenyList = [3574600435, 3612261728, 1333567905, 2634310414];
 
 const xur = 2796397637;
 
@@ -217,17 +218,19 @@ function VendorService(): VendorServiceType {
   ): Promise<[D1Store[], { [vendorHash: number]: Vendor }]> {
     const characters = stores.filter((s) => !s.isVault);
 
-    const reloadPromise = getDefinitions()
+    const reloadPromise = ((store.dispatch(getDefinitions()) as any) as Promise<
+      D1ManifestDefinitions
+    >)
       .then((defs) => {
         // Narrow down to only visible vendors (not packages and such)
         const vendorList = Object.values(defs.Vendor).filter((v) => v.summary.visible);
 
-        service.totalVendors = characters.length * (vendorList.length - vendorBlackList.length);
+        service.totalVendors = characters.length * (vendorList.length - vendorDenyList.length);
         service.loadedVendors = 0;
 
         return Promise.all(
           vendorList.flatMap(async (vendorDef) => {
-            if (vendorBlackList.includes(vendorDef.hash)) {
+            if (vendorDenyList.includes(vendorDef.hash)) {
               return null;
             }
 
@@ -285,7 +288,7 @@ function VendorService(): VendorServiceType {
       });
     });
 
-    mergedVendor.allItems = mergedVendor.categories.map((i) => i.saleItems).flat();
+    mergedVendor.allItems = mergedVendor.categories.flatMap((i) => i.saleItems);
 
     return mergedVendor;
   }
@@ -396,9 +399,7 @@ function VendorService(): VendorServiceType {
               vendor.expires = calculateExpiration(vendor.nextRefreshDate, vendorHash);
               vendor.factionLevel = factionLevel(store, vendorDef.summary.factionHash);
               vendor.factionAligned = factionAligned(store, vendorDef.summary.factionHash);
-              return set(key, vendor)
-                .catch(handleLocalStorageFullError)
-                .then(() => vendor);
+              return set(key, vendor).then(() => vendor);
             })
             .catch((e) => {
               // console.log("vendor error", vendorDef.summary.vendorName, 'for', store.name, e, e.code, e.status);
@@ -412,11 +413,9 @@ function VendorService(): VendorServiceType {
                   factionAligned: factionAligned(store, vendorDef.summary.factionHash),
                 };
 
-                return set(key, vendor)
-                  .catch(handleLocalStorageFullError)
-                  .then(() => {
-                    throw new Error(`Cached failed vendor ${vendorDef.summary.vendorName}`);
-                  });
+                return set(key, vendor).then(() => {
+                  throw new Error(`Cached failed vendor ${vendorDef.summary.vendorName}`);
+                });
               }
               throw new Error(`Failed to load vendor ${vendorDef.summary.vendorName}`);
             });
@@ -487,15 +486,19 @@ function VendorService(): VendorServiceType {
       saleItem.item.itemInstanceId = `vendor-${vendorDef.hash}-${saleItem.vendorItemIndex}`;
     });
 
+    const buckets = bucketsSelector(rxStore.getState())!;
+
     return processItems(
       { id: null } as any,
-      saleItems.map((i) => i.item)
+      saleItems.map((i) => i.item),
+      defs,
+      buckets
     ).then((items) => {
       const itemsById = _.keyBy(items, (i) => i.id);
       const categories = _.compact(
         _.map(vendor.saleItemCategories, (category) => {
           const categoryInfo = vendorDef.categories[category.categoryIndex];
-          if (categoryBlacklist.includes(categoryInfo.categoryHash)) {
+          if (categoryDenyList.includes(categoryInfo.categoryHash)) {
             return null;
           }
 

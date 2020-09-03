@@ -12,6 +12,7 @@ import {
   equipItems as d2EquipItems,
   transfer as d2Transfer,
   setLockState as d2SetLockState,
+  setTrackedState as d2SetTrackedState,
 } from '../bungie-api/destiny2-api';
 import { chainComparator, compareBy, reverseComparator } from '../utils/comparators';
 import { createItemIndex as d2CreateItemIndex } from './store/d2-item-factory';
@@ -31,9 +32,10 @@ import {
 } from './dim-item-info';
 import reduxStore from '../store/store';
 import { count } from 'app/utils/util';
-import { itemInfosSelector } from './selectors';
+import { itemInfosSelector, itemHashTagsSelector } from './selectors';
 import { getStore, getItemAcrossStores, getCurrentStore, getVault } from './stores-helpers';
 import { touch } from './actions';
+import { ItemHashTag } from '@destinyitemmanager/dim-api-types';
 
 /**
  * You can reserve a number of each type of item in each store.
@@ -83,7 +85,11 @@ export async function setItemLockState(
   const store = item.owner === 'vault' ? getCurrentStore(stores)! : getStore(stores, item.owner)!;
 
   if (item.isDestiny2()) {
-    await d2SetLockState(store, item, state);
+    if (type === 'lock') {
+      await d2SetLockState(store, item, state);
+    } else {
+      await d2SetTrackedState(store, item, state);
+    }
   } else if (item.isDestiny1()) {
     await d1SetItemState(item, store, state, type);
   }
@@ -639,6 +645,7 @@ function ItemService(): ItemServiceType {
     }
 
     const itemInfos = itemInfosSelector(reduxStore.getState());
+    const itemHashTags = itemHashTagsSelector(reduxStore.getState());
 
     // A cached version of the space-left function
     const cachedSpaceLeft = _.memoize(
@@ -674,6 +681,7 @@ function ItemService(): ItemServiceType {
         store,
         targetStore,
         itemInfos,
+        itemHashTags,
         item
       ).find((candidate) => {
         const spaceLeft = cachedSpaceLeft(targetStore, candidate);
@@ -1016,6 +1024,9 @@ export function sortMoveAsideCandidatesForStore(
   fromStore: DimStore,
   targetStore: DimStore,
   itemInfos: ItemInfos,
+  itemHashTags: {
+    [itemHash: string]: ItemHashTag;
+  },
   /** The item we're trying to make space for. May be missing. */
   item?: DimItem
 ) {
@@ -1049,7 +1060,7 @@ export function sortMoveAsideCandidatesForStore(
       compareBy((i) => !fromStore.isVault && !i.canBeEquippedBy(fromStore)),
       // Tagged items sort by orders defined in dim-item-info
       compareBy((i) => {
-        const tag = getTag(i, itemInfos);
+        const tag = getTag(i, itemInfos, itemHashTags);
         return -(fromStore.isVault ? vaultDisplacePriority : characterDisplacePriority).indexOf(
           tag || 'none'
         );

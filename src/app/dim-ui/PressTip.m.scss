@@ -13,12 +13,17 @@
   z-index: 99999;
   white-space: pre-wrap;
   box-sizing: border-box;
+  user-select: none;
 
   h2 {
     background-color: #444;
     margin: 0 0 4px 0;
     font-size: 14px;
     @include destiny-header;
+  }
+
+  hr {
+    border-color: #888;
   }
 
   &[data-popper-placement='top'] .arrow {

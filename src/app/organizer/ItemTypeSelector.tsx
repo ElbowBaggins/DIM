@@ -33,6 +33,7 @@ import energyWeapon from 'destiny-icons/general/energy_weapon.svg';
 import powerWeapon from 'destiny-icons/general/power_weapon.svg';
 import ghost from 'destiny-icons/general/ghost.svg';
 import { D1ManifestDefinitions } from 'app/destiny1/d1-definitions';
+import { ItemCategoryHashes } from 'data/d2/generated-enums';
 
 /**
  * Each branch of the drilldown options is represented by a SelectionTreeNode
@@ -61,7 +62,7 @@ const armorHashes = {
  * used to generate the list of selected subcategories.
  */
 export const getD2SelectionTree = (defs: D2ManifestDefinitions): ItemCategoryTreeNode => {
-  const armorCategory = defs.ItemCategory.get(20);
+  const armorCategory = defs.ItemCategory.get(ItemCategoryHashes.Armor);
 
   // Each class has the same armor
   const armorCategories = armorCategory.groupedCategoryHashes.map(
@@ -134,6 +135,27 @@ export const getD2SelectionTree = (defs: D2ManifestDefinitions): ItemCategoryTre
             icon: scoutRifle,
           },
           {
+            id: 'sidearm',
+            itemCategoryHash: 14,
+            subCategories: [kinetic, energy],
+            terminal: true,
+            icon: sidearm,
+          },
+          {
+            id: 'bow',
+            itemCategoryHash: 3317538576,
+            subCategories: [kinetic, energy, power],
+            terminal: true,
+            icon: bow,
+          },
+          {
+            id: 'submachine',
+            itemCategoryHash: 3954685534,
+            subCategories: [kinetic, energy],
+            terminal: true,
+            icon: smg,
+          },
+          {
             id: 'fusionrifle',
             itemCategoryHash: 9,
             subCategories: [energy, power],
@@ -155,23 +177,17 @@ export const getD2SelectionTree = (defs: D2ManifestDefinitions): ItemCategoryTre
             icon: shotgun,
           },
           {
+            id: 'tracerifle',
+            itemCategoryHash: 2489664120,
+            subCategories: [kinetic, energy],
+            terminal: true,
+            icon: traceRifle,
+          },
+          {
             id: 'machinegun',
             itemCategoryHash: 12,
             terminal: true,
             icon: machinegun,
-          },
-          {
-            id: 'rocketlauncher',
-            itemCategoryHash: 13,
-            terminal: true,
-            icon: rLauncher,
-          },
-          {
-            id: 'sidearm',
-            itemCategoryHash: 14,
-            subCategories: [kinetic, energy],
-            terminal: true,
-            icon: sidearm,
           },
           {
             id: 'sword',
@@ -187,11 +203,10 @@ export const getD2SelectionTree = (defs: D2ManifestDefinitions): ItemCategoryTre
             icon: gLauncher,
           },
           {
-            id: 'tracerifle',
-            itemCategoryHash: 2489664120,
-            subCategories: [kinetic, energy],
+            id: 'rocketlauncher',
+            itemCategoryHash: 13,
             terminal: true,
-            icon: traceRifle,
+            icon: rLauncher,
           },
           {
             id: 'linearfusionrifle',
@@ -200,46 +215,25 @@ export const getD2SelectionTree = (defs: D2ManifestDefinitions): ItemCategoryTre
             terminal: true,
             icon: lFusionRifle,
           },
-          {
-            id: 'submachine',
-            itemCategoryHash: 3954685534,
-            subCategories: [kinetic, energy],
-            terminal: true,
-            icon: smg,
-          },
-          {
-            id: 'bow',
-            itemCategoryHash: 3317538576,
-            subCategories: [kinetic, energy, power],
-            terminal: true,
-            icon: bow,
-          },
         ],
       },
       {
-        id: 'armor',
-        itemCategoryHash: 20,
-        icon: helmet,
-        subCategories: [
-          {
-            id: 'hunter',
-            itemCategoryHash: 23,
-            subCategories: armorCategories,
-            icon: hunter,
-          },
-          {
-            id: 'titan',
-            itemCategoryHash: 22,
-            subCategories: armorCategories,
-            icon: titan,
-          },
-          {
-            id: 'warlock',
-            itemCategoryHash: 21,
-            subCategories: armorCategories,
-            icon: warlock,
-          },
-        ],
+        id: 'hunter',
+        itemCategoryHash: 23,
+        subCategories: armorCategories,
+        icon: hunter,
+      },
+      {
+        id: 'titan',
+        itemCategoryHash: 22,
+        subCategories: armorCategories,
+        icon: titan,
+      },
+      {
+        id: 'warlock',
+        itemCategoryHash: 21,
+        subCategories: armorCategories,
+        icon: warlock,
       },
       {
         id: 'ghosts',

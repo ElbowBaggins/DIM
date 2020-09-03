@@ -1,6 +1,6 @@
 import React from 'react';
 import { DimItem } from '../inventory/item-types';
-import { RootState, ThunkDispatchProp } from '../store/reducers';
+import { RootState, ThunkDispatchProp } from 'app/store/types';
 import { t } from 'app/i18next-t';
 import './item-review.scss';
 import { connect } from 'react-redux';
@@ -180,10 +180,10 @@ class ItemReviews extends React.Component<Props, State> {
 
               {expandReview && (
                 <span ng-show="expandReview">
-                  <button className="dim-button" onClick={this.submitReview}>
+                  <button type="button" className="dim-button" onClick={this.submitReview}>
                     {t('DtrReview.Submit')}
                   </button>{' '}
-                  <button className="dim-button" onClick={this.cancelEdit}>
+                  <button type="button" className="dim-button" onClick={this.cancelEdit}>
                     {t('DtrReview.Cancel')}
                   </button>
                 </span>

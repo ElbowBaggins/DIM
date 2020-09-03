@@ -16,11 +16,12 @@ import { t } from 'app/i18next-t';
 import { refresh$ } from '../shell/refresh';
 import { InventoryBuckets } from '../inventory/inventory-buckets';
 import CharacterSelect from '../dim-ui/CharacterSelect';
-import { RootState, ThunkDispatchProp } from '../store/reducers';
+import { RootState, ThunkDispatchProp } from 'app/store/types';
 import {
   ownedItemsSelector,
   sortedStoresSelector,
   profileResponseSelector,
+  bucketsSelector,
 } from '../inventory/selectors';
 import { connect } from 'react-redux';
 import {
@@ -30,7 +31,7 @@ import {
   filterVendorGroupsToSearch,
 } from './d2-vendors';
 import styles from './Vendors.m.scss';
-import { searchFilterSelector } from 'app/search/search-filters';
+import { searchFilterSelector } from 'app/search/search-filter';
 import { DimItem } from 'app/inventory/item-types';
 import PageWithMenu from 'app/dim-ui/PageWithMenu';
 import VendorsMenu from './VendorsMenu';
@@ -67,7 +68,7 @@ function mapStateToProps() {
   return (state: RootState): StoreProps => ({
     stores: sortedStoresSelector(state),
     ownedItemHashes: ownedItemSelectorInstance(state),
-    buckets: state.inventory.buckets,
+    buckets: bucketsSelector(state),
     defs: state.manifest.d2Manifest,
     isPhonePortrait: state.shell.isPhonePortrait,
     searchQuery: state.shell.searchQuery,
@@ -180,7 +181,7 @@ function Vendors({
   const currencyLookups = vendorsResponse?.currencyLookups.data?.itemQuantities;
 
   if (vendorGroups && filterToUnacquired) {
-    vendorGroups = filterVendorGroupsToUnacquired(vendorGroups);
+    vendorGroups = filterVendorGroupsToUnacquired(vendorGroups, ownedItemHashes);
   }
   if (vendorGroups && searchQuery.length) {
     vendorGroups = filterVendorGroupsToSearch(vendorGroups, searchQuery, filterItems);

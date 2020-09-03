@@ -2,8 +2,20 @@ import _ from 'lodash';
 import { Loadout, LoadoutItem } from './loadout-types';
 import { DimItem } from '../inventory/item-types';
 import { v4 as uuidv4 } from 'uuid';
-import { DimStore } from 'app/inventory/store-types';
+import { DimStore, DimCharacterStat } from 'app/inventory/store-types';
 import { DestinyClass } from 'bungie-api-ts/destiny2';
+import { D2Categories } from '../destiny2/d2-bucket-categories';
+import { armorStats } from 'app/inventory/store/stats';
+import { bungieNetPath } from 'app/dim-ui/BungieImage';
+import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
+import { D1ManifestDefinitions } from 'app/destiny1/d1-definitions';
+
+const excludeGearSlots = ['Class', 'SeasonalArtifacts'];
+// order to display a list of all 8 gear slots
+const gearSlotOrder = [
+  ...D2Categories.Weapons.filter((t) => !excludeGearSlots.includes(t)),
+  ...D2Categories.Armor,
+];
 
 /**
  * Creates a new loadout, with all of the items equipped.
@@ -28,7 +40,7 @@ export function getLight(store: DimStore, items: DimItem[]): number {
   // https://www.reddit.com/r/DestinyTheGame/comments/6yg4tw/how_overall_power_level_is_calculated/
   if (store.isDestiny2()) {
     const exactLight = _.sumBy(items, (i) => i.primStat!.value) / items.length;
-    return Math.floor(exactLight * 10) / 10;
+    return Math.floor(exactLight * 1000) / 1000;
   } else {
     const itemWeight = {
       Weapons: 6,
@@ -55,15 +67,40 @@ export function getLight(store: DimStore, items: DimItem[]): number {
   }
 }
 
+/** Returns a map of armor hashes to stats. There should be just one of each item */
+export function getArmorStats(
+  defs: D1ManifestDefinitions | D2ManifestDefinitions,
+  items: DimItem[]
+): { [hash: number]: DimCharacterStat } {
+  const statDefs = armorStats.map((hash) => defs.Stat.get(hash));
+
+  // Construct map of stat hash to DimCharacterStat
+  const statsByArmorHash: { [hash: number]: DimCharacterStat } = {};
+  statDefs.forEach(({ hash, displayProperties: { description, icon, name } }) => {
+    statsByArmorHash[hash] = { hash, description, icon: bungieNetPath(icon), name, value: 0 };
+  });
+
+  // Sum the items stats into the statsByArmorHash
+  items.forEach((item) => {
+    const itemStats = _.groupBy(item.stats, (stat) => stat.statHash);
+    Object.entries(statsByArmorHash).forEach(([hash, stat]) => {
+      stat.value += itemStats[hash]?.[0].value ?? 0;
+    });
+  });
+
+  return statsByArmorHash;
+}
+
 // Generate an optimized item set (loadout items) based on a filtered set of items and a value function
 export function optimalItemSet(
   applicableItems: DimItem[],
   bestItemFn: (item: DimItem) => number
-): DimItem[] {
+): Record<'equippable' | 'unrestricted', DimItem[]> {
   const itemsByType = _.groupBy(applicableItems, (i) => i.type);
 
   // Pick the best item
   let items = _.mapValues(itemsByType, (items) => _.maxBy(items, bestItemFn)!);
+  const unrestricted = _.sortBy(Object.values(items), (i) => gearSlotOrder.indexOf(i.type));
 
   // Solve for the case where our optimizer decided to equip two exotics
   const getLabel = (i: DimItem) => i.equippingLabel;
@@ -105,7 +142,9 @@ export function optimalItemSet(
     }
   });
 
-  return Object.values(items);
+  const equippable = _.sortBy(Object.values(items), (i) => gearSlotOrder.indexOf(i.type));
+
+  return { equippable, unrestricted };
 }
 
 export function optimalLoadout(
@@ -113,10 +152,10 @@ export function optimalLoadout(
   bestItemFn: (item: DimItem) => number,
   name: string
 ): Loadout {
-  const items = optimalItemSet(applicableItems, bestItemFn);
+  const { equippable } = optimalItemSet(applicableItems, bestItemFn);
   return newLoadout(
     name,
-    items.map((i) => convertToLoadoutItem(i, true))
+    equippable.map((i) => convertToLoadoutItem(i, true))
   );
 }
 /** Create a loadout from all of this character's items that can be in loadouts */

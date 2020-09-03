@@ -12,7 +12,6 @@ import _ from 'lodash';
 import { DestinyAccount } from '../accounts/destiny-account';
 import { getCharacters, getStores } from '../bungie-api/destiny2-api';
 import { bungieErrorToaster } from '../bungie-api/error-toaster';
-import { getBuckets } from '../destiny2/d2-buckets';
 import { getDefinitions, D2ManifestDefinitions } from '../destiny2/d2-definitions';
 import { bungieNetPath } from '../dim-ui/BungieImage';
 import { reportException } from '../utils/exceptions';
@@ -33,12 +32,14 @@ import { switchMap, publishReplay, merge, take } from 'rxjs/operators';
 import helmetIcon from '../../../destiny-icons/armor_types/helmet.svg';
 import xpIcon from '../../images/xpIcon.svg';
 import { maxLightItemSet } from 'app/loadout/auto-loadouts';
-import { storesSelector } from './selectors';
-import { ThunkResult } from 'app/store/reducers';
-import { currentAccountSelector } from 'app/accounts/reducer';
+import { storesSelector, bucketsSelector } from './selectors';
+import { ThunkResult } from 'app/store/types';
+import { currentAccountSelector } from 'app/accounts/selectors';
 import { getCharacterStatsData as getD1CharacterStatsData } from './store/character-utils';
 import { getCharacters as d1GetCharacters } from '../bungie-api/destiny1-api';
 import { getArtifactBonus } from './stores-helpers';
+import { ItemPowerSet } from './ItemPowerSet';
+import { StatHashes } from 'data/d2/generated-enums';
 
 /**
  * Update the high level character information for all the stores
@@ -191,12 +192,12 @@ function makeD2StoresService(): D2StoreServiceType {
     resetIdTracker();
 
     try {
-      const [defs, buckets, , profileInfo] = await Promise.all([
-        getDefinitions(),
-        getBuckets(),
+      const [defs, , profileInfo] = await Promise.all([
+        (store.dispatch(getDefinitions()) as any) as Promise<D2ManifestDefinitions>,
         store.dispatch(loadNewItems(account)),
         getStores(account),
       ]);
+      const buckets = bucketsSelector(store.getState())!;
       console.time('Process inventory');
 
       // TODO: components may be hidden (privacy)
@@ -255,7 +256,7 @@ function makeD2StoresService(): D2StoreServiceType {
       console.timeEnd('Process inventory');
 
       console.time('Inventory state update');
-      store.dispatch(update({ stores, buckets, profileResponse: profileInfo }));
+      store.dispatch(update({ stores, profileResponse: profileInfo }));
       console.timeEnd('Inventory state update');
 
       return stores;
@@ -296,7 +297,7 @@ function makeD2StoresService(): D2StoreServiceType {
     const itemComponents = profileInfo.itemComponents;
     const progressions = profileInfo.characterProgressions.data?.[characterId]?.progressions || [];
     const uninstancedItemObjectives =
-      profileInfo.characterProgressions.data?.[characterId].uninstancedItemObjectives || [];
+      profileInfo.characterProgressions.data?.[characterId]?.uninstancedItemObjectives || [];
 
     const store = makeCharacter(defs, character, lastPlayedDate);
 
@@ -412,8 +413,12 @@ function makeD2StoresService(): D2StoreServiceType {
   // Add a fake stat for "max base power"
   function updateBasePower(stores: D2Store[], store: D2Store, defs: D2ManifestDefinitions) {
     if (!store.isVault) {
-      const def = defs.Stat.get(1935470627);
-      const maxBasePower = getLight(store, maxLightItemSet(stores, store));
+      const def = defs.Stat.get(StatHashes.Power);
+      const { equippable, unrestricted } = maxLightItemSet(stores, store);
+      const unrestrictedMaxGearPower = getLight(store, unrestricted);
+      const unrestrictedPowerFloor = Math.floor(unrestrictedMaxGearPower);
+      const equippableMaxGearPower = getLight(store, equippable);
+
       const hasClassified = stores.some((s) =>
         s.items.some(
           (i) =>
@@ -422,12 +427,19 @@ function makeD2StoresService(): D2StoreServiceType {
         )
       );
 
+      const differentEquippableMaxGearPower =
+        (unrestrictedMaxGearPower !== equippableMaxGearPower && equippableMaxGearPower) ||
+        undefined;
+
       store.stats.maxGearPower = {
         hash: -3,
-        name: t('Stats.MaxGearPower'),
+        name: t('Stats.MaxGearPowerAll'),
+        // used to be t('Stats.MaxGearPower'), a translation i don't want to lose yet
         hasClassified,
-        description: def.displayProperties.description,
-        value: maxBasePower,
+        description: '',
+        differentEquippableMaxGearPower,
+        richTooltip: ItemPowerSet(unrestricted, unrestrictedPowerFloor),
+        value: unrestrictedMaxGearPower,
         icon: helmetIcon,
       };
 
@@ -436,7 +448,7 @@ function makeD2StoresService(): D2StoreServiceType {
         hash: -2,
         name: t('Stats.PowerModifier'),
         hasClassified: false,
-        description: def.displayProperties.description,
+        description: '',
         value: artifactPower,
         icon: xpIcon,
       };
@@ -445,8 +457,8 @@ function makeD2StoresService(): D2StoreServiceType {
         hash: -1,
         name: t('Stats.MaxTotalPower'),
         hasClassified,
-        description: def.displayProperties.description,
-        value: maxBasePower + artifactPower,
+        description: '',
+        value: unrestrictedMaxGearPower + artifactPower,
         icon: bungieNetPath(def.displayProperties.icon),
       };
     }

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { getActivePlatform } from '../accounts/platforms';
+import { getActivePlatform } from '../accounts/get-active-platform';
 import { loadingTracker } from '../shell/loading-tracker';
 import { handleD2Errors } from './d2-trackerErrorHandler';
 import { D2Item } from '../inventory/item-types';
@@ -10,7 +10,7 @@ import { conditionallyIgnoreReviews } from './userFilter';
 import { toUtcTime } from './util';
 import { getReviews, getItemReviewsKey } from '../item-review/reducer';
 import { reviewsLoaded } from '../item-review/actions';
-import { ThunkResult } from '../store/reducers';
+import { ThunkResult } from 'app/store/types';
 import { DtrD2ActivityModes, DtrReviewPlatform } from '@destinyitemmanager/dim-api-types';
 
 /**

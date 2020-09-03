@@ -20,6 +20,7 @@ const ForkTsCheckerNotifierWebpackPlugin = require('fork-ts-checker-notifier-web
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const svgToMiniDataURI = require('mini-svg-data-uri');
 const _ = require('lodash');
+const WorkerPlugin = require('worker-plugin');
 
 const Visualizer = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
@@ -319,6 +320,12 @@ module.exports = (env) => {
         chunks: ['gdriveReturn'],
       }),
 
+      new HtmlWebpackPlugin({
+        inject: false,
+        filename: '404.html',
+        template: '!html-loader!src/404.html',
+      }),
+
       // Generate the .htaccess file (kind of an abuse of HtmlWebpack plugin just for templating)
       new HtmlWebpackPlugin({
         filename: '.htaccess',
@@ -384,9 +391,23 @@ module.exports = (env) => {
         // Enable vendorengrams.xyz integration
         '$featureFlags.vendorEngrams': JSON.stringify(true),
         // Enable the Armor 2 Mod picker
-        '$featureFlags.armor2ModPicker': JSON.stringify(env.dev),
+        '$featureFlags.armor2ModPicker': JSON.stringify(true),
         // Show a banner for supporting a charitable cause
         '$featureFlags.issueBanner': JSON.stringify(true),
+        // Show the triage tab in the item popup
+        '$featureFlags.triage': JSON.stringify(env.dev),
+        // Detach stats from the sticky header on mobile
+        '$featureFlags.unstickyStats': JSON.stringify(!env.release),
+        // Drag and drop mobile inspect
+        '$featureFlags.mobileInspect': JSON.stringify(!env.release),
+        // Rearrange buckets in categories
+        '$featureFlags.newArrangement': JSON.stringify(!env.release),
+        // New background design
+        '$featureFlags.gradientBackground': JSON.stringify(env.dev),
+      }),
+
+      new WorkerPlugin({
+        globalObject: 'self',
       }),
 
       new LodashModuleReplacementPlugin({
@@ -411,10 +432,15 @@ module.exports = (env) => {
     config.plugins.push(new Visualizer());
   }
 
-  if (env.release) {
+  if (!env.dev) {
     config.plugins.push(
       new CopyWebpackPlugin({
-        patterns: [{ from: './src/android-config.json', to: '.well-known/assetlinks.json' }],
+        patterns: [
+          {
+            from: `./src/android-config${env.release ? '' : '.beta'}.json`,
+            to: '.well-known/assetlinks.json',
+          },
+        ],
       })
     );
   }
@@ -423,7 +449,7 @@ module.exports = (env) => {
     // In dev we use babel to compile TS, and fork off a separate typechecker
     config.plugins.push(
       new ForkTsCheckerWebpackPlugin({
-        eslint: true,
+        eslint: { files: './src/**/*.{ts,tsx,js,jsx}' },
       })
     );
 

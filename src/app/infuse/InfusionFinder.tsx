@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useReducer } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import './InfusionFinder.scss';
 import { DimItem } from '../inventory/item-types';
 import { showInfuse$ } from './infuse';
@@ -8,20 +8,14 @@ import ConnectedInventoryItem from '../inventory/ConnectedInventoryItem';
 import copy from 'fast-copy';
 import { storesSelector, currentStoreSelector } from '../inventory/selectors';
 import { DimStore } from '../inventory/store-types';
-import { RootState } from '../store/reducers';
+import { RootState } from 'app/store/types';
 import _ from 'lodash';
 import { reverseComparator, compareBy, chainComparator } from '../utils/comparators';
 import { newLoadout, convertToLoadoutItem } from '../loadout/loadout-utils';
 import { connect } from 'react-redux';
 import { t } from 'app/i18next-t';
 import clsx from 'clsx';
-import SearchFilterInput from '../search/SearchFilterInput';
-import {
-  SearchConfig,
-  searchConfigSelector,
-  SearchFilters,
-  searchFiltersConfigSelector,
-} from '../search/search-filters';
+import { SearchFilters, searchFiltersConfigSelector } from '../search/search-filter';
 import { setSetting } from '../settings/actions';
 import { showNotification } from '../notifications/notifications';
 import { applyLoadout } from 'app/loadout/loadout-apply';
@@ -30,6 +24,7 @@ import { InfuseDirection, DestinyVersion } from '@destinyitemmanager/dim-api-typ
 import { LoadoutItem } from 'app/loadout/loadout-types';
 import { useSubscription } from 'app/utils/hooks';
 import { useLocation } from 'react-router';
+import SearchBar from 'app/search/SearchBar';
 
 const itemComparator = chainComparator(
   reverseComparator(compareBy((item: DimItem) => item.primStat!.value)),
@@ -47,7 +42,6 @@ interface ProvidedProps {
 interface StoreProps {
   stores: DimStore[];
   currentStore: DimStore;
-  searchConfig: SearchConfig;
   filters: SearchFilters;
   lastInfusionDirection: InfuseDirection;
   isPhonePortrait: boolean;
@@ -57,7 +51,6 @@ function mapStateToProps(state: RootState): StoreProps {
   return {
     stores: storesSelector(state),
     currentStore: currentStoreSelector(state)!,
-    searchConfig: searchConfigSelector(state),
     filters: searchFiltersConfigSelector(state),
     lastInfusionDirection: settingsSelector(state).infusionDirection,
     isPhonePortrait: state.shell.isPhonePortrait,
@@ -79,8 +72,6 @@ interface State {
   source?: DimItem;
   /** The item that will have its power increased by infusion */
   target?: DimItem;
-  /** Initial height of the sheet, to prevent it resizing */
-  height?: number;
   /** Search filter string */
   filter: string;
 }
@@ -94,7 +85,6 @@ type Action =
   | { type: 'swapDirection' }
   /** Select one of the items in the list */
   | { type: 'selectItem'; item: DimItem }
-  | { type: 'setHeight'; height: number }
   | { type: 'setFilter'; filter: string };
 
 /**
@@ -109,7 +99,6 @@ function stateReducer(state: State, action: Action): State {
         source: undefined,
         target: undefined,
         filter: '',
-        height: undefined,
       };
     case 'init': {
       const direction =
@@ -154,12 +143,6 @@ function stateReducer(state: State, action: Action): State {
         };
       }
     }
-    case 'setHeight': {
-      return {
-        ...state,
-        height: action.height,
-      };
-    }
     case 'setFilter': {
       return {
         ...state,
@@ -172,19 +155,14 @@ function stateReducer(state: State, action: Action): State {
 function InfusionFinder({
   stores,
   currentStore,
-  searchConfig,
   filters,
   isPhonePortrait,
   lastInfusionDirection,
 }: Props) {
-  const itemContainer = useRef<HTMLDivElement>(null);
-  const [{ direction, query, source, target, height, filter }, stateDispatch] = useReducer(
-    stateReducer,
-    {
-      direction: lastInfusionDirection,
-      filter: '',
-    }
-  );
+  const [{ direction, query, source, target, filter }, stateDispatch] = useReducer(stateReducer, {
+    direction: lastInfusionDirection,
+    filter: '',
+  });
 
   const reset = () => stateDispatch({ type: 'reset' });
   const selectItem = (item: DimItem) => stateDispatch({ type: 'selectItem', item });
@@ -199,13 +177,6 @@ function InfusionFinder({
       stateDispatch({ type: 'init', item, hasInfusables: hasInfusables, hasFuel });
     })
   );
-
-  // Track the initial height of the sheet
-  useEffect(() => {
-    if (itemContainer.current && !height) {
-      stateDispatch({ type: 'setHeight', height: itemContainer.current.clientHeight });
-    }
-  }, [height]);
 
   // Close the sheet on navigation
   const { pathname } = useLocation();
@@ -286,7 +257,7 @@ function InfusionFinder({
             {result ? <ConnectedInventoryItem item={result} /> : missingItem}
           </div>
           <div className="infuseActions">
-            <button className="dim-button" onClick={switchDirection}>
+            <button type="button" className="dim-button" onClick={switchDirection}>
               <AppIcon icon={faRandom} /> {t('Infusion.SwitchDirection')}
             </button>
             {result && effectiveSource && effectiveTarget && (
@@ -303,10 +274,9 @@ function InfusionFinder({
           </div>
         </div>
         <div className="infuseSearch">
-          <SearchFilterInput
-            searchConfig={searchConfig}
+          <SearchBar
             onQueryChanged={onQueryChanged}
-            placeholder="Filter items"
+            placeholder={t('Infusion.Filter')}
             autoFocus={autoFocus}
           />
         </div>
@@ -315,8 +285,8 @@ function InfusionFinder({
   );
 
   return (
-    <Sheet onClose={reset} header={header} sheetClassName="infuseDialog">
-      <div className="infuseSources" ref={itemContainer} style={{ height }}>
+    <Sheet onClose={reset} header={header} sheetClassName="infuseDialog" freezeInitialHeight={true}>
+      <div className="infuseSources">
         {items.length > 0 || dupes.length > 0 ? (
           <>
             <div className="sub-bucket">

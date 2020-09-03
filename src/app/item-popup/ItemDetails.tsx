@@ -12,7 +12,7 @@ import ItemDescription from './ItemDescription';
 import ItemExpiration from './ItemExpiration';
 import { Reward } from 'app/progress/Reward';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
-import { RootState } from 'app/store/reducers';
+import { RootState } from 'app/store/types';
 import { connect } from 'react-redux';
 import { ActivityModifier } from 'app/progress/ActivityModifier';
 import helmetIcon from 'destiny-icons/armor_types/helmet.svg';
@@ -20,10 +20,11 @@ import handCannonIcon from 'destiny-icons/weapons/hand_cannon.svg';
 import modificationIcon from 'destiny-icons/general/modifications.svg';
 import MetricCategories from './MetricCategories';
 import EmblemPreview from './EmblemPreview';
-import { destinyVersionSelector } from 'app/accounts/reducer';
+import { destinyVersionSelector } from 'app/accounts/selectors';
 import { D1ManifestDefinitions } from 'app/destiny1/d1-definitions';
 import Objective from 'app/progress/Objective';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { ItemCategoryHashes } from 'data/d2/generated-enums';
 
 interface ProvidedProps {
   item: DimItem;
@@ -51,12 +52,15 @@ function isD2Manifest(
 
 // TODO: probably need to load manifest. We can take a lot of properties off the item if we just load the definition here.
 function ItemDetails({ item, extraInfo = {}, defs }: Props) {
-  // mods should be 610365472 ("Weapon Mods") if they aren't 4104513227 ("Armor Mods")
-  const modTypeIcon = item.itemCategoryHashes.includes(4104513227) ? helmetIcon : handCannonIcon;
+  const modTypeIcon = item.itemCategoryHashes.includes(ItemCategoryHashes.ArmorMods)
+    ? helmetIcon
+    : handCannonIcon;
+
+  const urlParams = useParams<{ membershipId?: string; destinyVersion?: string }>();
 
   return (
     <div className="item-details-body">
-      {item.itemCategoryHashes.includes(41) && (
+      {item.itemCategoryHashes.includes(ItemCategoryHashes.Shaders) && (
         <BungieImage className="item-shader" src={item.icon} width="96" height="96" />
       )}
 
@@ -70,7 +74,7 @@ function ItemDetails({ item, extraInfo = {}, defs }: Props) {
         </div>
       )}
 
-      {isD2Manifest(defs) && item.itemCategoryHashes.includes(19) && (
+      {isD2Manifest(defs) && item.itemCategoryHashes.includes(ItemCategoryHashes.Emblems) && (
         <div className="item-details">
           <EmblemPreview item={item} defs={defs} />
         </div>
@@ -158,7 +162,9 @@ function ItemDetails({ item, extraInfo = {}, defs }: Props) {
 
       {item.isDestiny2() && item.previewVendor !== undefined && item.previewVendor !== 0 && (
         <div className="item-description">
-          <Link to={`vendors/${item.previewVendor}`}>
+          <Link
+            to={`/${urlParams.membershipId}/d${urlParams.destinyVersion}/vendors/${item.previewVendor}`}
+          >
             {t('ItemService.PreviewVendor', { type: item.typeName })}
           </Link>
         </div>
@@ -187,9 +193,8 @@ function ItemDetails({ item, extraInfo = {}, defs }: Props) {
           </div>
         )}
 
-      {!extraInfo.mod && extraInfo.collectible && (
+      {!extraInfo.mod && (
         <div className="item-details">
-          <div>{extraInfo.collectible.sourceString}</div>
           {extraInfo.owned && (
             <div>
               <AppIcon className="owned-icon" icon={faCheck} /> {t('MovePopup.Owned')}
@@ -205,7 +210,6 @@ function ItemDetails({ item, extraInfo = {}, defs }: Props) {
 
       {extraInfo.mod && (
         <div className="item-details mods">
-          {extraInfo.collectible && <div>{extraInfo.collectible.sourceString}</div>}
           {extraInfo.owned && (
             <div>
               <img className="owned-icon" src={modificationIcon} /> {t('MovePopup.OwnedMod')}

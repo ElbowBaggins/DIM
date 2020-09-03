@@ -4,9 +4,6 @@ interface CssExports {
   'build': string;
   'header': string;
   'items': string;
-  'light': string;
-  'nonActiveStat': string;
-  'statSegment': string;
 }
 export const cssExports: CssExports;
 export default cssExports;

@@ -46,7 +46,9 @@ function ItemActions({
 
   const noted = () => {
     const note = prompt(t('Organizer.NotePrompt'));
-    onNote(note || undefined);
+    if (note !== null) {
+      onNote(note || undefined);
+    }
   };
 
   return (
@@ -61,6 +63,7 @@ function ItemActions({
         <AppIcon icon={lockIcon} /> {t('Organizer.Lock')}
       </button>
       <button
+        type="button"
         className={`dim-button ${styles.actionButton}`}
         disabled={!itemsAreSelected}
         name="unlock"

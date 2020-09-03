@@ -1,8 +1,10 @@
 @import '../variables';
+@import './ItemTable.m.scss';
 
 .dropDown {
   display: inline-block;
   position: relative;
+  z-index: $dropdown-menu;
 }
 
 .button {
@@ -17,9 +19,9 @@
   position: absolute;
   z-index: 5;
   left: 0;
-  max-height: calc(100vh - #{77px + $header-height});
-  max-height: calc(100vh - #{77px + $header-height} - constant(safe-area-inset-top));
-  max-height: calc(100vh - #{77px + $header-height} - env(safe-area-inset-top));
+  max-height: calc(100vh - #{120px + $header-height});
+  max-height: calc(100vh - #{120px + $header-height} - constant(safe-area-inset-top));
+  max-height: calc(100vh - #{120px + $header-height} - env(safe-area-inset-top));
   overflow: auto;
   margin-top: 2px;
   width: max-content;
@@ -29,6 +31,7 @@
     right: 0;
   }
 
+  background: black;
   @include visible-scrollbars;
 }
 

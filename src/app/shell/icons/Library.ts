@@ -45,7 +45,7 @@ const faChevronDown = 'fas fa-chevron-down';
 const faChevronUp = 'fas fa-chevron-up';
 const faStar = 'fas fa-star';
 const faStarHalfAlt = 'fas fa-star-half-alt';
-const faStarOutline = 'far fa-star-outline';
+const faStarOutline = 'far fa-star';
 const faSync = 'fas fa-sync';
 const faTable = 'fas fa-table';
 const faTag = 'fas fa-tag';
@@ -65,6 +65,7 @@ const faStickyNote = 'fas fa-sticky-note';
 const faMinusSquare = 'fas fa-minus-square';
 const faRandom = 'fas fa-random';
 const faEquals = 'fas fa-equals';
+const faEllipsisV = 'fas fa-ellipsis-v';
 const faArrowCircleDown = 'fas fa-arrow-circle-down';
 const faExclamationCircle = 'fas fa-exclamation-circle';
 const faMinus = 'fas fa-minus';
@@ -78,6 +79,8 @@ const faExclamationTriangle = 'fas fa-exclamation-triangle';
 const faTshirt = 'fas fa-tshirt';
 const faGripLinesVertical = 'fas fa-grip-lines-vertical';
 const faExternalLinkAlt = 'fas fa-external-link-alt';
+const faBookmarkSolid = 'fas fa-bookmark';
+const faBookmark = 'far fa-bookmark';
 
 const faXbox = 'fab fa-xbox';
 const faPlaystation = 'fab fa-playstation';
@@ -114,6 +117,7 @@ export {
   faCog as settingsIcon,
   faCopy as copyIcon,
   faDownload as downloadIcon,
+  faEllipsisV,
   faEnvelope as sendIcon,
   faEraser as clearIcon,
   faLevelUpAlt as levellingIcon,
@@ -155,6 +159,8 @@ export {
   faGlobe as globeIcon,
   faStickyNote as stickyNoteIcon,
   faArrowRight as moveIcon,
+  faBookmark as unTrackedIcon,
+  faBookmarkSolid as trackedIcon,
   faMinusSquare,
   faRandom,
   faEquals,

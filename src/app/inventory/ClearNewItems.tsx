@@ -3,7 +3,7 @@ import { DestinyAccount } from '../accounts/destiny-account';
 import { t } from 'app/i18next-t';
 import './ClearNewItems.scss';
 import { connect } from 'react-redux';
-import { RootState } from '../store/reducers';
+import { RootState } from 'app/store/types';
 import GlobalHotkeys from '../hotkeys/GlobalHotkeys';
 import NewItemIndicator from './NewItemIndicator';
 import { settingsSelector } from 'app/settings/reducer';
@@ -48,7 +48,7 @@ function ClearNewItems({ showNewItems, hasNewItems, clearAllNewItems }: Props) {
           },
         ]}
       />
-      <button onClick={clearAllNewItems} title={t('Hotkey.ClearNewItemsTitle')}>
+      <button type="button" onClick={clearAllNewItems} title={t('Hotkey.ClearNewItemsTitle')}>
         <NewItemIndicator className="new-item" /> <span>{t('Hotkey.ClearNewItems')}</span>
       </button>
     </div>

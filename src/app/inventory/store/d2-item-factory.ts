@@ -18,7 +18,7 @@ import { buildFlavorObjective, buildObjectives } from './objectives';
 
 import D2Events from 'data/d2/events.json';
 import { D2ManifestDefinitions } from '../../destiny2/d2-definitions';
-import { D2ManifestService } from '../../manifest/manifest-service-json';
+import { warnMissingDefinition } from '../../manifest/manifest-service-json';
 import { D2SourcesToEvent } from 'data/d2/d2-event-info';
 import { D2Store } from '../store-types';
 import { D2StoresService } from '../d2-stores';
@@ -31,6 +31,13 @@ import { buildTalentGrid } from './talent-grids';
 import { reportException } from '../../utils/exceptions';
 import { t } from 'app/i18next-t';
 import { getSeason } from './season';
+import {
+  ENGRAMS_BUCKET,
+  MODIFICATIONS_BUCKET,
+  SHADERS_BUCKET,
+  THE_FORBIDDEN_BUCKET,
+} from 'app/search/d2-known-values';
+import { ItemCategoryHashes, StatHashes } from 'data/d2/generated-enums';
 
 // Maps tierType to tierTypeName in English
 const tiers = ['Unknown', 'Currency', 'Common', 'Uncommon', 'Rare', 'Legendary', 'Exotic'];
@@ -168,7 +175,7 @@ export function makeFakeItem(
   buckets: InventoryBuckets,
   itemComponents: DestinyItemComponentSetOfint64 | undefined,
   itemHash: number,
-  itemInstanceId: string = itemHash.toString(),
+  itemInstanceId = '0',
   quantity = 1,
   mergedCollectibles?: {
     [hash: number]: DestinyCollectibleComponent;
@@ -227,7 +234,7 @@ export function makeItem(
       : {};
   // Missing definition?
   if (!itemDef) {
-    D2ManifestService.warnMissingDefinition();
+    warnMissingDefinition();
     return null;
   }
 
@@ -253,11 +260,11 @@ export function makeItem(
   }
 
   // def.bucketTypeHash is where it goes normally
-  let normalBucket = buckets.byHash[itemDef.inventory.bucketTypeHash];
+  let normalBucket = buckets.byHash[itemDef.inventory!.bucketTypeHash];
 
   // https://github.com/Bungie-net/api/issues/687
-  if (itemDef.inventory.bucketTypeHash === 2422292810) {
-    normalBucket = buckets.byHash[3313201758];
+  if (itemDef.inventory!.bucketTypeHash === THE_FORBIDDEN_BUCKET) {
+    normalBucket = buckets.byHash[MODIFICATIONS_BUCKET];
   }
 
   // item.bucket is where it IS right now
@@ -278,7 +285,9 @@ export function makeItem(
 
   // 34 = category hash for engrams
   const isEngram =
-    itemDef.itemCategoryHashes?.includes(34) || normalBucket.hash === 375726501 || false;
+    itemDef.itemCategoryHashes?.includes(ItemCategoryHashes.Engrams) ||
+    normalBucket.hash === ENGRAMS_BUCKET ||
+    false;
 
   // https://github.com/Bungie-net/api/issues/134, class items had a primary stat
   // https://github.com/Bungie-net/api/issues/1079, engrams had a primary stat
@@ -297,18 +306,20 @@ export function makeItem(
 
   const powerCapHash =
     item.versionNumber !== undefined &&
-    itemDef.quality.versions?.[item.versionNumber]?.powerCapHash;
+    itemDef.quality?.versions?.[item.versionNumber]?.powerCapHash;
   // ignore falsyness of 0, because powerCap && powerCapHash are never zero and the code gets ugly otherwise
   let powerCap = (powerCapHash && defs.PowerCap.get(powerCapHash).powerCap) || null;
 
   // here is where we need to manually adjust unreasonable powerCap values,
   // which are used for things that aren't currently set to ever cap
-  if (powerCap && powerCap > 50000) powerCap = null;
+  if (powerCap && powerCap > 50000) {
+    powerCap = null;
+  }
 
-  // null out falsey values like a blank string for a url
+  // null out falsy values like a blank string for a url
   const iconOverlay =
     (item.versionNumber !== undefined &&
-      itemDef.quality.displayVersionWatermarkIcons?.[item.versionNumber]) ||
+      itemDef.quality?.displayVersionWatermarkIcons?.[item.versionNumber]) ||
     null;
 
   const collectible =
@@ -331,6 +342,12 @@ export function makeItem(
   ) {
     typeName = itemDef.displayProperties.name;
     name = itemDef.setData.questLineName;
+  } else if (itemDef.objectives?.questlineItemHash) {
+    const questLineItem = defs.InventoryItem.get(itemDef.objectives.questlineItemHash);
+    if (questLineItem && questLineItem.displayProperties.name !== itemDef.displayProperties.name) {
+      typeName = itemDef.displayProperties.name;
+      name = questLineItem.displayProperties.name;
+    }
   }
 
   const createdItem: D2Item = Object.assign(Object.create(ItemProto), {
@@ -344,8 +361,8 @@ export function makeItem(
     // This is the type of the item (see DimCategory/DimBuckets) regardless of location
     type: itemType,
     itemCategoryHashes: itemDef.itemCategoryHashes || [], // see defs.ItemCategory
-    tier: tiers[itemDef.inventory.tierType] || 'Common',
-    isExotic: tiers[itemDef.inventory.tierType] === 'Exotic',
+    tier: tiers[itemDef.inventory!.tierType] || 'Common',
+    isExotic: tiers[itemDef.inventory!.tierType] === 'Exotic',
     isVendorItem: !owner || owner.id === null,
     name,
     description: displayProperties.description,
@@ -369,15 +386,17 @@ export function makeItem(
     primStat: primaryStat,
     typeName,
     equipRequiredLevel: instanceDef?.equipRequiredLevel ?? 0,
-    maxStackSize: Math.max(itemDef.inventory.maxStackSize, 1),
-    uniqueStack: Boolean(itemDef.inventory.stackUniqueLabel?.length),
+    maxStackSize: Math.max(itemDef.inventory!.maxStackSize, 1),
+    uniqueStack: Boolean(itemDef.inventory!.stackUniqueLabel?.length),
     classType: itemDef.classType, // 0: titan, 1: hunter, 2: warlock, 3: any
     classTypeNameLocalized: getClassTypeNameLocalized(itemDef.classType, defs),
     element,
     energy: instanceDef?.energy ?? null,
     powerCap,
+    breakerType: null,
     visible: true,
     lockable: item.lockable,
+    trackable: Boolean(item.itemInstanceId && itemDef.objectives?.questlineItemHash),
     tracked: Boolean(item.state & ItemState.Tracked),
     locked: Boolean(item.state & ItemState.Locked),
     masterwork: Boolean(item.state & ItemState.Masterwork) && itemType !== 'Class',
@@ -394,7 +413,7 @@ export function makeItem(
     previewVendor: itemDef.preview?.previewVendorHash,
     ammoType: itemDef.equippingBlock ? itemDef.equippingBlock.ammoType : DestinyAmmunitionType.None,
     source: itemDef.collectibleHash
-      ? defs.Collectible.get(itemDef.collectibleHash)?.sourceHash
+      ? defs.Collectible.get(itemDef.collectibleHash, itemDef.hash)?.sourceHash
       : null,
     collectibleState: collectible ? collectible.state : null,
     collectibleHash: itemDef.collectibleHash || null,
@@ -411,13 +430,23 @@ export function makeItem(
     availableMetricCategoryNodeHashes: itemDef.metrics?.availableMetricCategoryNodeHashes,
   });
 
-  createdItem.season = getSeason(createdItem);
+  createdItem.season = getSeason(
+    createdItem,
+    (item.versionNumber !== undefined &&
+      itemDef.quality?.displayVersionWatermarkIcons?.[item.versionNumber]) ||
+      null
+  );
   createdItem.event = createdItem.source
     ? D2SourcesToEvent[createdItem.source] || D2Events[item.itemHash]
     : D2Events[item.itemHash];
 
   // *able
-  createdItem.taggable = Boolean(createdItem.lockable || createdItem.classified);
+  createdItem.taggable = Boolean(
+    createdItem.lockable ||
+      createdItem.classified ||
+      // Shaders
+      createdItem.bucket.hash === SHADERS_BUCKET
+  );
   createdItem.comparable = Boolean(createdItem.equipment && createdItem.lockable);
   createdItem.reviewable = Boolean(
     $featureFlags.reviewsEnabled && isWeaponOrArmor1OrExoticArmor2(createdItem)
@@ -513,13 +542,27 @@ export function makeItem(
 
   // Secondary Icon
   if (createdItem.sockets) {
-    const multiEmblem = createdItem.sockets.sockets.filter(
-      (plug) => plug.plug?.plugItem.itemType === DestinyItemType.Emblem
+    const multiEmblem = createdItem.sockets.allSockets.filter(
+      (socket) => socket.plugged?.plugDef.itemType === DestinyItemType.Emblem
     );
-    const selectedEmblem = multiEmblem[0]?.plug;
+    const selectedEmblem = multiEmblem[0]?.plugged;
 
     if (selectedEmblem) {
-      createdItem.secondaryIcon = selectedEmblem.plugItem.secondaryIcon;
+      createdItem.secondaryIcon = selectedEmblem.plugDef.secondaryIcon;
+    }
+  }
+
+  // a weapon can have an inherent breaker type, or gain one from socketed mods
+  // (or armor mods can sort of add them but let's not go there quite yet)
+  // this is presented as an else-type dichotomy here, but who knows what the future holds
+  if (itemDef.breakerTypeHash) {
+    createdItem.breakerType = defs.BreakerType.get(itemDef.breakerTypeHash);
+  } else if (createdItem.bucket.inWeapons && createdItem.sockets) {
+    const breakerTypeHash = createdItem.sockets.allSockets.find(
+      (s) => s.plugged?.plugDef.breakerTypeHash
+    )?.plugged?.plugDef.breakerTypeHash;
+    if (breakerTypeHash) {
+      createdItem.breakerType = defs.BreakerType.get(breakerTypeHash);
     }
   }
 
@@ -560,8 +603,8 @@ export function makeItem(
 function isWeaponOrArmor1OrExoticArmor2(item: D2Item) {
   return (
     item.primStat &&
-    (item.primStat.statHash === 1480404414 || // weapon
-      (item.primStat.statHash === 3897883278 && // armor
+    (item.primStat.statHash === StatHashes.Attack || // weapon
+      (item.primStat.statHash === StatHashes.Defense && // armor
         (!item.energy || // energy is an armor 2.0 signifier
           item.isExotic))) // but we want to allow exotic armor 2.0 reviews
   );
@@ -581,9 +624,9 @@ function buildPursuitInfo(
       expirationDate: new Date(item.expirationDate),
       rewards: [],
       suppressExpirationWhenObjectivesComplete: Boolean(
-        itemDef.inventory.suppressExpirationWhenObjectivesComplete
+        itemDef.inventory!.suppressExpirationWhenObjectivesComplete
       ),
-      expiredInActivityMessage: itemDef.inventory.expiredInActivityMessage,
+      expiredInActivityMessage: itemDef.inventory!.expiredInActivityMessage,
       places: [],
       activityTypes: [],
       modifierHashes: [],

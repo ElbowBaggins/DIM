@@ -9,6 +9,7 @@ import {
   DestinyStatAggregationType,
   DestinyStatCategory,
   DestinySocketCategoryStyle,
+  DestinyClass,
 } from 'bungie-api-ts/destiny2';
 import { D2Item, DimSocket, DimPlug, DimStat, DimSockets } from '../item-types';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
@@ -16,7 +17,16 @@ import { compareBy } from 'app/utils/comparators';
 import _ from 'lodash';
 import { t } from 'app/i18next-t';
 import { getSocketsWithStyle, getSocketsWithPlugCategoryHash } from '../../utils/socket-utils';
-import { D2CategoryHashes } from 'app/search/search-filter-hashes';
+import {
+  armorBuckets,
+  ARMOR_STAT_CAP,
+  TOTAL_STAT_HASH,
+  CUSTOM_TOTAL_STAT_HASH,
+} from 'app/search/d2-known-values';
+import { D1ItemCategoryHashes } from 'app/search/d1-known-values';
+import { ItemCategoryHashes, StatHashes } from 'data/d2/generated-enums';
+import reduxStore from '../../store/store';
+import { settingsSelector } from 'app/settings/reducer';
 
 /**
  * These are the utilities that deal with Stats on items - specifically, how to calculate them.
@@ -36,63 +46,62 @@ import { D2CategoryHashes } from 'app/search/search-filter-hashes';
 
 /** Stats that all armor should have. */
 export const armorStats = [
-  2996146975, // Mobility
-  392767087, // Resilience
-  1943323491, // Recovery
-  1735777505, // Discipline
-  144602215, // Intellect
-  4244567218, // Strength
+  StatHashes.Mobility,
+  StatHashes.Resilience,
+  StatHashes.Recovery,
+  StatHashes.Discipline,
+  StatHashes.Intellect,
+  StatHashes.Strength,
 ];
 
 /**
  * Which stats to display, and in which order.
  */
-export const statWhiteList = [
-  4284893193, // Rounds Per Minute
-  2961396640, // Charge Time
-  447667954, // Draw Time
-  3614673599, // Blast Radius
-  2523465841, // Velocity
-  2837207746, // Swing Speed (sword)
-  4043523819, // Impact
-  1240592695, // Range
-  2762071195, // Efficiency (sword)
-  209426660, // Defense (sword)
-  1591432999, // Accuracy
-  155624089, // Stability
-  943549884, // Handling
-  4188031367, // Reload Speed
-  1345609583, // Aim Assistance
-  3555269338, // Zoom
-  2715839340, // Recoil Direction
-  3871231066, // Magazine
-  1931675084, // Inventory Size
-  925767036, // Ammo Capacity
+export const statAllowList = [
+  StatHashes.RoundsPerMinute,
+  StatHashes.ChargeTime,
+  StatHashes.DrawTime,
+  StatHashes.BlastRadius,
+  StatHashes.Velocity,
+  StatHashes.SwingSpeed,
+  StatHashes.Impact,
+  StatHashes.Range,
+  StatHashes.GuardEfficiency,
+  StatHashes.GuardResistance,
+  StatHashes.Accuracy,
+  StatHashes.Stability,
+  StatHashes.Handling,
+  StatHashes.ChargeRate,
+  StatHashes.GuardEndurance,
+  StatHashes.ReloadSpeed,
+  StatHashes.AimAssistance,
+  StatHashes.Zoom,
+  StatHashes.RecoilDirection,
+  StatHashes.Magazine,
+  StatHashes.InventorySize,
+  StatHashes.AmmoCapacity,
   ...armorStats,
-  -1000, // Total
-];
-
-/** Stats that should be forced to display without a bar (just a number). */
-const statsNoBar = [
-  4284893193, // Rounds Per Minute
-  3871231066, // Magazine
-  2961396640, // Charge Time
-  447667954, // Draw Time
-  1931675084, // Recovery
-  2715839340, // Recoil Direction
+  TOTAL_STAT_HASH,
+  CUSTOM_TOTAL_STAT_HASH,
 ];
 
 /** Stats that are measured in milliseconds. */
-export const statsMs = [
-  447667954, // Draw Time
-  2961396640, // Charge Time
+export const statsMs = [StatHashes.DrawTime, StatHashes.ChargeTime];
+
+/** Stats that should be forced to display without a bar (just a number). */
+const statsNoBar = [
+  StatHashes.RoundsPerMinute,
+  StatHashes.Magazine,
+  StatHashes.InventorySize,
+  StatHashes.RecoilDirection,
+  ...statsMs,
 ];
 
 /** Show these stats in addition to any "natural" stats */
-const hiddenStatsWhitelist = [
-  1345609583, // Aim Assistance
-  3555269338, // Zoom
-  2715839340, // Recoil Direction
+const hiddenStatsAllowList = [
+  StatHashes.AimAssistance,
+  StatHashes.Zoom,
+  StatHashes.RecoilDirection,
 ];
 
 /** Build the full list of stats for an item. If the item has no stats, this returns null. */
@@ -119,12 +128,12 @@ export function buildStats(
   let investmentStatsByHash = _.keyBy(investmentStats, (s) => s.statHash);
 
   // Include the contributions from perks and mods
-  if (createdItem.sockets?.sockets.length) {
+  if (createdItem.sockets?.allSockets.length) {
     enhanceStatsWithPlugs(
       itemDef,
       investmentStats,
       investmentStatsByHash,
-      createdItem.sockets.sockets,
+      createdItem.sockets.allSockets,
       defs,
       statGroup,
       statDisplays
@@ -138,14 +147,16 @@ export function buildStats(
     investmentStatsByHash = _.keyBy(investmentStats, (s) => s.statHash);
 
     if (createdItem.bucket.inArmor) {
-      if (createdItem.sockets?.sockets.length) {
-        buildBaseStats(investmentStatsByHash, createdItem.sockets.sockets);
-      }
+      buildBaseStats(investmentStats, investmentStatsByHash, createdItem);
 
       // Add the "Total" stat for armor
       const tStat = totalStat(investmentStats);
       investmentStats.push(tStat);
-      // investmentStatsByHash[tStat.statHash] = tStat; // not used after this line
+
+      const cStat = customStat(investmentStats, createdItem.classType);
+      if (cStat) {
+        investmentStats.push(cStat);
+      }
     }
   } else if (
     createdItem.isDestiny2() &&
@@ -167,7 +178,7 @@ function buildStatsFromMods(
 ): DimStat[] {
   const statTracker: { stat: number; value: number } | {} = {};
   const investmentStats: DimStat[] = [];
-  const modSockets = getSocketsWithPlugCategoryHash(itemSockets, D2CategoryHashes.armormod);
+  const modSockets = getSocketsWithPlugCategoryHash(itemSockets, ItemCategoryHashes.ArmorMods);
   const masterworkSockets = getSocketsWithStyle(
     itemSockets,
     DestinySocketCategoryStyle.EnergyMeter
@@ -183,10 +194,10 @@ function buildStatsFromMods(
   }
 
   for (const socket of modSockets) {
-    if (socket?.plug?.stats) {
+    if (socket?.plugged?.stats) {
       for (const statHash of armorStats) {
-        if (socket.plug.stats[statHash]) {
-          statTracker[statHash] += socket.plug.stats[statHash];
+        if (socket.plugged.stats[statHash]) {
+          statTracker[statHash] += socket.plugged.stats[statHash];
         }
       }
     }
@@ -198,7 +209,7 @@ function buildStatsFromMods(
       value: statTracker[statHash],
     };
     const builtStat = buildStat(hashAndValue, statGroup, defs.Stat.get(statHash), statDisplays);
-    builtStat.maximumValue = 42;
+    builtStat.maximumValue = ARMOR_STAT_CAP;
     investmentStats.push(builtStat);
   }
 
@@ -213,18 +224,21 @@ function shouldShowStat(
   statDisplays: { [key: number]: DestinyStatDisplayDefinition }
 ) {
   // Bows have a charge time stat that nobody asked for
-  if (statHash === 2961396640 && itemDef.itemCategoryHashes?.includes(3317538576)) {
+  if (
+    statHash === StatHashes.ChargeTime &&
+    itemDef.itemCategoryHashes?.includes(ItemCategoryHashes.Bows)
+  ) {
     return false;
   }
 
   // Swords shouldn't show any hidden stats
-  const includeHiddenStats = !itemDef.itemCategoryHashes?.includes(54);
+  const includeHiddenStats = !itemDef.itemCategoryHashes?.includes(D1ItemCategoryHashes.sword);
 
   return (
-    // Must be on the whitelist
-    statWhiteList.includes(statHash) &&
+    // Must be on the AllowList
+    statAllowList.includes(statHash) &&
     // Must be on the list of interpolated stats, or included in the hardcoded hidden stats list
-    (statDisplays[statHash] || (includeHiddenStats && hiddenStatsWhitelist.includes(statHash)))
+    (statDisplays[statHash] || (includeHiddenStats && hiddenStatsAllowList.includes(statHash)))
   );
 }
 
@@ -281,13 +295,12 @@ function buildStat(
     bar = !statDisplay.displayAsNumeric;
     value = interpolateStatValue(value, statDisplay);
   }
-  value = Math.max(0, value);
 
   return {
     investmentValue: itemStat.value || 0,
     statHash,
     displayProperties: statDef.displayProperties,
-    sort: statWhiteList.indexOf(statHash),
+    sort: statAllowList.indexOf(statHash),
     value,
     base: value,
     maximumValue,
@@ -314,8 +327,8 @@ function enhanceStatsWithPlugs(
 
   // Add the chosen plugs' investment stats to the item's base investment stats
   for (const socket of sockets) {
-    if (socket.plug?.plugItem.investmentStats) {
-      for (const perkStat of socket.plug.plugItem.investmentStats) {
+    if (socket.plugged?.plugDef.investmentStats) {
+      for (const perkStat of socket.plugged.plugDef.investmentStats) {
         const statHash = perkStat.statTypeHash;
         const itemStat = statsByHash[statHash];
         const value = perkStat.value || 0;
@@ -323,7 +336,7 @@ function enhanceStatsWithPlugs(
           itemStat.investmentValue += value;
         } else if (shouldShowStat(itemDef, statHash, statDisplays)) {
           // This stat didn't exist before we modified it, so add it here.
-          const stat = socket.plug.plugItem.investmentStats.find(
+          const stat = socket.plugged.plugDef.investmentStats.find(
             (s) => s.statTypeHash === statHash
           );
 
@@ -354,7 +367,7 @@ function enhanceStatsWithPlugs(
   const sortedSockets = _.sortBy(sockets, (s) => s.plugOptions.length);
   for (const socket of sortedSockets) {
     for (const plug of socket.plugOptions) {
-      if (plug.plugItem?.investmentStats?.length) {
+      if (plug.plugDef?.investmentStats?.length) {
         plug.stats = buildPlugStats(plug, statsByHash, statDisplays);
       }
     }
@@ -375,7 +388,7 @@ function buildPlugStats(
     [statHash: number]: number;
   } = {};
 
-  for (const perkStat of plug.plugItem.investmentStats) {
+  for (const perkStat of plug.plugDef.investmentStats) {
     let value = perkStat.value || 0;
     const itemStat = statsByHash[perkStat.statTypeHash];
     const statDisplay = statDisplays[perkStat.statTypeHash];
@@ -438,7 +451,7 @@ function buildLiveStats(
       investmentValue: itemStat.value || 0,
       statHash,
       displayProperties: statDef.displayProperties,
-      sort: statWhiteList.indexOf(statHash),
+      sort: statAllowList.indexOf(statHash),
       value: itemStat.value,
       base: itemStat.value,
       maximumValue,
@@ -459,17 +472,31 @@ function buildLiveStats(
  * representing the raw armor stats before mods changed them
  */
 function buildBaseStats(
-  statsByHash: { [k: number]: DimStat }, // mutated
-  sockets: DimSocket[]
+  stats: DimStat[], //mutated
+  statsByHash: { [k: number]: DimStat }, // mutated, same as above but keyed by hash
+  item: D2Item
 ) {
-  for (const socket of sockets) {
-    if (socket.plug?.plugItem.investmentStats) {
-      for (const perkStat of socket.plug.plugItem.investmentStats) {
-        const statHash = perkStat.statTypeHash;
-        const itemStat = statsByHash[statHash];
-        const perkValue = perkStat.value || 0;
-        if (itemStat && itemStat.base > perkValue) {
-          itemStat.base -= perkValue;
+  // Class Items always have a base stat of 0;
+  if (item.bucket.hash === armorBuckets.classitem) {
+    for (const stat of stats) {
+      stat.base = 0;
+    }
+  } else if (item.sockets?.allSockets.length) {
+    for (const socket of item.sockets.allSockets) {
+      if (socket.plugged?.plugDef.investmentStats) {
+        for (const perkStat of socket.plugged.plugDef.investmentStats) {
+          const statHash = perkStat.statTypeHash;
+          const itemStat = statsByHash[statHash];
+          const perkValue = perkStat.value || 0;
+          if (itemStat && itemStat.base > perkValue) {
+            itemStat.base -= perkValue;
+          }
+          if (
+            (itemStat && itemStat.investmentValue === 0 && perkValue < 0) ||
+            perkStat.isConditionallyActive
+          ) {
+            itemStat.baseMayBeWrong = true;
+          }
         }
       }
     }
@@ -477,17 +504,55 @@ function buildBaseStats(
 }
 
 function totalStat(stats: DimStat[]): DimStat {
+  // TODO: for loop
+  // TODO: base only
+  // TODO: search terms?
   const total = _.sumBy(stats, (s) => s.value);
   const baseTotal = _.sumBy(stats, (s) => s.base);
+  const baseMayBeWrong = stats.some((stat) => stat.baseMayBeWrong);
   return {
     investmentValue: total,
-    statHash: -1000,
+    statHash: TOTAL_STAT_HASH,
     displayProperties: ({
       name: t('Stats.Total'),
     } as any) as DestinyDisplayPropertiesDefinition,
-    sort: statWhiteList.indexOf(-1000),
+    sort: statAllowList.indexOf(TOTAL_STAT_HASH),
     value: total,
     base: baseTotal,
+    baseMayBeWrong,
+    maximumValue: 100,
+    bar: false,
+    smallerIsBetter: false,
+    additive: false,
+  };
+}
+
+function customStat(stats: DimStat[], destinyClass: DestinyClass): DimStat | undefined {
+  const customStatDef = settingsSelector(reduxStore.getState()).customTotalStatsByClass[
+    destinyClass
+  ];
+
+  if (!customStatDef || customStatDef.length === 0 || customStatDef.length === 6) {
+    return undefined;
+  }
+
+  // TODO: for loop
+  // Custom stat is always base stat
+  stats = stats.filter((s) => customStatDef.includes(s.statHash));
+  const total = _.sumBy(stats, (s) => s.base);
+  const baseTotal = total;
+  const baseMayBeWrong = stats.some((stat) => stat.baseMayBeWrong);
+  return {
+    investmentValue: total,
+    statHash: CUSTOM_TOTAL_STAT_HASH,
+    displayProperties: ({
+      name: t('Stats.Custom'),
+      description: t('Stats.CustomDesc'),
+    } as any) as DestinyDisplayPropertiesDefinition,
+    sort: statAllowList.indexOf(CUSTOM_TOTAL_STAT_HASH),
+    value: total,
+    base: baseTotal,
+    baseMayBeWrong,
     maximumValue: 100,
     bar: false,
     smallerIsBetter: false,
@@ -503,10 +568,12 @@ export function interpolateStatValue(value: number, statDisplay: DestinyStatDisp
   const interp = statDisplay.displayInterpolation;
 
   // Clamp the value to prevent overfilling
-  value = Math.max(0, Math.min(value, statDisplay.maximumValue));
+  value = Math.min(value, statDisplay.maximumValue);
 
   let endIndex = interp.findIndex((p) => p.value > value);
-  if (endIndex < 0) {
+
+  // value < 0 is for mods with negative stats
+  if (endIndex < 0 || (value < 0 && armorStats.includes(statDisplay.statHash))) {
     endIndex = interp.length - 1;
   }
   const startIndex = Math.max(0, endIndex - 1);
@@ -524,7 +591,9 @@ export function interpolateStatValue(value: number, statDisplay: DestinyStatDisp
 
   // vthorn has a hunch that magazine size doesn't use banker's rounding, but the rest definitely do:
   // https://github.com/Bungie-net/api/issues/1029#issuecomment-531849137
-  return statDisplay.statHash === 3871231066 ? Math.round(interpValue) : bankersRound(interpValue);
+  return statDisplay.statHash === StatHashes.Magazine
+    ? Math.round(interpValue)
+    : bankersRound(interpValue);
 }
 
 /**

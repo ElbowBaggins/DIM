@@ -1,24 +1,23 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { DimStore, DimVault } from './store-types';
 import { InventoryBuckets } from './inventory-buckets';
 import { t } from 'app/i18next-t';
 import './Stores.scss';
-import StoreHeading from './StoreHeading';
-import { RootState } from '../store/reducers';
+import StoreHeading from '../character-tile/StoreHeading';
+import { RootState } from 'app/store/types';
 import { connect } from 'react-redux';
 import { Frame, Track, View, ViewPager } from 'react-view-pager';
 import ScrollClassDiv from '../dim-ui/ScrollClassDiv';
 import { StoreBuckets } from './StoreBuckets';
 import D1ReputationSection from './D1ReputationSection';
 import Hammer from 'react-hammerjs';
-import { sortedStoresSelector } from './selectors';
+import { sortedStoresSelector, bucketsSelector } from './selectors';
 import { hideItemPopup } from '../item-popup/item-popup';
 import { storeBackgroundColor } from '../shell/filters';
 import InventoryCollapsibleTitle from './InventoryCollapsibleTitle';
 import clsx from 'clsx';
-import CharacterStats from './CharacterStats';
-import VaultStats from './VaultStats';
 import { getCurrentStore, getVault, getStore } from './stores-helpers';
+import StoreStats from 'app/store-stats/StoreStats';
 
 interface StoreProps {
   stores: DimStore[];
@@ -29,7 +28,7 @@ interface StoreProps {
 function mapStateToProps(state: RootState): StoreProps {
   return {
     stores: sortedStoresSelector(state),
-    buckets: state.inventory.buckets!,
+    buckets: bucketsSelector(state)!,
     isPhonePortrait: state.shell.isPhonePortrait,
   };
 }
@@ -45,6 +44,18 @@ function Stores(this: void, { stores, buckets, isPhonePortrait }: Props) {
 
   const [selectedStoreId, setSelectedStoreId] = useState(currentStore?.id);
   const detachedLoadoutMenu = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      /* Set a CSS variable so we can style things based on the height of the header */
+      const element = document.querySelector('.store-header');
+      if (element) {
+        document
+          .querySelector('html')!
+          .style.setProperty('--store-header-height', element.clientHeight + 'px');
+      }
+    }, 0);
+  });
 
   if (!stores.length || !buckets) {
     return null;
@@ -98,11 +109,7 @@ function Stores(this: void, { stores, buckets, isPhonePortrait }: Props) {
                       onTapped={setSelectedStoreId}
                       loadoutMenuRef={detachedLoadoutMenu}
                     />
-                    {isVault(store) ? (
-                      <VaultStats store={store} />
-                    ) : (
-                      <CharacterStats destinyVersion={store.destinyVersion} stats={store.stats} />
-                    )}
+                    {!$featureFlags.unstickyStats && <StoreStats store={store} />}
                   </View>
                 ))}
               </Track>
@@ -114,6 +121,12 @@ function Stores(this: void, { stores, buckets, isPhonePortrait }: Props) {
 
         <Hammer direction="DIRECTION_HORIZONTAL" onSwipe={handleSwipe}>
           <div>
+            {$featureFlags.unstickyStats && (
+              <StoreStats
+                store={selectedStore}
+                style={{ ...storeBackgroundColor(selectedStore, 0, true), paddingBottom: 8 }}
+              />
+            )}
             <StoresInventory
               stores={[selectedStore]}
               vault={vault}
@@ -140,11 +153,7 @@ function Stores(this: void, { stores, buckets, isPhonePortrait }: Props) {
             style={storeBackgroundColor(store, index)}
           >
             <StoreHeading store={store} />
-            {isVault(store) ? (
-              <VaultStats store={store} />
-            ) : (
-              <CharacterStats destinyVersion={store.destinyVersion} stats={store.stats} />
-            )}
+            <StoreStats store={store} />
           </div>
         ))}
       </ScrollClassDiv>
@@ -173,10 +182,6 @@ function categoryHasItems(
 }
 
 export default connect<StoreProps>(mapStateToProps)(Stores);
-
-function isVault(store: DimStore): store is DimVault {
-  return store.isVault;
-}
 
 function StoresInventory({
   buckets,

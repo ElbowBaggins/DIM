@@ -2,11 +2,9 @@ import React from 'react';
 import { t } from 'app/i18next-t';
 import './loadout-popup.scss';
 import { DimStore } from '../inventory/store-types';
-import { RootState, ThunkDispatchProp } from '../store/reducers';
+import { RootState, ThunkDispatchProp } from 'app/store/types';
 import { previousLoadoutSelector, loadoutsSelector } from './reducer';
-import { currentAccountSelector } from '../accounts/reducer';
-import { getBuckets as d2GetBuckets } from '../destiny2/d2-buckets';
-import { getBuckets as d1GetBuckets } from '../destiny1/d1-buckets';
+import { currentAccountSelector } from 'app/accounts/selectors';
 import _ from 'lodash';
 import { connect } from 'react-redux';
 import {
@@ -48,7 +46,7 @@ import {
   titanIcon,
 } from '../shell/icons';
 import { DimItem } from '../inventory/item-types';
-import { searchFilterSelector } from '../search/search-filters';
+import { searchFilterSelector } from '../search/search-filter';
 import PressTip from '../dim-ui/PressTip';
 import { showNotification } from '../notifications/notifications';
 import { DestinyAccount } from 'app/accounts/destiny-account';
@@ -58,10 +56,13 @@ import { Loadout } from './loadout-types';
 import { editLoadout } from './LoadoutDrawer';
 import { applyLoadout } from './loadout-apply';
 import { fromEquippedTypes } from './LoadoutDrawerContents';
-import { storesSelector } from 'app/inventory/selectors';
+import { storesSelector, bucketsSelector } from 'app/inventory/selectors';
 import { DestinyClass } from 'bungie-api-ts/destiny2';
 import { getAllItems } from 'app/inventory/stores-helpers';
 import { deleteLoadout } from './actions';
+import helmetIcon from 'destiny-icons/armor_types/helmet.svg';
+import xpIcon from 'images/xpIcon.svg';
+import { InventoryBuckets } from 'app/inventory/inventory-buckets';
 
 const loadoutIcon = {
   [DestinyClass.Unknown]: globeIcon,
@@ -83,6 +84,7 @@ interface StoreProps {
   classTypeId: DestinyClass;
   stores: DimStore[];
   hasClassified: boolean;
+  buckets: InventoryBuckets;
   searchFilter(item: DimItem): boolean;
 }
 
@@ -124,6 +126,7 @@ function mapStateToProps() {
       classTypeId: dimStore.classType,
       account: currentAccountSelector(state)!,
       stores: storesSelector(state),
+      buckets: bucketsSelector(state)!,
       hasClassified: hasClassifiedSelector(state),
     };
   };
@@ -142,7 +145,7 @@ class LoadoutPopup extends React.Component<Props> {
     } = this.props;
 
     // For the most part we don't need to memoize this - this menu is destroyed when closed
-    const maxLight = getLight(dimStore, maxLightItemSet(stores, dimStore));
+    const maxLight = getLight(dimStore, maxLightItemSet(stores, dimStore).equippable);
     const artifactLight = getArtifactBonus(dimStore);
 
     const numPostmasterItems = dimStore.isDestiny2() ? pullablePostmasterItems(dimStore).length : 0;
@@ -174,8 +177,21 @@ class LoadoutPopup extends React.Component<Props> {
                 <span onClick={this.maxLightLoadout}>
                   <PressTip tooltip={hasClassified ? t('Loadouts.Classified') : ''}>
                     <span className="light">
-                      <AppIcon icon={powerIndicatorIcon} />
-                      {maxLight + artifactLight}
+                      {dimStore.destinyVersion === 1 ? (
+                        <>
+                          <AppIcon icon={powerIndicatorIcon} />
+                          {Math.floor(maxLight * 10) / 10}
+                        </>
+                      ) : (
+                        <>
+                          <img className="yellowInlineSvg" src={helmetIcon} />
+                          {Math.floor(maxLight)}
+                          {' + '}
+                          <img className="yellowInlineSvg" src={xpIcon} />
+                          {artifactLight}
+                        </>
+                      )}
+
                       {hasClassified && <sup>*</sup>}
                     </span>
                   </PressTip>
@@ -416,9 +432,8 @@ class LoadoutPopup extends React.Component<Props> {
   };
 
   private makeRoomForPostmaster = () => {
-    const { dimStore } = this.props;
-    const bucketsService = dimStore.destinyVersion === 1 ? d1GetBuckets : d2GetBuckets;
-    return queueAction(() => makeRoomForPostmaster(dimStore, bucketsService));
+    const { dimStore, buckets } = this.props;
+    return queueAction(() => makeRoomForPostmaster(dimStore, buckets));
   };
 
   private pullFromPostmaster = () => {

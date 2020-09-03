@@ -10,15 +10,18 @@ import { DestinyClass } from 'bungie-api-ts/destiny2';
 import { DimStore } from './store-types';
 import { DtrRating } from '../item-review/dtr-api-types';
 import Papa from 'papaparse';
-import { ThunkResult } from 'app/store/reducers';
+import { ThunkResult } from 'app/store/types';
 import _ from 'lodash';
-import { getActivePlatform } from '../accounts/platforms';
+import { getActivePlatform } from '../accounts/get-active-platform';
 import { getClass } from './store/character-utils';
 import { download } from 'app/utils/util';
 import { getRating } from '../item-review/reducer';
-import { getSpecialtySocketMetadata } from 'app/utils/item-utils';
+import { getSpecialtySocketMetadata, getMasterworkStatNames } from 'app/utils/item-utils';
 import store from '../store/store';
 import { t } from 'app/i18next-t';
+import { dimArmorStatHashByName } from 'app/search/search-filter-values';
+import { StatHashes } from 'data/d2/generated-enums';
+import { D1_StatHashes } from 'app/search/d1-known-values';
 
 // step node names we'll hide, we'll leave "* Chroma" for now though, since we don't otherwise indicate Chroma
 const FILTER_NODE_NAMES = [
@@ -44,8 +47,7 @@ const FILTER_NODE_NAMES = [
 ];
 
 // ignore raid & calus sources in favor of more detailed sources
-delete D2Sources.raid;
-delete D2Sources.calus;
+const sourceKeys = Object.keys(D2Sources).filter((k) => !['raid', 'calus'].includes(k));
 
 export function downloadCsvFiles(
   stores: DimStore[],
@@ -74,13 +76,13 @@ export function downloadCsvFiles(
 
     if (type === 'Weapons') {
       if (
-        item.primStat &&
-        (item.primStat.statHash === 368428387 || item.primStat.statHash === 1480404414)
+        item.primStat?.statHash === D1_StatHashes.Attack ||
+        item.primStat?.statHash === StatHashes.Attack
       ) {
         items.push(item);
       }
     } else if (type === 'Armor') {
-      if (item.primStat?.statHash === 3897883278) {
+      if (item.primStat?.statHash === StatHashes.Defense) {
         items.push(item);
       }
     } else if (type === 'Ghost' && item.bucket.hash === 4023194814) {
@@ -117,7 +119,7 @@ export function importTagsNotesFromCsv(files: File[]): ThunkResult<any> {
     let total = 0;
 
     for (const file of files) {
-      const results = await new Promise<Papa.ParseResult>((resolve, reject) =>
+      const results = await new Promise<Papa.ParseResult<CSVRow>>((resolve, reject) =>
         Papa.parse(file, {
           header: true,
           complete: resolve,
@@ -130,7 +132,7 @@ export function importTagsNotesFromCsv(files: File[]): ThunkResult<any> {
       ) {
         throw new Error(results.errors[0].message);
       }
-      const contents: CSVRow[] = results.data;
+      const contents = results.data;
 
       if (!contents || !contents.length) {
         throw new Error(t('Csv.EmptyFile'));
@@ -190,13 +192,13 @@ function downloadCsv(filename: string, csv: string) {
 }
 
 function buildSocketNames(sockets: DimSockets): string[] {
-  const socketItems = sockets.sockets.map((s) =>
+  const socketItems = sockets.allSockets.map((s) =>
     s.plugOptions
-      .filter((p) => !FILTER_NODE_NAMES.some((n) => n === p.plugItem.displayProperties.name))
+      .filter((p) => !FILTER_NODE_NAMES.some((n) => n === p.plugDef.displayProperties.name))
       .map((p) =>
-        s.plug?.plugItem.hash === p.plugItem.hash
-          ? `${p.plugItem.displayProperties.name}*`
-          : p.plugItem.displayProperties.name
+        s.plugged?.plugDef.hash === p.plugDef.hash
+          ? `${p.plugDef.displayProperties.name}*`
+          : p.plugDef.displayProperties.name
       )
   );
 
@@ -276,7 +278,7 @@ function equippable(item: DimItem) {
 export function source(item: DimItem) {
   if (item.isDestiny2()) {
     return (
-      Object.keys(D2Sources).find(
+      sourceKeys.find(
         (src) =>
           D2Sources[src].sourceHashes.includes(item.source) ||
           D2Sources[src].itemHashes.includes(item.hash) ||
@@ -285,16 +287,6 @@ export function source(item: DimItem) {
     );
   }
 }
-
-export const armorStatHashes = {
-  Mobility: 2996146975,
-  Resilience: 392767087,
-  Recovery: 1943323491,
-  Discipline: 1735777505,
-  Intellect: 144602215,
-  Strength: 4244567218,
-  Total: -1000,
-};
 
 function downloadArmor(items: DimItem[], nameMap: { [key: string]: string }, itemInfos: ItemInfos) {
   // We need to always emit enough columns for all perks
@@ -313,7 +305,10 @@ function downloadArmor(items: DimItem[], nameMap: { [key: string]: string }, ite
       [item.isDestiny1() ? 'Light' : 'Power']: item.primStat?.value,
     };
     if (item.isDestiny2()) {
-      row['Masterwork Type'] = item.masterworkInfo?.statName;
+      row['Power Limit'] = item.powerCap;
+    }
+    if (item.isDestiny2()) {
+      row['Masterwork Type'] = getMasterworkStatNames(item.masterworkInfo) || undefined;
       row['Masterwork Tier'] = item.masterworkInfo?.tier
         ? Math.min(10, item.masterworkInfo.tier)
         : undefined;
@@ -339,18 +334,12 @@ function downloadArmor(items: DimItem[], nameMap: { [key: string]: string }, ite
 
     if ($featureFlags.reviewsEnabled) {
       const dtrRating = getDtrRating(item);
-
-      if (dtrRating?.overallScore) {
-        row['DTR Rating'] = dtrRating.overallScore;
-        row['# of Reviews'] = dtrRating.ratingCount;
-      } else {
-        row['DTR Rating'] = 'N/A';
-        row['# of Reviews'] = 'N/A';
-      }
+      row['DTR Rating'] = dtrRating?.overallScore ?? 'N/A';
+      row['# of Reviews'] = dtrRating?.ratingCount ?? 'N/A';
     }
 
     if (item.isDestiny1()) {
-      row['% Quality'] = item.quality ? item.quality.min : 0;
+      row['% Quality'] = item.quality?.min ?? 0;
     }
     const stats: { [name: string]: { value: number; pct: number; base: number } } = {};
     if (item.isDestiny1() && item.stats) {
@@ -375,22 +364,22 @@ function downloadArmor(items: DimItem[], nameMap: { [key: string]: string }, ite
       });
     }
     if (item.isDestiny1()) {
-      row['% IntQ'] = stats.Intellect ? stats.Intellect.pct : 0;
-      row['% DiscQ'] = stats.Discipline ? stats.Discipline.pct : 0;
-      row['% StrQ'] = stats.Strength ? stats.Strength.pct : 0;
-      row.Int = stats.Intellect ? stats.Intellect.value : 0;
-      row.Disc = stats.Discipline ? stats.Discipline.value : 0;
-      row.Str = stats.Strength ? stats.Strength.value : 0;
+      row['% IntQ'] = stats.Intellect?.pct ?? 0;
+      row['% DiscQ'] = stats.Discipline?.pct ?? 0;
+      row['% StrQ'] = stats.Strength?.pct ?? 0;
+      row.Int = stats.Intellect?.value ?? 0;
+      row.Disc = stats.Discipline?.value ?? 0;
+      row.Str = stats.Strength?.value ?? 0;
     } else {
-      const armorStats = Object.keys(armorStatHashes).map((statName) => ({
+      const armorStats = Object.keys(dimArmorStatHashByName).map((statName) => ({
         name: statName,
-        stat: stats[armorStatHashes[statName]],
+        stat: stats[dimArmorStatHashByName[statName]],
       }));
       armorStats.forEach((stat) => {
-        row[stat.name] = stat.stat ? stat.stat.value : 0;
+        row[capitalizeFirstLetter(stat.name)] = stat.stat?.value ?? 0;
       });
       armorStats.forEach((stat) => {
-        row[`${stat.name} (Base)`] = stat.stat ? stat.stat.base : 0;
+        row[`${capitalizeFirstLetter(stat.name)} (Base)`] = stat.stat?.base ?? 0;
       });
 
       if (item.isDestiny2() && item.sockets) {
@@ -428,12 +417,15 @@ function downloadWeapons(
       Tier: item.tier,
       Type: item.typeName,
       Source: source(item),
-      [item.isDestiny1() ? 'Light' : 'Power']: item.primStat?.value,
       Category: item.bucket.type,
       Element: item.element?.displayProperties.name,
+      [item.isDestiny1() ? 'Light' : 'Power']: item.primStat?.value,
     };
     if (item.isDestiny2()) {
-      row['Masterwork Type'] = item.masterworkInfo?.statName;
+      row['Power Limit'] = item.powerCap;
+    }
+    if (item.isDestiny2()) {
+      row['Masterwork Type'] = getMasterworkStatNames(item.masterworkInfo) || undefined;
       row['Masterwork Tier'] = item.masterworkInfo?.tier
         ? Math.min(10, item.masterworkInfo.tier)
         : undefined;
@@ -457,13 +449,8 @@ function downloadWeapons(
     const dtrRating = getDtrRating(item);
 
     if ($featureFlags.reviewsEnabled) {
-      if (dtrRating?.overallScore) {
-        row['DTR Rating'] = dtrRating.overallScore;
-        row['# of Reviews'] = dtrRating.ratingCount;
-      } else {
-        row['DTR Rating'] = 'N/A';
-        row['# of Reviews'] = 'N/A';
-      }
+      row['DTR Rating'] = dtrRating?.overallScore ?? 'N/A';
+      row['# of Reviews'] = dtrRating?.ratingCount ?? 'N/A';
     }
 
     const stats = {
@@ -487,47 +474,47 @@ function downloadWeapons(
       item.stats.forEach((stat) => {
         if (stat.value) {
           switch (stat.statHash) {
-            case 2715839340: // Recoil direction
+            case StatHashes.RecoilDirection:
               stats.recoil = stat.value;
               break;
-            case 1345609583: // Aim Assist
+            case StatHashes.AimAssistance:
               stats.aa = stat.value;
               break;
-            case 4043523819: // Impact
+            case StatHashes.Impact:
               stats.impact = stat.value;
               break;
-            case 1240592695: // Range
+            case StatHashes.Range:
               stats.range = stat.value;
               break;
-            case 155624089: // Stability
+            case StatHashes.Stability:
               stats.stability = stat.value;
               break;
-            case 4284893193: // Rate of fire
+            case StatHashes.RoundsPerMinute:
               stats.rof = stat.value;
               break;
-            case 4188031367: // Reload
+            case StatHashes.ReloadSpeed:
               stats.reload = stat.value;
               break;
-            case 3871231066: // Magazine
-            case 925767036: // Energy
+            case StatHashes.Magazine:
+            case StatHashes.AmmoCapacity:
               stats.magazine = stat.value;
               break;
-            case 943549884: // Equip Speed
+            case StatHashes.Handling:
               stats.equipSpeed = stat.value;
               break;
-            case 447667954: // Draw Time
+            case StatHashes.DrawTime:
               stats.drawtime = stat.value;
               break;
-            case 2961396640: // Charge Time
+            case StatHashes.ChargeTime:
               stats.chargetime = stat.value;
               break;
-            case 1591432999: // accuracy
+            case StatHashes.Accuracy:
               stats.accuracy = stat.value;
               break;
-            case 3614673599: // Blast Radius
+            case StatHashes.BlastRadius:
               stats.blastRadius = stat.value;
               break;
-            case 2523465841: // Velocity
+            case StatHashes.Velocity:
               stats.velocity = stat.value;
               break;
           }

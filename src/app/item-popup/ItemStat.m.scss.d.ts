@@ -8,15 +8,19 @@ interface CssExports {
   'masterworked': string;
   'modded': string;
   'moddedStatBar': string;
+  'negativeModded': string;
   'quality': string;
   'qualitySummary': string;
   'ratingChartBarColor': string;
+  'smallStatToggle': string;
   'statBar': string;
   'statName': string;
   'totalRow': string;
   'totalStatDetailed': string;
   'totalStatMasterwork': string;
   'totalStatModded': string;
+  'totalStatNegativeModded': string;
+  'totalStatWarn': string;
   'value': string;
 }
 export const cssExports: CssExports;

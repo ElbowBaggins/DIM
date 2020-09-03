@@ -18,7 +18,8 @@ import { DestinyAccount } from 'app/accounts/destiny-account';
 import { VendorItem } from './vendor-item';
 import _ from 'lodash';
 import { DimItem } from 'app/inventory/item-types';
-
+import { ItemCategoryHashes } from 'data/d2/generated-enums';
+import { VENDORS } from 'app/search/d2-known-values';
 export interface D2VendorGroup {
   def: DestinyVendorGroupDefinition;
   vendors: D2Vendor[];
@@ -34,12 +35,12 @@ export interface D2Vendor {
 }
 
 const vendorOrder = [
-  863940356, // spider
-  3361454721, // eververse
-  1265988377, // benedict
-  672118013, // banshee
-  248695599, // drifter
-  2917531897, // ada
+  VENDORS.SPIDER,
+  VENDORS.EVERVERSE,
+  VENDORS.BENEDICT,
+  VENDORS.BANSHEE,
+  VENDORS.DRIFTER,
+  VENDORS.ADA,
 ];
 
 export function toVendorGroups(
@@ -119,8 +120,9 @@ export function toVendor(
     return undefined;
   }
 
-  const destinationDef =
-    vendor && defs.Destination.get(vendorDef.locations[vendor.vendorLocationIndex].destinationHash);
+  const destinationDef = vendor?.vendorLocationIndex
+    ? defs.Destination.get(vendorDef.locations[vendor.vendorLocationIndex].destinationHash)
+    : undefined;
   const placeDef = destinationDef && defs.Place.get(destinationDef.placeHash);
 
   const vendorCurrencyHashes = new Set<number>();
@@ -130,9 +132,9 @@ export function toVendor(
     }
   }
   const currencies = _.compact(
-    Array.from(vendorCurrencyHashes)
-      .map((h) => defs.InventoryItem.get(h))
-      .filter((i) => !i.itemCategoryHashes.includes(41))
+    Array.from(vendorCurrencyHashes, (h) => defs.InventoryItem.get(h)).filter(
+      (i) => !i.itemCategoryHashes?.includes(ItemCategoryHashes.Shaders)
+    )
   );
 
   return {
@@ -158,7 +160,7 @@ export function getVendorItems(
     [hash: number]: DestinyCollectibleComponent;
   }
 ): VendorItem[] {
-  if (sales && itemComponents) {
+  if (sales) {
     const components = Object.values(sales);
     return components.map((component) =>
       VendorItem.forVendorSaleItem(
@@ -185,7 +187,10 @@ export function getVendorItems(
   }
 }
 
-export function filterVendorGroupsToUnacquired(vendorGroups: readonly D2VendorGroup[]) {
+export function filterVendorGroupsToUnacquired(
+  vendorGroups: readonly D2VendorGroup[],
+  ownedItemHashes: Set<number>
+) {
   return vendorGroups
     .map((group) => ({
       ...group,
@@ -195,8 +200,10 @@ export function filterVendorGroupsToUnacquired(vendorGroups: readonly D2VendorGr
           items: vendor.items.filter(
             (item) =>
               item.item?.isDestiny2() &&
-              item.item.collectibleState !== null &&
-              item.item.collectibleState & DestinyCollectibleState.NotAcquired
+              (item.item.collectibleState !== null
+                ? item.item.collectibleState & DestinyCollectibleState.NotAcquired
+                : item.item.itemCategoryHashes.includes(ItemCategoryHashes.Mods_Mod) &&
+                  !ownedItemHashes.has(item.item.hash))
           ),
         }))
         .filter((v) => v.items.length),

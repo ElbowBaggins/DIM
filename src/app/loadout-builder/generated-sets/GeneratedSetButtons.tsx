@@ -8,7 +8,7 @@ import styles from './GeneratedSetButtons.m.scss';
 import { Loadout } from 'app/loadout/loadout-types';
 import { applyLoadout } from 'app/loadout/loadout-apply';
 import { DestinyClass } from 'bungie-api-ts/destiny2';
-import { statTier } from './utils';
+import { statTier } from '../utils';
 
 /**
  * Renders the Create Loadout and Equip Items buttons for each generated set
@@ -16,12 +16,10 @@ import { statTier } from './utils';
 export default function GeneratedSetButtons({
   store,
   set,
-  numSets,
   onLoadoutSet,
 }: {
   store: DimStore;
   set: ArmorSet;
-  numSets: number;
   onLoadoutSet(loadout: Loadout): void;
 }) {
   // Opens the loadout menu for the generated set
@@ -37,11 +35,10 @@ export default function GeneratedSetButtons({
 
   return (
     <div className={styles.buttons}>
-      <span className={styles.combos}>{t('LoadoutBuilder.Combinations', { count: numSets })}</span>
-      <button className="dim-button" onClick={openLoadout}>
+      <button type="button" className="dim-button" onClick={openLoadout}>
         {t('LoadoutBuilder.CreateLoadout')}
       </button>
-      <button className="dim-button" onClick={equipItems}>
+      <button type="button" className="dim-button" onClick={equipItems}>
         {t('LoadoutBuilder.EquipItems', { name: store.name })}
       </button>
     </div>
@@ -57,7 +54,7 @@ function createLoadout(classType: DestinyClass, set: ArmorSet): Loadout {
   };
   const loadout = newLoadout(
     t('Loadouts.Generated', data),
-    set.firstValidSet.map((i) => convertToLoadoutItem(i, true))
+    set.armor.map((items) => convertToLoadoutItem(items[0], true))
   );
   loadout.classType = classType;
   return loadout;

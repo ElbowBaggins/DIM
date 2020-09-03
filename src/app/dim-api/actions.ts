@@ -4,11 +4,11 @@ import {
   postUpdates,
   deleteAllData,
 } from '../dim-api/dim-api';
-import { ThunkResult, RootState } from '../store/reducers';
+import { RootState, ThunkResult } from 'app/store/types';
 import { DimApiState } from './reducer';
 import { get, set } from 'idb-keyval';
 import { getPlatforms } from '../accounts/platforms';
-import { currentAccountSelector } from '../accounts/reducer';
+import { currentAccountSelector } from 'app/accounts/selectors';
 import { observeStore } from '../utils/redux-utils';
 import _ from 'lodash';
 import {
@@ -72,6 +72,8 @@ const installObservers = _.once((dispatch: ThunkDispatch<RootState, undefined, A
           settings: settingsToSave,
           profiles: nextState.profiles,
           updateQueue: nextState.updateQueue,
+          itemHashTags: nextState.itemHashTags,
+          searches: nextState.searches,
         };
         console.log('Saving profile data to IDB');
         set('dim-api-profile', savedState);
@@ -225,14 +227,20 @@ export function loadDimApiData(forceLoad = false): ThunkResult {
 
         console.error('[loadDimApiData] Unable to get profile from DIM API', e);
 
-        // Wait, with exponential backoff
-        getProfileBackoff++;
-        const waitTime = getBackoffWaitTime(getProfileBackoff);
-        console.log('[loadDimApiData] Waiting', waitTime, 'ms before re-attempting profile fetch');
-        await delay(waitTime);
+        if (e.name !== 'FatalTokenError') {
+          // Wait, with exponential backoff
+          getProfileBackoff++;
+          const waitTime = getBackoffWaitTime(getProfileBackoff);
+          console.log(
+            '[loadDimApiData] Waiting',
+            waitTime,
+            'ms before re-attempting profile fetch'
+          );
+          await delay(waitTime);
 
-        // Retry
-        dispatch(loadDimApiData(forceLoad));
+          // Retry
+          dispatch(loadDimApiData(forceLoad));
+        }
         return;
       } finally {
         readyResolve();
@@ -350,7 +358,7 @@ function tryLoadLegacyData(): ThunkResult {
     await delay(1000); // I don't know how to make sure sync service is fully initialized
     const data = await SyncService.get();
     if (!getState().dimApi.apiPermissionGranted && data && !_.isEmpty(data)) {
-      await dispatch(importDataBackup(data));
+      await dispatch(importDataBackup(data, true));
     }
   };
 }

@@ -1,6 +1,7 @@
 import { D2Item, DimSockets, DimMasterwork } from '../item-types';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
 import { DamageType } from 'bungie-api-ts/destiny2';
+import { PlugCategoryHashes } from 'data/d2/generated-enums';
 
 /**
  * These are the utilities that deal with figuring out Masterwork info.
@@ -64,12 +65,12 @@ function buildForsakenKillTracker(
   createdItem: D2Item,
   defs: D2ManifestDefinitions
 ): DimMasterwork | null {
-  const killTrackerSocket = createdItem.sockets!.sockets.find((socket) =>
-    Boolean(socket.plug?.plugObjectives?.length)
+  const killTrackerSocket = createdItem.sockets!.allSockets.find((socket) =>
+    Boolean(socket.plugged?.plugObjectives?.length)
   );
 
-  if (killTrackerSocket?.plug?.plugObjectives?.length) {
-    const plugObjective = killTrackerSocket.plug.plugObjectives[0];
+  if (killTrackerSocket?.plugged?.plugObjectives?.length) {
+    const plugObjective = killTrackerSocket.plugged.plugObjectives[0];
 
     const objectiveDef = defs.Objective.get(plugObjective.objectiveHash);
 
@@ -77,7 +78,7 @@ function buildForsakenKillTracker(
       progress: plugObjective.progress,
       typeIcon: objectiveDef.displayProperties.icon,
       typeDesc: objectiveDef.progressDescription,
-      typeName: [3244015567, 2285636663, 38912240].includes(killTrackerSocket.plug.plugItem.hash)
+      typeName: [3244015567, 2285636663, 38912240].includes(killTrackerSocket.plugged.plugDef.hash)
         ? 'Crucible'
         : 'Vanguard',
     };
@@ -88,15 +89,15 @@ function buildForsakenMasterworkStats(
   createdItem: D2Item,
   defs: D2ManifestDefinitions
 ): DimMasterwork | null {
-  const masterworkSocket = createdItem.sockets!.sockets.find((socket) =>
+  const masterworkSocket = createdItem.sockets!.allSockets.find((socket) =>
     Boolean(
-      socket.plug?.plugItem.plug &&
-        (socket.plug.plugItem.plug.plugCategoryIdentifier.includes('masterworks.stat') ||
-          socket.plug.plugItem.plug.plugCategoryIdentifier.endsWith('_masterwork'))
+      socket.plugged?.plugDef.plug &&
+        (socket.plugged.plugDef.plug.plugCategoryIdentifier.includes('masterworks.stat') ||
+          socket.plugged.plugDef.plug.plugCategoryIdentifier.endsWith('_masterwork'))
     )
   );
-  if (masterworkSocket?.plug?.plugItem.investmentStats.length) {
-    const masterwork = masterworkSocket.plug.plugItem.investmentStats[0];
+  if (masterworkSocket?.plugged?.plugDef.investmentStats.length) {
+    const masterwork = masterworkSocket.plugged.plugDef.investmentStats[0];
     if (!createdItem.element && createdItem.bucket?.sort === 'Armor') {
       createdItem.element =
         Object.values(defs.DamageType).find(
@@ -104,18 +105,18 @@ function buildForsakenMasterworkStats(
         ) ?? null;
     }
 
-    const statDef = defs.Stat.get(masterwork.statTypeHash);
-
     return {
       typeName: null,
-      typeIcon: masterworkSocket.plug.plugItem.displayProperties.icon,
-      typeDesc: masterworkSocket.plug.plugItem.displayProperties.description,
-      statHash: masterwork.statTypeHash,
-      statName: statDef.displayProperties.name,
-      statValue: masterworkSocket.plug.stats
-        ? masterworkSocket.plug.stats[masterwork.statTypeHash]
-        : 0,
+      typeIcon: masterworkSocket.plugged.plugDef.displayProperties.icon,
+      typeDesc: masterworkSocket.plugged.plugDef.displayProperties.description,
       tier: masterwork.value,
+      stats: [
+        {
+          hash: masterwork.statTypeHash,
+          name: defs.Stat.get(masterwork.statTypeHash).displayProperties.name,
+          value: masterworkSocket.plugged.stats?.[masterwork.statTypeHash] || 0,
+        },
+      ],
     };
   }
   return null;
@@ -128,37 +129,36 @@ function buildMasterworkInfo(
   sockets: DimSockets,
   defs: D2ManifestDefinitions
 ): DimMasterwork | null {
-  const socket = sockets.sockets.find((socket) => Boolean(socket.plug?.plugObjectives.length));
-  if (
-    !socket ||
-    !socket.plug ||
-    !socket.plug.plugObjectives ||
-    !socket.plug.plugObjectives.length
-  ) {
+  const socket = sockets.allSockets.find((socket) =>
+    Boolean(socket.plugged?.plugObjectives.length)
+  );
+  if (!socket?.plugged?.plugObjectives?.length) {
     return null;
   }
-  const plugObjective = socket.plug.plugObjectives[0];
-  const investmentStats = socket.plug.plugItem.investmentStats;
-  if (!investmentStats || !investmentStats.length) {
-    return null;
-  }
-  const statHash = investmentStats[0].statTypeHash;
-
+  const plugObjective = socket.plugged.plugObjectives[0];
+  const investmentStats = socket.plugged.plugDef.investmentStats;
   const objectiveDef = defs.Objective.get(plugObjective.objectiveHash);
-  const statDef = defs.Stat.get(statHash);
 
-  if (!objectiveDef || !statDef) {
+  if (!investmentStats?.length || !objectiveDef) {
     return null;
   }
+
+  const stats = investmentStats.map((stat) => ({
+    hash: stat.statTypeHash,
+    name: defs.Stat.get(stat.statTypeHash).displayProperties.name,
+    value: socket.plugged?.stats?.[stat.statTypeHash] || 0,
+  }));
 
   return {
     progress: plugObjective.progress,
-    typeName: socket.plug.plugItem.plug.plugCategoryHash === 2109207426 ? 'Vanguard' : 'Crucible',
+    typeName:
+      socket.plugged.plugDef.plug.plugCategoryHash ===
+      PlugCategoryHashes.V300PlugsMasterworksGenericWeaponsKills
+        ? 'Vanguard'
+        : 'Crucible',
     typeIcon: objectiveDef.displayProperties.icon,
     typeDesc: objectiveDef.progressDescription,
-    statHash,
-    statName: statDef.displayProperties.name,
-    statValue: socket.plug.stats ? socket.plug.stats[statHash] : 0,
-    tier: investmentStats[0].value,
+    tier: socket.plugged?.plugDef.investmentStats[0].value,
+    stats,
   };
 }

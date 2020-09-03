@@ -1,6 +1,6 @@
 {
   "AWA": {
-    "ConfirmDescription": "Por favor, utilize o app Destiny Companion para dar permissão ao DIM de modificar seus itens.",
+    "ConfirmDescription": "Por favor, utilize o app Destiny Companion para dar permissão ao DIM modificar seus itens.",
     "ConfirmTitle": "Confirmar Ação"
   },
   "Accounts": {
@@ -41,7 +41,9 @@
     "SetNotes": "Anotação do item ID {{id}} redefinida para \"{{notes}}\"",
     "SetTag": "Tag do item ID {{id}} redefinida para {{tag}}",
     "Setting": "Redefinido a propriedade {{key}} para {{value}}",
-    "TagCleanup": "Tags de itens desmontados descartadas"
+    "TagCleanup": "Limpado {{count}} tag de itens desmontados",
+    "TagCleanupUnknown": "Limpado algumas tags de itens desmontados",
+    "TagCleanup_plural": "Limpado {{count}} tags de itens desmontados"
   },
   "Bucket": {
     "Armor": "Armaduras",
@@ -68,11 +70,13 @@
     "ItemUniquenessExplanation_male": "Você tentou mover o {{type}} '{{name}}' para seu {{character}} mas o local de destino já possui esse item e apenas um é permitido.",
     "Maintenance": "Servidores Bungie.net estão fora do ar para manutenção.",
     "NetworkError": "Erro de rede - {{status}} {{statusText}}",
-    "NoAccount": "Nenhuma conta de Destiny foi encontrada no {{platform}}. Você selecionou a plataforma correta?",
+    "NoAccount": "Nenhuma conta de Destiny encontrada. Você escolheu a plataforma certa?",
     "NoAccountForPlatform": "Incapaz de encontrar uma conta de Destiny no {{platform}}.",
     "NotConnected": "Você deve estar sem conexão com a Internet.",
     "NotConnectedOrBlocked": "Você pode não estar conectado à internet, ou uma extensão de bloqueio de anúncios ou privacidade pode estar bloqueando Bungie.net.",
     "NotLoggedIn": "Por favor, autorize o DIM para poder utilizar este app.",
+    "Slow": "Bungie.net está temporariamente lento",
+    "SlowDetails": "Bungie.net está levando mais tempo que o esperado para responder. Normalmente isto ocorre quando vários jogadores estão ativos no jogo ao mesmo tempo ou quando a Bungie.net está instável. E, quem sabe, seja apenas sua conexão com a internet mesmo. De qualquer forma, vamos continuar esperando por uma resposta.",
     "SlowResponse": "Bungie.net está demorando muito para responder.",
     "Throttled": "Bungie.net está limitando quantas solicitações o DIM pode fazer.",
     "Twitter": "Veja atualizações em:",
@@ -144,7 +148,8 @@
     "Title": "Algo deu errado"
   },
   "ErrorPanel": {
-    "Description": "Este problema possivelmente afeta todos as aplicações de terceiro. Verifique se a Bungie.net carrega ou se o app Destiny 2 Companion funciona como o esperado."
+    "Description": "Este problema possivelmente afeta todos as aplicações de terceiro. Verifique se a Bungie.net carrega ou se o app Destiny 2 Companion funciona como o esperado.",
+    "Troubleshooting": "Guia para Solução de Problemas"
   },
   "FarmingMode": {
     "D2Desc": "DIM está prevenindo que os itens vão para o Chefe do Correio garantindo que sempre tenha um espaço vazio por tipo de item em {{store}}. Está movendo os itens para o cofre para abrir espaço.",
@@ -189,6 +194,7 @@
     "AmmoType": "Mostrar itens baseados no seu tipo de munição.",
     "ArmorCategory": "Mostrar armaduras baseadas na sua categoria.",
     "Ascended": "Mostra itens que tenham um nódulo de ascensão e se eles foram ascendidos ou não.",
+    "Breaker": "Filtra pelo tipo de quebra-guarda ou tipo de campeão correspondente.",
     "BulkClear": "Tag removida de 1 item.",
     "BulkClear_plural": "Tags removidas de {{count}} itens.",
     "BulkRevert": "Tag revertida em 1 item.",
@@ -243,18 +249,18 @@
     "NamedStat": "Mostra armaduras que tem pontos no atributo nomeado.",
     "Negate": "Para negar uma busca, inclua um sinal de menos como prefixo do termo buscado: {{notexample}} achará todos os itens não-engramas.",
     "NewItems": "Mostra novos itens.",
-    "Notes": "Procura por itens que você marcou com notas customizadas",
+    "Notes": "Procura por itens que você marcou com notas personalizadas",
     "Ornament": "Mostra itens com ornamentos e filtros pra seus estados.",
     "PartialMatch": "Exibe itens onde seus nomes/perks possuem uma correspondência parcial com o texto do filtro. Busque por frases inteiras usando aspas. O filtro 'perk:' buscará somente perks.",
     "Postmaster": "Itens que estão no Chefe dos Correios atualmente.",
     "PowerLevel": "Mostra itens baseado em seus níveis de poder (Ataque para Armas; Defesa para Armaduras).",
+    "PowerLimit": "Exibe itens baseados no nível de poder máximo que eles podem ser infundidos.",
     "Quality": "Mostra itens baseado na porcentagem total da qualidade de seus atributos. '{{percentage}}' é um apelido pra '{{quality}}'.",
     "RandomRoll": "Mostra itens que caem com valores aleatórios.",
     "RarityTier": "Mostra itens baseado na raridade deles.",
     "Rated": "Mostra todas as armas que tem uma avaliação vinda do Destiny Tracker.",
     "Rating": "Mostra armas baseado em suas avaliações no Destiny Tracker.",
     "RatingCount": "Mostra armas baseado no número de avaliações existentes para o sandbox atual no Destiny Tracker.",
-    "Reacquirable": "Exibe os itens que podem ser readquiridos da coleção.",
     "Reforgeable": "Mostra itens que podem ser reforjados no Armeiro.",
     "Release": "Disponível na versão <i>{{release}}</i>",
     "Releases": {
@@ -307,6 +313,7 @@
     "StatsBase": "Filtra armaduras baseado no valor base do atributo, sem incluir os mod anexados.",
     "StatsLoadout": "Encontra um conjunto de itens para equipar com valor máximo de um dado atributo.",
     "StatsMax": "Encontra armaduras com o maior número para um atributo específico. Inclui todos os itens com o atributo mais alto.",
+    "SunsetAfter": "Exibe itens da última temporada que podem atingir o Limite de Poder Sazonal.",
     "Tags": {
       "Archive": "Escurece itens que você raramente usa.",
       "Dismantle": "Exibir itens que deseja desmontar futuramente.",
@@ -342,6 +349,7 @@
     "Year": "Exibir itens a partir de qual ano foi inserido em Destiny."
   },
   "General": {
+    "ClickForDetails": "Clique para detalhes",
     "UserGuideLink": "Guia do usuário"
   },
   "Ghost": {
@@ -365,18 +373,21 @@
     "BungieNetAlert": "Alerta da Bungie",
     "Clear": "Limpar filtro de busca",
     "CompareMatching": "Comparar itens filtrados",
+    "DeleteSearch": "Apagar pesquisa",
     "FilterHelp": "Pesquisar item/perk, {{example}}, e mais",
     "FilterHelpBrief": "Procurar itens",
+    "FilterHelpMenuItem": "Ajuda sobre filtros...",
     "FilterMatchCount": "1 item",
     "FilterMatchCount_plural": "{{count}} itens",
     "Filters": "Filtros",
-    "InstallDIM": "Instalar DIM",
+    "InstallDIM": "Instalar como um App",
     "Inventory": "Inventário",
     "IosPwaPrompt": "No Safari para celular, clique no ícone compartilhar (botão do meio na parte inferior) e selecione \"Adicionar à Tela Inicial\".",
     "Menu": "Menu",
     "Refresh": "Atualizar dados do Destiny",
     "ReloadApp": "Recarregar o App",
     "ReportBug": "Relatar Falhas",
+    "SaveSearch": "Salvar pesquisa",
     "Shop": "Loja",
     "UpgradeDIM": "Atualize o DIM",
     "WhatsNew": "Novidades"
@@ -385,19 +396,21 @@
     "CannotMove": "Não é possível remover o item deste personagem.",
     "Drag": "Segure a tecla shift para transferir uma pilha parcial",
     "NoStorage": "DIM não pode salvar os dados",
-    "NoStorageMessage": "DIM não pode salvar dados no seu navegador. Isso pode ser causado por navegação privada ou quando existe pouco espaço em disco."
+    "NoStorageMessage": "DIM não está conseguindo salvar dados em seu navegador. Isso normalmente ocorre durante a navegação privada ou em modo anônimo, ou ainda quando há pouco espaço disponível em disco. Sendo assim, não será possível se conectar ou usar o DIM."
   },
   "Hotkey": {
     "CheatSheetTitle": "Teclas de Atalho:",
     "ClearDialog": "Dispensar diálogo",
     "ClearNewItems": "Limpar novos itens",
     "ClearNewItemsTitle": "Tecla de atalho: X",
+    "Enter": "ENTER",
     "MarkItemAs": "Marcar item como '{{tag}}'",
     "Menu": "Alternar menu",
     "RefreshInventory": "Atualizar inventário",
     "ShowHotkeys": "Exibir teclas de atalho",
     "StartSearch": "Iniciar uma busca",
     "StartSearchClear": "Iniciar uma busca limpa",
+    "Tab": "TAB",
     "ToggleDetails": "Mostrar todos os detalhes do item"
   },
   "Infusion": {
@@ -529,8 +542,6 @@
     "BurnTypeVoid": "Vácuo",
     "ChooseAlternate": "Escolher outro item com os mesmos atributos:",
     "ChooseAlternateTitle": "Escolher outro item",
-    "Combinations": "1 combinação",
-    "Combinations_plural": "{{count, number}} combinações",
     "CreateLoadout": "+ Set",
     "DropToExclude": "Mova itens para cá para ignorá-los",
     "DropToLock": "Mova itens para cá para trava-los",
@@ -538,25 +549,36 @@
     "ExcludeItem": "Ignorar item",
     "Filter": "Filtros",
     "GeneratedBuilds": "Construções",
-    "LimitedCombos": "Você tem {{combosWithoutCaps, number}} combinações possíveis de atributos, mas olhamos apenas para {{combos, number}} delas para impedir o DIM de travar. Como resultado, algumas possibilidades não são mostradas. Trave alguns itens ou perks ou desmonte alguma armadura antiga para ficar abaixo do limite.",
+    "ItemsGroupedByStats": "Itens singulares foram agrupados por atributos e status de obra-prima.",
+    "ItemsGroupedByStatsEnergy": "Itens singulares foram agrupados por atributos, status de obra-prima e tipo de energia.",
+    "ItemsGroupedByStatsEnergyModSlot": "Itens singulares foram agrupados por atributos, status de obra-prima, tipo de energia e slot de mod sazonal.",
+    "ItemsGroupedByStatsModSlot": "Itens singulares foram agrupados por atributos, status de obra-prima e slot de mod sazonal.",
+    "LimitedCombos": "Você tem {{combosWithoutCaps, number}} possíveis combinações, mas estamos exibindo apenas {{combos, number}} destas para evitar que o DIM trave. Sendo assim, algumas possibilidades não estão sendo mostradas. Trave alguns itens, perks ou então desmonte algumas armaduras antigas para ficar dentro deste limite. Travar mods gerais ou sazonais aumentam o número de combinações.",
     "LockEquipped": "Equipado",
     "LockItem": "Travar item",
     "LockPerk": "Selecione uma energia ou perk",
     "NewEmptyLoadout": "Criar set vazio",
     "NoBuildsFound": "Nenhuma construção compatível. Tente flexibilizar seu critério de filtragem.",
-    "NumStatMixes": "{{count, number}} possibilidade de atributos",
-    "NumStatMixes_plural": "{{count, number}} possibilidades de atributos",
+    "NoBuildsFoundExoticsAndMods": "Você tem um exótico e cinco mods sazonais bloqueados.",
+    "NoBuildsFoundModsAreTooExpensive": "As exigências de energia dos mods selecionados são altas demais.",
+    "NoBuildsFoundSeasonalModNotSatisfied": "Falta um item para guardar um dos mods sazonais selecionados.",
+    "NoBuildsFoundWithReasons": "Nenhuma construção compatível. As causas mais comuns podem incluir:",
+    "NumCombinations": "{{count, number}} combinação",
+    "NumCombinations_plural": "{{count, number}} combinações",
     "OptimizerExplanation": "Selecione perks, filtre, reorganize atributos e trave itens para estreitar o número de sets em potencial.",
-    "OptimizerExplanationArmour2Mods": "Mods de armaduras 2.0 não estão inclusos nos cálculos de tier de atributo.",
+    "OptimizerExplanationArmour2Mods": "Alterações de atributos de mods de Armadura 2.0 são ignoradas sempre que possível. Para mais informações, por favor, acesse {{link}}.",
     "OptimizerExplanationDesktop": "Shift-clique um perk para selecionar. Shift-clique em um item para ignorá-lo. Mova os itens para a barra lateral para ignorá-los ou travá-los.",
+    "ProcessingSets": "Processando sets de\n{{character}}",
     "ResetLocked": "Resetar itens travados",
-    "SearchPlaceholder": "Filtrar (ex. \"Vigília dos Heróis\")",
     "SelectMax": "- Máx -",
     "SelectMin": "- Mín -",
+    "SelectMinStatTotal": "Mínimo do Atributo Total de Armadura",
+    "SelectMinStatTotalDescription": "Determina um valor mínimo para o atributo total de uma única peça da armadura (excluindo itens de classe).",
     "SelectPerks": "Selecionar perks",
     "SelectPower": "Poder Mínimo",
     "SelectPowerDescription": "Define um nível de poder mínimo para todo o set (não peças individuais)",
     "SelectedPerkKey": "Perk selecionado",
+    "StatIncorrectWarning": "Por favor, remova quaisquer mods com atributos de efeitos negativos ou condicionais para obter resultados mais precisos.\n\nDevido a estes modificadores com efeitos negativos ou condicionais, DIM não é capaz de determinar o valor base de {{stats}} em alguns dos itens incluídos. Esta é uma limitação das informações recebidas da Bungie.net.",
     "StatTierIgnoreOption": "Ignorar",
     "StatTierIncludeOption": "Incluir",
     "TierNumber": "T{{tier}}",
@@ -581,6 +603,8 @@
     "Create": "Criar set",
     "Delete": "Excluir set",
     "Edit": "Editar set",
+    "EquippableDifferent1": "Múltiplos itens exóticos foram usados para calcular seu Poder Máximo. Então o número mostrado pode não ser alcançável ao equipar seus itens no jogo.",
+    "EquippableDifferent2": "O Poder Máximo não se restringe pela regra de \"Um Exótico\" ao determinar o Poder dos seus itens comuns, poderosos ou pináculo.",
     "FilteredItems": "Itens filtrados",
     "FindAnother": "Encontrar outro {{name}}",
     "FromEquipped": "Equipado",
@@ -665,10 +689,13 @@
     "AddNote": "Adicionar anotação",
     "CantPullFromPostmaster": "Você dever ir à torre para recuperar este item.",
     "Consolidate": "Consolidar",
+    "Details": "Popup",
     "DistributeEvenly": "Distribuir igualmente",
     "Equip": "Equip",
+    "EquipWithName": "Equipar em {{character}}",
     "Expand": "Expandir detalhes do item",
     "Infuse": "Infunda",
+    "ItemDetailSheet": "Abrir detalhes do item",
     "LockUnlock": {
       "Lock": "Travar {{itemType}}",
       "Unlock": "Destravar {{itemType}}"
@@ -678,12 +705,15 @@
     "OverviewTab": "Visão geral",
     "Owned": "Este item está em seu inventário.",
     "OwnedMod": "Este mod está na parte de modificações do seu inventário.",
+    "PowerCap": "",
     "PullItem": "Mover de {{bucket}} para {{store}}",
     "ReadLore": "Leia a história no Ishtar Collective (somente em inglês)",
+    "ReadLoreLink": "Leia a história",
     "ReviewsTab": "Análises",
     "Rewards": "Recompensas:",
     "Split": "Dividir",
     "Store": "Mover",
+    "StoreWithName": "Armazenar em {{character}}",
     "Subtitle": {
       "Consumable": "{{classType}} {{typeName}}",
       "Gear": "{{light}} {{statName}} {{classType}} {{typeName}}"
@@ -693,6 +723,7 @@
       "Track": "Rastrear {{itemType}}",
       "Untrack": "Não rastrear {{itemType}}"
     },
+    "TriageTab": "Triagem",
     "Vault": "Cofre"
   },
   "Notes": {
@@ -710,7 +741,8 @@
     "Columns": {
       "Archetype": "Arquétipo",
       "BaseStats": "Atributos base",
-      "CustomTotal": "Total customizado",
+      "Breaker": "Quebra-guarda",
+      "CustomTotal": "Total Personalizado",
       "Damage": "Dano",
       "Element": "Elemento",
       "Energy": "Energia",
@@ -730,7 +762,6 @@
       "PerksMods": "Perks, Mods e Tonalizadores",
       "Quality": "Qualidade %",
       "Rating": "Avaliação",
-      "Reacquireable": "Recuperável",
       "Season": "Temporada",
       "Source": "Fonte",
       "StatQuality": "Qualidade dos Atributos",
@@ -792,6 +823,7 @@
     "ColumnSize": "{{num}} itens",
     "ColumnSizeAuto": "Auto",
     "CsvImport": "Importar marcas/anotações do CSV",
+    "CustomStatDesc": "Indique atributos de armaduras para criar um valor total personalizado que será exibido no popup do item, no Organizador e no Comparador. Pesquise por stat:custom>=30.",
     "Data": "Planilhas",
     "DefaultItemSizeNote": "Um item de tamanho 50px vai parecer mais nítido, sem borrar a imagem ou o texto do item.",
     "DontForgetDupes": "Não esqueça que você pode pesquisar is:dupe para encontrar facilmente itens duplicados, e então usar a ferramenta de comparação para avaliar itens relacionados.",
@@ -828,22 +860,29 @@
     "SortName": "Nome"
   },
   "Stats": {
+    "Custom": "Total Personalizado",
+    "CustomDesc": "Total personalizado de atributos base selecionados, ignorando mods e obras-primas. Acesse as Configurações para modificar quais atributos serão incluídos.",
     "Discipline": "Disciplina",
     "Intellect": "Intelecto",
     "MaxGearPower": "Poder máximo de itens equipáveis",
+    "MaxGearPowerAll": "Poder Máximo de todos os equipamentos",
     "MaxTotalPower": "Poder máximo total",
     "Milliseconds": "ms",
     "NoBonus": "Sem bônus",
     "NotApplicable": "N/D",
     "OfMaxRoll": "{{range}} do valor máximo",
     "PercentHelp": "Clique para mais informações sobre Níveis de Qualidade.",
+    "PowerCap": "Limite de Poder",
+    "PowerCapDisclaimer": "Informações sobre o Limite de Poder podem estar incorretas para armaduras de incursões ou armas da \"Último Desejo\" e \"Jardim da Salvação\".",
+    "PowerCapWithSeason": "{{powerCap}} (máx. na temporada {{finalSeason}})",
     "PowerModifier": "Poder concedido pela progressão de experiência sazonal",
     "Prestige": "Nível de prestígio: {{level}}\n{{exp}}xp para 5 fragmentos de luz.",
     "Quality": "Níveis de qualidade",
     "Strength": "Força",
     "TierProgress": "T{{tier}} {{statName}} ({{progress}}/60 para T{{nextTier}})\n",
     "TierProgress_Max": "T{{tier}} {{statName}} ({{progress}}/300)\n",
-    "Total": "Total"
+    "Total": "Total",
+    "TotalIncorrectWarning": "Devido a modificadores com efeitos negativos ou condicionais, DIM não é capaz de determinar o valor base de {{stats}}. Esta é uma limitação das informações recebidas da Bungie.net."
   },
   "Storage": {
     "ApiPermissionPrompt": {
@@ -874,7 +913,7 @@
     "GDriveImportExplain": "Você pode restaurar dados antigos armazenados no seu navegador ou no Google Drive. Use isso se você está atualizando o DIM para a v6 e possui dados armazenados antes disso.",
     "GDriveSignInError": "Erro ao conectar com o Google Drive:",
     "GDriveSignedIn": "Conectado no Google Drive como {{email}}",
-    "GoogleApiBlocked": "Google Drive não está disponível por que um bloqueador de conteúdo bloqueou o JavaScript. Por favor remova o DIM do bloqueio e tente novamente.",
+    "GoogleApiBlocked": "Você não poderá se conectar ao Google Drive devido a um bloqueador de conteúdo. Caso precise importar dados antigos do Google Drive, será necessário desativar este bloqueador e atualizar a página.",
     "Import": "Importar Dados de Backup",
     "ImportConfirmDimApi": "Você confirma que quer substituir suas tags, sets e configurações atuais com esta versão? Esta opção sobrescreverá totalmente tudo o que você tiver atualmente.",
     "ImportExport": "Backup e Importação",
@@ -915,7 +954,6 @@
     "Keep": "Manter",
     "LockAll": "Travar Itens",
     "TagItem": "Marcar item",
-    "TagItems": "Marcar itens",
     "UnlockAll": "Destravar itens"
   },
   "Triumphs": {
@@ -930,8 +968,6 @@
   "Vendors": {
     "Catalysts": "Catalisadores",
     "Collections": "Coleções",
-    "DestinyMap": "Encontre os colecionáveis nos mapas do Destiny do lowlines",
-    "DestinySets": "Procure mais itens em Destiny Sets",
     "Engram": "Engrama de Recompensa",
     "FilterToUnacquired": "Exibir somente itens não coletados",
     "Vendors": "Vendedores"
@@ -1002,7 +1038,7 @@
     "ImportNoFile": "Nenhum arquivo selecionado.",
     "ImportSuccess": "Lista de desejos carregada com informações sobre um valor.{{titleAndDescription}}",
     "ImportSuccess_plural": "Lista de desejos carregada com informações sobre {{count, number}} valores.{{titleAndDescription}}",
-    "InvalidExternalSource": "Por favor, insira uma URL válida para a fonte da sua lista de desejos externa. A URL deve começar com https://raw.githubusercontent.com",
+    "InvalidExternalSource": "Por favor, insira uma URL válida como fonte de dados de lista de desejos externa. A URL deve começar como uma das seguintes:",
     "LastUpdated": "Última atualização: {{lastUpdatedDate}} às {{lastUpdatedTime}}",
     "Num": "{{num, number}} valores em sua lista de desejos",
     "UpdateExternalSource": "Atualizar fonte da Lista de Desejos",

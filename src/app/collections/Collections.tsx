@@ -10,9 +10,9 @@ import { D2StoresService } from '../inventory/d2-stores';
 import Catalysts from './Catalysts';
 import { connect } from 'react-redux';
 import { InventoryBuckets } from '../inventory/inventory-buckets';
-import { RootState } from '../store/reducers';
+import { RootState } from 'app/store/types';
 import { createSelector } from 'reselect';
-import { storesSelector, profileResponseSelector } from '../inventory/selectors';
+import { storesSelector, profileResponseSelector, bucketsSelector } from '../inventory/selectors';
 import { refresh$ } from '../shell/refresh';
 import PresentationNodeRoot from './PresentationNodeRoot';
 import { useSubscription } from 'app/utils/hooks';
@@ -46,7 +46,7 @@ function mapStateToProps() {
   });
 
   return (state: RootState): StoreProps => ({
-    buckets: state.inventory.buckets,
+    buckets: bucketsSelector(state),
     defs: state.manifest.d2Manifest,
     ownedItemHashes: ownedItemHashesSelector(state),
     profileResponse: profileResponseSelector(state),
@@ -82,7 +82,7 @@ function Collections({ account, buckets, ownedItemHashes, defs, profileResponse 
   const metricsRootNodeHash = profileResponse.metrics?.data?.metricsRootNodeHash;
 
   return (
-    <div className="vendor d2-vendors dim-page">
+    <div className="collections-page d2-vendors dim-page">
       <ErrorBoundary name="Catalysts">
         <Catalysts defs={defs} profileResponse={profileResponse} />
       </ErrorBoundary>
@@ -117,24 +117,6 @@ function Collections({ account, buckets, ownedItemHashes, defs, profileResponse 
           />
         )}
       </ErrorBoundary>
-      <div className="collections-partners">
-        <a
-          className="collections-partner dim-button"
-          target="_blank"
-          rel="noopener"
-          href="https://destinysets.com"
-        >
-          {t('Vendors.DestinySets')}
-        </a>
-        <a
-          className="collections-partner dim-button"
-          target="_blank"
-          rel="noopener"
-          href="https://lowlidev.com.au/destiny/maps"
-        >
-          {t('Vendors.DestinyMap')}
-        </a>
-      </div>
     </div>
   );
 }

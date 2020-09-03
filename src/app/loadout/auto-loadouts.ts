@@ -7,6 +7,7 @@ import { DimItem } from '../inventory/item-types';
 import { DestinyClass } from 'bungie-api-ts/destiny2';
 import { Loadout } from './loadout-types';
 import { getAllItems, getCurrentStore } from 'app/inventory/stores-helpers';
+import { StatHashes } from 'data/d2/generated-enums';
 
 /**
  *  A dynamic loadout set up to level weapons and armor
@@ -64,23 +65,26 @@ export function itemLevelingLoadout(stores: DimStore[], store: DimStore): Loadou
  * A loadout that's dynamically calculated to maximize Light level (preferring not to change currently-equipped items)
  */
 export function maxLightLoadout(stores: DimStore[], store: DimStore): Loadout {
-  const items = maxLightItemSet(stores, store);
+  const { equippable } = maxLightItemSet(stores, store);
   return newLoadout(
     name,
-    items.map((i) => convertToLoadoutItem(i, true))
+    equippable.map((i) => convertToLoadoutItem(i, true))
   );
 }
 
 const powerStatHashes = [
-  1480404414, // D2 Attack
-  3897883278, // D1 & D2 Defense
+  StatHashes.Attack, // D2 Attack
+  StatHashes.Defense, // D1 & D2 Defense
   368428387, // D1 Attack
 ];
 
 /**
  * A loadout that's dynamically calculated to maximize Light level (preferring not to change currently-equipped items)
  */
-export function maxLightItemSet(stores: DimStore[], store: DimStore): DimItem[] {
+export function maxLightItemSet(
+  stores: DimStore[],
+  store: DimStore
+): ReturnType<typeof optimalItemSet> {
   const applicableItems: DimItem[] = [];
   for (const s of stores) {
     for (const i of s.items) {

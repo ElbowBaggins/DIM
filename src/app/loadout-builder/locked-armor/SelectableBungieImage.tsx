@@ -1,4 +1,3 @@
-import { DestinyInventoryItemDefinition } from 'bungie-api-ts/destiny2';
 import clsx from 'clsx';
 import { t } from 'app/i18next-t';
 import React from 'react';
@@ -8,6 +7,11 @@ import styles from './SelectableBungieImage.m.scss';
 import { InventoryBucket } from 'app/inventory/inventory-buckets';
 import { D2ManifestDefinitions } from 'app/destiny2/d2-definitions';
 import { SocketDetailsMod } from 'app/item-popup/SocketDetails';
+import ClosableContainer from '../ClosableContainer';
+import { TRACTION_PERK } from 'app/search/d2-known-values';
+import { PluggableInventoryItemDefinition } from 'app/inventory/item-types';
+import { StatValue } from 'app/item-popup/PlugTooltip';
+import { armorStatHashes } from 'app/search/search-filter-values';
 
 const badPerk = new Set([
   3201772785, // power weapon targeting
@@ -38,7 +42,7 @@ export function SelectableMod({
   onLockedPerk,
   onLockedModBase,
 }: {
-  mod: DestinyInventoryItemDefinition;
+  mod: PluggableInventoryItemDefinition;
   // plugSet this mod appears in
   plugSetHash: number;
   defs: D2ManifestDefinitions;
@@ -85,34 +89,45 @@ export function SelectableArmor2Mod({
   defs,
   selected,
   unselectable,
-  onLockedArmor2Mod,
+  onModSelected,
+  onModRemoved,
 }: {
   mod: LockedArmor2Mod;
   defs: D2ManifestDefinitions;
   selected: boolean;
   unselectable: boolean;
-  onLockedArmor2Mod(mod: LockedArmor2Mod): void;
+  onModSelected(mod: LockedArmor2Mod): void;
+  onModRemoved(mod: LockedArmor2Mod): void;
 }) {
   const handleClick = () => {
-    !unselectable && onLockedArmor2Mod(mod);
+    !unselectable && onModSelected(mod);
   };
 
   return (
-    <div
-      className={clsx(styles.perk, {
-        [styles.lockedPerk]: selected,
-        [styles.unselectable]: unselectable,
-      })}
-      onClick={handleClick}
-      role="button"
-      tabIndex={0}
-    >
-      <SocketDetailsMod itemDef={mod.mod} defs={defs} />
-      <div className={styles.perkInfo}>
-        <div className={styles.perkTitle}>{mod.mod.displayProperties.name}</div>
-        <div className={styles.perkDescription}>{mod.mod.displayProperties.description}</div>
+    <ClosableContainer enabled={selected} onClose={() => onModRemoved(mod)}>
+      <div
+        className={clsx(styles.perk, {
+          [styles.lockedPerk]: selected,
+          [styles.unselectable]: unselectable,
+        })}
+        onClick={handleClick}
+        role="button"
+        tabIndex={0}
+      >
+        <SocketDetailsMod itemDef={mod.mod} defs={defs} />
+        <div className={styles.perkInfo}>
+          <div className={styles.perkTitle}>{mod.mod.displayProperties.name}</div>
+          <div className={styles.perkDescription}>{mod.mod.displayProperties.description}</div>
+          {mod.mod.investmentStats
+            .filter((stat) => armorStatHashes.includes(stat.statTypeHash))
+            .map((stat) => (
+              <div className={styles.plugStats} key={stat.statTypeHash}>
+                <StatValue value={stat.value} defs={defs} statHash={stat.statTypeHash} />
+              </div>
+            ))}
+        </div>
       </div>
-    </div>
+    </ClosableContainer>
   );
 }
 
@@ -127,7 +142,7 @@ export function SelectablePerk({
   unselectable,
   onLockedPerk,
 }: {
-  perk: DestinyInventoryItemDefinition;
+  perk: PluggableInventoryItemDefinition;
   bucket: InventoryBucket;
   defs: D2ManifestDefinitions;
   selected: boolean;
@@ -154,7 +169,7 @@ export function SelectablePerk({
     >
       <BungieImageAndAmmo
         className={clsx({
-          [styles.goodPerk]: perk.hash === 1818103563,
+          [styles.goodPerk]: perk.hash === TRACTION_PERK,
           [styles.badPerk]: isBadPerk,
         })}
         hash={perk.hash}
@@ -168,7 +183,7 @@ export function SelectablePerk({
             ? sandboxPerk.displayProperties.description
             : perk.displayProperties.description}
           {isBadPerk && <p>{t('LoadoutBuilder.BadPerk')}</p>}
-          {perk.hash === 1818103563 && t('LoadoutBuilder.Traction')}
+          {perk.hash === TRACTION_PERK && t('LoadoutBuilder.Traction')}
         </div>
       </div>
     </div>

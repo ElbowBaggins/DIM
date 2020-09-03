@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-key, react/prop-types */
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { RootState } from 'app/store/reducers';
+import { RootState } from 'app/store/types';
 import { D2StoresService } from 'app/inventory/d2-stores';
 import { DestinyAccount } from 'app/accounts/destiny-account';
 import { useSubscription } from 'app/utils/hooks';
@@ -18,7 +18,7 @@ import styles from './Organizer.m.scss';
 import { t } from 'app/i18next-t';
 import ShowPageLoading from 'app/dim-ui/ShowPageLoading';
 import { D1ManifestDefinitions } from 'app/destiny1/d1-definitions';
-import { destinyVersionSelector } from 'app/accounts/reducer';
+import { destinyVersionSelector } from 'app/accounts/selectors';
 import { D1StoresService } from 'app/inventory/d1-stores';
 
 interface ProvidedProps {
